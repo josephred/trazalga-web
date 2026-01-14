@@ -1,9 +1,8 @@
 // src/api/axiosConfig.js
 import axios from 'axios';
 
-// Cambia esto por tu URL real cuando subas a producción
-// Para desarrollo local, usa tu localhost o la URL de producción si ya está arriba.
-const BASE_URL = 'https://apps.procesac.com/api';
+// Usa ruta relativa para que funcione tanto en local (proxy de Vite) como en producción (rewrite de Vercel)
+const BASE_URL = '/api';
 
 const api = axios.create({
     baseURL: BASE_URL,
