@@ -17,6 +17,8 @@ export default async function handler(req, res) {
                 // Forzamos el Origin al del backend para evitar validaciones de CORS del lado del servidor
                 'Origin': 'https://apps.procesac.com',
                 'Referer': 'https://apps.procesac.com/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*',
                 ...(req.headers.authorization && { 'Authorization': req.headers.authorization }),
             },
             body,
