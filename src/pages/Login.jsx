@@ -29,7 +29,11 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const response = await api.post('/auth/login', { rut, clave });
+      // Clean RUT: remove dots/hyphens and the verification digit
+      const cleanRut = rut.replace(/[.-]/g, '');
+      const rutBody = cleanRut.slice(0, -1);
+
+      const response = await api.post('/auth/login', { rut: rutBody, clave });
       localStorage.setItem('token', response.data.token);
       navigate('/dashboard');
     } catch (_error) {
@@ -93,6 +97,9 @@ export default function Login() {
               >
                 {loading ? 'Ingresando...' : 'Ingresar'}
               </Button>
+              <Typography variant="caption" display="block" align="center" sx={{ mt: 2, color: 'text.secondary' }}>
+                {__APP_VERSION__}
+              </Typography>
             </Box>
           </Paper>
         </Box>
