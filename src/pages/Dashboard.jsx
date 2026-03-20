@@ -1,8 +1,11 @@
-import { Typography, Container, Grid, Box, AppBar, Toolbar, Button, IconButton } from '@mui/material';
+import { useState } from 'react';
+import { Typography, Container, Grid, Box, AppBar, Toolbar, Button, CircularProgress, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import StatCard from '../components/dashboard/StatCard';
 import PerformanceChart from '../components/dashboard/PerformanceChart';
 import DataTable from '../components/dashboard/DataTable';
+import ReportFilter from '../components/dashboard/ReportFilter';
 import {
   BarChart as BarChartIcon,
   TrendingUp as TrendingUpIcon,
@@ -13,10 +16,37 @@ import {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [reportData, setReportData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
+  };
+
+  const handleGenerateReport = async (filters) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { fechaInicio, fechaFin, tipoReporte } = filters;
+      // Endpoint: https://apps.procesac.com/api/reportes?fechaInicio=2026-01-01&fechaFin=2026-02-01&tipoReporte=1
+      const response = await axios.get('https://apps.procesac.com/api/reportes', {
+        params: {
+          fechaInicio,
+          fechaFin,
+          tipoReporte
+        }
+      });
+      
+      setReportData(response.data);
+    } catch (err) {
+      console.error('Error fetching report:', err);
+      setError('Error al obtener los datos del reporte. Por favor, intente de nuevo.');
+      setReportData([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,7 +68,7 @@ export default function Dashboard() {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth={false} sx={{ mt: 4, mb: 4, width: '100%' }}>
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" fontWeight="bold" gutterBottom>
             Panel de Gestión Trazalga
@@ -48,72 +78,28 @@ export default function Dashboard() {
           </Typography>
         </Box>
 
-        {/* Tarjetas de Estadísticas */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Producción Total"
-              value="24.5k"
-              trend={12}
-              icon={BarChartIcon}
-              color="#1976d2"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Eficiencia Media"
-              value="88%"
-              trend={-2.4}
-              icon={TrendingUpIcon}
-              color="#2e7d32"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Usuarios Activos"
-              value="156"
-              trend={8.1}
-              icon={GroupIcon}
-              color="#ed6c02"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Inventario"
-              value="1.2k"
-              icon={InventoryIcon}
-              color="#9c27b0"
-            />
-          </Grid>
-        </Grid>
+        {/* Filtros de Reporte */}
+        <Box sx={{ mb: 4 }}>
+          <ReportFilter onGenerate={handleGenerateReport} />
+        </Box>
 
-        {/* Gráficos y Tablas */}
-        <Grid container spacing={3}>
-          <Grid item xs={12} lg={8}>
-            <PerformanceChart title="Rendimiento Semanal" />
+        {error && (
+          <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Grid container spacing={3}>
+            <Grid size={12}>
+              <DataTable title="Resultados del Reporte" data={reportData} />
+            </Grid>
           </Grid>
-          <Grid item xs={12} lg={4}>
-            {/* Aquí podría ir otro componente pequeño o una barra lateral de actividad */}
-            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <StatCard
-                title="Alertas de Sistema"
-                value="3"
-                icon={TrendingUpIcon}
-                color="#d32f2f"
-              />
-              <StatCard
-                title="Proyectos Nuevos"
-                value="12"
-                trend={5}
-                icon={InventoryIcon}
-                color="#0288d1"
-              />
-            </Box>
-          </Grid>
-          <Grid item xs={12}>
-            <DataTable title="Recursos y Proyectos Recientes" />
-          </Grid>
-        </Grid>
+        )}
       </Container>
     </>
   );

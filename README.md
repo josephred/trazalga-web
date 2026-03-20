@@ -44,3 +44,9 @@ npm run preview
 ```bash
 npm run lint
 ```
+
+
+**Para ejecutar el emulador de android**
+```bash
+& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd Medium_Phone_API_36.1 -dns-server 8.8.8.8
+```

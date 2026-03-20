@@ -15,6 +15,8 @@ export default function Login() {
 
   const navigate = useNavigate();
 
+  // Log al cargar para confirmar que el código está actualizado
+  // console.log('%c--- COMPONENTE LOGIN CARGADO ---', 'background: #222; color: #bada55; font-size: 20px;');
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,6 +26,7 @@ export default function Login() {
     if (!rut) { newErrors.rut = 'El RUT es obligatorio'; isValid = false; }
     else if (!validateRut(rut)) { newErrors.rut = 'RUT no válido'; isValid = false; }
     if (!clave) { newErrors.clave = 'La clave es obligatoria'; isValid = false; }
+
     setErrors(newErrors);
     if (!isValid) return;
 
@@ -36,7 +39,8 @@ export default function Login() {
       const response = await api.post('/auth/login', { rut: rutBody, clave });
       localStorage.setItem('token', response.data.token);
       navigate('/dashboard');
-    } catch (_error) {
+    } catch (error) {
+      console.error('Error en Login:', error);
       setSnackbar({ open: true, message: "RUT o Clave incorrectos", severity: 'error' });
     } finally {
       setLoading(false);
@@ -62,7 +66,7 @@ export default function Login() {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Paper elevation={3} sx={{ p: 4, width: '100%', borderRadius: 2 }}>
             <Typography component="h1" variant="h4" align="center" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-              Trazalga Reportes
+              Trazalga Reportes:
             </Typography>
             <Box component="form" onSubmit={handleLogin} sx={{ mt: 1 }}>
               <TextField

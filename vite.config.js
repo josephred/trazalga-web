@@ -11,10 +11,22 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': {
+      '/v-api': {
         target: 'https://apps.procesac.com',
         changeOrigin: true,
         secure: true,
+        rewrite: (path) => path.replace(/^\/v-api/, '/api'),
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            // Removemos completamente la cabecera Origin para intentar saltar el chequeo CORS
+            proxyReq.removeHeader('Origin');
+            proxyReq.setHeader('Referer', 'https://apps.procesac.com/');
+          });
+        },
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        }
       }
     }
   }

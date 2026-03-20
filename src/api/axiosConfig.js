@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Usa ruta relativa para que funcione tanto en local (proxy de Vite) como en producción (rewrite de Vercel)
-const BASE_URL = '/api';
+const BASE_URL = '/v-api';
 
 const api = axios.create({
     baseURL: BASE_URL,
