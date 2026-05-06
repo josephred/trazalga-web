@@ -132,7 +132,7 @@ export default function MainLayout() {
       </Drawer>
 
       {/* ═══════════ MAIN CONTENT AREA ═══════════ */}
-      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', position: 'relative' }}>
         
         {/* ═══════════ TOPBAR ═══════════ */}
         <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: '1px solid #e0e0e0', bgcolor: '#fff' }}>

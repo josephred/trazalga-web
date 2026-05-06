@@ -26,20 +26,22 @@ function App() {
 
         {/* Rutas protegidas con Layout Principal */}
         <Route 
+          path="/"
           element={
             <PrivateRoute>
               <MainLayout />
             </PrivateRoute>
           } 
         >
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/consultas" element={<Consultas />} />
-          <Route path="/alertas" element={<Alertas />} />
-          <Route path="/casos" element={<Casos />} />
-          <Route path="/reportes" element={<Reportes />} />
-          <Route path="/mapa" element={<Mapa />} />
-          <Route path="/administracion" element={<Administracion />} />
-          <Route path="/ayuda" element={<Ayuda />} />
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="consultas" element={<Consultas />} />
+          <Route path="alertas" element={<Alertas />} />
+          <Route path="casos" element={<Casos />} />
+          <Route path="reportes" element={<Reportes />} />
+          <Route path="mapa" element={<Mapa />} />
+          <Route path="administracion" element={<Administracion />} />
+          <Route path="ayuda" element={<Ayuda />} />
         </Route>
 
         {/* Redirección por defecto */}

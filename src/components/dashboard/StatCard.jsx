@@ -31,19 +31,21 @@ const StatCard = ({ title, value, icon: Icon, trend, color }) => {
                             </Typography>
                         )}
                     </Box>
-                    <Box
-                        sx={{
-                            backgroundColor: `${color}15`,
-                            color: color,
-                            borderRadius: 2,
-                            p: 1.5,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        <Icon fontSize="large" />
-                    </Box>
+                    {Icon && (
+                        <Box
+                            sx={{
+                                backgroundColor: `${color}15`,
+                                color: color,
+                                borderRadius: 2,
+                                p: 1.5,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            <Icon fontSize="large" />
+                        </Box>
+                    )}
                 </Stack>
             </CardContent>
         </Card>
