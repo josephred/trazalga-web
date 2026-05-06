@@ -2,6 +2,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Consultas from './pages/Consultas';
+import Alertas from './pages/Alertas';
+import Casos from './pages/Casos';
+import Reportes from './pages/Reportes';
+import Mapa from './pages/Mapa';
+import Administracion from './pages/Administracion';
+import Ayuda from './pages/Ayuda';
+import MainLayout from './components/layout/MainLayout';
 
 // Un componente simple para proteger rutas (si no hay token, manda al login)
 const PrivateRoute = ({ children }) => {
@@ -16,15 +24,23 @@ function App() {
         {/* Ruta pública */}
         <Route path="/login" element={<Login />} />
 
-        {/* Ruta protegida */}
+        {/* Rutas protegidas con Layout Principal */}
         <Route 
-          path="/dashboard" 
           element={
             <PrivateRoute>
-              <Dashboard />
+              <MainLayout />
             </PrivateRoute>
           } 
-        />
+        >
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/consultas" element={<Consultas />} />
+          <Route path="/alertas" element={<Alertas />} />
+          <Route path="/casos" element={<Casos />} />
+          <Route path="/reportes" element={<Reportes />} />
+          <Route path="/mapa" element={<Mapa />} />
+          <Route path="/administracion" element={<Administracion />} />
+          <Route path="/ayuda" element={<Ayuda />} />
+        </Route>
 
         {/* Redirección por defecto */}
         <Route path="*" element={<Navigate to="/dashboard" />} />

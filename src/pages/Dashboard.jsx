@@ -10,8 +10,7 @@ import {
   BarChart as BarChartIcon,
   TrendingUp as TrendingUpIcon,
   Group as GroupIcon,
-  Inventory as InventoryIcon,
-  Logout as LogoutIcon
+  Inventory as InventoryIcon
 } from '@mui/icons-material';
 
 export default function Dashboard() {
@@ -19,11 +18,6 @@ export default function Dashboard() {
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
 
   const handleGenerateReport = async (filters) => {
     setLoading(true);
@@ -51,33 +45,7 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* AppBar con botón de logout */}
-      <AppBar position="static" elevation={2}>
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            Trazalga Reportes
-          </Typography>
-          <Button
-            color="inherit"
-            onClick={handleLogout}
-            startIcon={<LogoutIcon />}
-            sx={{ textTransform: 'none', fontSize: '1rem' }}
-          >
-            Cerrar Sesión
-          </Button>
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth={false} sx={{ mt: 4, mb: 4, width: '100%' }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            Panel de Gestión Trazalga
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Resumen operativo y métricas clave de rendimiento en tiempo real.
-          </Typography>
-        </Box>
-
+      <Container maxWidth={false} sx={{ width: '100%', p: 0 }}>
         {/* Filtros de Reporte */}
         <Box sx={{ mb: 4 }}>
           <ReportFilter onGenerate={handleGenerateReport} />
