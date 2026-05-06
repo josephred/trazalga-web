@@ -206,7 +206,26 @@ export default function Login() {
               zIndex: 2,
             }}>
               {featureItems.map((item, index) => (
-                <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, flex: 1, px: 1.5 }}>
+                <Box 
+                  key={index} 
+                  component="a"
+                  href="#"
+                  onClick={(e) => e.preventDefault()}
+                  sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    gap: 0.5, 
+                    flex: 1, 
+                    px: 1.5,
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      filter: 'brightness(1.2)',
+                    }
+                  }}
+                >
                   <Box sx={{ color: '#fff', transform: 'scale(0.8)' }}>{item.icon}</Box>
                   <Typography sx={{ color: '#fff', fontSize: '0.6rem', textAlign: 'center', fontWeight: 600, lineHeight: 1.2 }}>
                     {item.label}
