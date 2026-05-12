@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { 
   Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, 
-  ListItemButton, ListItemIcon, ListItemText, Avatar, Button, IconButton
+  ListItemButton, ListItemIcon, ListItemText, Avatar, Button, IconButton,
+  Menu, MenuItem, Divider
 } from '@mui/material';
 import { 
   Home as HomeIcon,
@@ -13,7 +14,9 @@ import {
   Settings as SettingsIcon,
   HelpOutline as HelpIcon,
   FilterList as FilterListIcon,
-  CalendarToday as CalendarTodayIcon
+  CalendarToday as CalendarTodayIcon,
+  Logout as LogoutIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import sernapescaLogo from '../../assets/sernapesca.png';
@@ -33,6 +36,22 @@ const menuItems = [
 export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleUserMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
 
   // Helper to get current page title
   const getCurrentPageTitle = () => {
@@ -187,7 +206,22 @@ export default function MainLayout() {
               </Box>
 
               {/* User Profile */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, borderLeft: '1px solid #e0e0e0', pl: 3 }}>
+              <Box 
+                onClick={handleUserMenuClick}
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1.5, 
+                  borderLeft: '1px solid #e0e0e0', 
+                  pl: 3,
+                  cursor: 'pointer',
+                  '&:hover': {
+                    '& .MuiAvatar-root': {
+                      bgcolor: '#1976d2',
+                    }
+                  }
+                }}
+              >
                 <Box sx={{ textAlign: 'right' }}>
                   <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#2d3748' }}>
                     Analista Regional
@@ -196,8 +230,57 @@ export default function MainLayout() {
                     IV Región
                   </Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: '#0a192f', width: 36, height: 36 }} />
+                <Avatar sx={{ bgcolor: '#0a192f', width: 36, height: 36, transition: 'all 0.3s' }} />
               </Box>
+
+              <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                onClick={handleClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                PaperProps={{
+                  elevation: 0,
+                  sx: {
+                    overflow: 'visible',
+                    filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                    mt: 1.5,
+                    '& .MuiAvatar-root': {
+                      width: 32,
+                      height: 32,
+                      ml: -0.5,
+                      mr: 1,
+                    },
+                    '&::before': {
+                      content: '""',
+                      display: 'block',
+                      position: 'absolute',
+                      top: 0,
+                      right: 14,
+                      width: 10,
+                      height: 10,
+                      bgcolor: 'background.paper',
+                      transform: 'translateY(-50%) rotate(45deg)',
+                      zIndex: 0,
+                    },
+                  },
+                }}
+              >
+                <MenuItem onClick={() => navigate('/perfil')}>
+                  <ListItemIcon>
+                    <PersonIcon fontSize="small" />
+                  </ListItemIcon>
+                  Mi Perfil
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout} sx={{ color: '#d32f2f' }}>
+                  <ListItemIcon>
+                    <LogoutIcon fontSize="small" sx={{ color: '#d32f2f' }} />
+                  </ListItemIcon>
+                  Cerrar sesión
+                </MenuItem>
+              </Menu>
 
             </Box>
           </Toolbar>
