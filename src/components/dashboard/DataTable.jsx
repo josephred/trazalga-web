@@ -36,8 +36,8 @@ const DataTable = ({ title, data = [] }) => {
                 <Typography variant="h6" gutterBottom fontWeight="bold">
                     {title}
                 </Typography>
-                <TableContainer sx={{ mt: 2 }}>
-                    <Table sx={{ minWidth: 650 }} aria-label="report table">
+                <TableContainer sx={{ mt: 2, overflowX: 'auto' }}>
+                    <Table sx={{ width: '100%' }} aria-label="report table">
                         <TableHead>
                             <TableRow>
                                 <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>ID/Folio</TableCell>

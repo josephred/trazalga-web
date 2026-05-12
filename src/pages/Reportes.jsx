@@ -59,11 +59,15 @@ export default function Reportes() {
           <CircularProgress />
         </Box>
       ) : (
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <DataTable title="Resultados del Reporte" data={reportData} />
+        <Box sx={{ width: '100%' }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Box sx={{ width: '100%', '& .MuiCard-root': { width: '100%' } }}>
+                <DataTable title="Resultados del Reporte" data={reportData} />
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
+        </Box>
       )}
     </Container>
   );
