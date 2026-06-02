@@ -5,6 +5,7 @@ import {
   Group as GroupIcon
 } from '@mui/icons-material';
 import StatCard from '../components/dashboard/StatCard';
+import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
 // import PerformanceChart from '../components/dashboard/PerformanceChart';
 
 export default function Dashboard() {
@@ -38,6 +39,10 @@ export default function Dashboard() {
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={2}>
           <StatCard title="Actores fiscalizados" value="215" color="#1976d2" icon={GroupIcon} />
+        </Grid>
+
+        <Grid item xs={12}>
+          <IndicadorRecolector />
         </Grid>
 
         <Grid item xs={12}>
