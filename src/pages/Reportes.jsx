@@ -3,6 +3,7 @@ import { Typography, Container, Grid, Box, CircularProgress, Alert } from '@mui/
 import axios from 'axios';
 import DataTable from '../components/dashboard/DataTable';
 import ReportFilter from '../components/dashboard/ReportFilter';
+import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
 
 export default function Reportes() {
   const [reportData, setReportData] = useState([]);
@@ -42,6 +43,9 @@ export default function Reportes() {
           Seleccione los filtros para generar el reporte de trazabilidad.
         </Typography>
       </Box>
+
+      {/* Indicadores Principales (Recolector) */}
+      <IndicadorRecolector />
 
       {/* Filtros de Reporte */}
       <Box sx={{ mb: 4 }}>
