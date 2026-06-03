@@ -12,9 +12,6 @@ export default function Dashboard() {
   return (
     <Container maxWidth={false} sx={{ width: '100%', p: 0 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Dashboard Ejecutivo
-        </Typography>
         <Typography variant="body1" color="text.secondary">
           Resumen general de indicadores y alertas.
         </Typography>

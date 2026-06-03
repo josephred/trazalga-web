@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, Card, CardContent, CircularProgress, Alert, Tabs, Tab } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../../api/axiosConfig';
 
 export default function IndicadorRecolector() {
   const [data, setData] = useState([]);
+  const [selectedPeriod, setSelectedPeriod] = useState('Diario');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -54,19 +55,45 @@ export default function IndicadorRecolector() {
     return <Alert severity="error">{error}</Alert>;
   }
 
+  const filteredData = data.filter(item => item.name === selectedPeriod);
+
   return (
     <Card sx={{ mb: 4, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
       <CardContent>
-        <Typography variant="h6" fontWeight="bold" gutterBottom color="#1a3a5c">
-          Indicadores de Recolector: Declaraciones vs Desembarques
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 2 }}>
+          <Typography variant="h6" fontWeight="bold" color="#1a3a5c">
+            Indicadores de Recolector: Declaraciones vs Desembarques
+          </Typography>
+          <Tabs
+            value={selectedPeriod}
+            onChange={(e, newValue) => setSelectedPeriod(newValue)}
+            textColor="primary"
+            indicatorColor="primary"
+            sx={{
+              minHeight: '36px',
+              height: '36px',
+              '& .MuiTab-root': {
+                minHeight: '36px',
+                height: '36px',
+                px: 2.5,
+                textTransform: 'none',
+                fontWeight: 'bold',
+                fontSize: '0.875rem',
+              }
+            }}
+          >
+            <Tab label="Diario" value="Diario" />
+            <Tab label="Semanal" value="Semanal" />
+            <Tab label="Mensual" value="Mensual" />
+          </Tabs>
+        </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Nº Declaraciones realizadas y Total de desembarques declarados (Kg) agrupados por Diario, Semanal y Mensual.
+          Nº Declaraciones realizadas y Total de desembarques declarados (Kg) para el periodo seleccionado.
         </Typography>
         <Box sx={{ width: '100%', height: 350 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={data}
+              data={filteredData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
@@ -75,8 +102,8 @@ export default function IndicadorRecolector() {
               <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
               <Tooltip />
               <Legend />
-              <Bar yAxisId="left" dataKey="declaraciones" name="Nº Declaraciones" fill="#8884d8" radius={[4, 4, 0, 0]} />
-              <Bar yAxisId="right" dataKey="desembarque" name="Total Desembarque (Kg)" fill="#82ca9d" radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="left" dataKey="declaraciones" name="Nº Declaraciones" fill="#8884d8" radius={[4, 4, 0, 0]} barSize={50} />
+              <Bar yAxisId="right" dataKey="desembarque" name="Total Desembarque (Kg)" fill="#82ca9d" radius={[4, 4, 0, 0]} barSize={50} />
             </BarChart>
           </ResponsiveContainer>
         </Box>

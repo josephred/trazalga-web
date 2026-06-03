@@ -35,9 +35,6 @@ export default function Reportes() {
   return (
     <Container maxWidth={false} sx={{ width: '100%', p: 0 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Generación de Reportes
-        </Typography>
         <Typography variant="body1" color="text.secondary">
           Seleccione los filtros para generar el reporte de trazabilidad.
         </Typography>
