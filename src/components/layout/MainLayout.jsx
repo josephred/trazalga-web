@@ -39,6 +39,20 @@ export default function MainLayout() {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
+  // Initialize with last 7 days
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0]
+  });
+
+  const handleStartDateChange = (e) => {
+    setDateRange({ ...dateRange, startDate: e.target.value });
+  };
+  
+  const handleEndDateChange = (e) => {
+    setDateRange({ ...dateRange, endDate: e.target.value });
+  };
+
   const handleUserMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -185,16 +199,24 @@ export default function MainLayout() {
             {/* Topbar Right: Actions & User */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               
-              {/* Placeholders for Filters */}
+              {/* Date Filters */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Button 
-                  variant="outlined" 
-                  size="small" 
-                  startIcon={<CalendarTodayIcon fontSize="small"/>}
-                  sx={{ textTransform: 'none', color: '#555', borderColor: '#ccc' }}
-                >
-                  05/05/2024 - 12/05/2024
-                </Button>
+                <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: '#fff', border: '1px solid #ccc', borderRadius: 1, px: 1, py: 0.5 }}>
+                  <CalendarTodayIcon fontSize="small" sx={{ color: '#555', mr: 1 }} />
+                  <input 
+                    type="date" 
+                    value={dateRange.startDate} 
+                    onChange={handleStartDateChange} 
+                    style={{ border: 'none', outline: 'none', color: '#555', fontSize: '0.875rem', backgroundColor: 'transparent' }} 
+                  />
+                  <Typography sx={{ color: '#555', mx: 1 }}> - </Typography>
+                  <input 
+                    type="date" 
+                    value={dateRange.endDate} 
+                    onChange={handleEndDateChange} 
+                    style={{ border: 'none', outline: 'none', color: '#555', fontSize: '0.875rem', backgroundColor: 'transparent' }} 
+                  />
+                </Box>
                 <Button 
                   variant="contained" 
                   size="small" 
@@ -288,7 +310,7 @@ export default function MainLayout() {
 
         {/* ═══════════ PAGE CONTENT (Outlet) ═══════════ */}
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: 3 }}>
-          <Outlet />
+          <Outlet context={{ dateRange }} />
         </Box>
 
       </Box>

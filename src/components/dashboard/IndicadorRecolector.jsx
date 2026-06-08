@@ -1,34 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, CircularProgress, Alert, Tabs, Tab } from '@mui/material';
+import { Box, Typography, Card, CardContent, CircularProgress, Alert } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../../api/axiosConfig';
 
-export default function IndicadorRecolector() {
+export default function IndicadorRecolector({ dateRange }) {
   const [data, setData] = useState([]);
-  const [selectedPeriod, setSelectedPeriod] = useState('Diario');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchIndicadores = async () => {
       try {
-        const response = await api.get('/reportes/indicadores-recolector');
+        let queryParams = '';
+        if (dateRange && dateRange.startDate && dateRange.endDate) {
+          queryParams = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+        }
+        const response = await api.get(`/reportes/indicadores-recolector${queryParams}`);
         const d = response.data;
         const chartData = [
           {
-            name: 'Diario',
+            name: 'Rango Seleccionado',
             declaraciones: d.declaracionesDiarias,
             desembarque: d.totalDiario
-          },
-          {
-            name: 'Semanal',
-            declaraciones: d.declaracionesSemanales,
-            desembarque: d.totalSemanal
-          },
-          {
-            name: 'Mensual',
-            declaraciones: d.declaracionesMensuales,
-            desembarque: d.totalMensual
           }
         ];
         setData(chartData);
@@ -41,7 +34,7 @@ export default function IndicadorRecolector() {
     };
 
     fetchIndicadores();
-  }, []);
+  }, [dateRange]);
 
   if (loading) {
     return (
@@ -55,8 +48,6 @@ export default function IndicadorRecolector() {
     return <Alert severity="error">{error}</Alert>;
   }
 
-  const filteredData = data.filter(item => item.name === selectedPeriod);
-
   return (
     <Card sx={{ mb: 4, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
       <CardContent>
@@ -64,28 +55,6 @@ export default function IndicadorRecolector() {
           <Typography variant="h6" fontWeight="bold" color="#1a3a5c">
             Indicadores de Recolector: Declaraciones vs Desembarques
           </Typography>
-          <Tabs
-            value={selectedPeriod}
-            onChange={(e, newValue) => setSelectedPeriod(newValue)}
-            textColor="primary"
-            indicatorColor="primary"
-            sx={{
-              minHeight: '36px',
-              height: '36px',
-              '& .MuiTab-root': {
-                minHeight: '36px',
-                height: '36px',
-                px: 2.5,
-                textTransform: 'none',
-                fontWeight: 'bold',
-                fontSize: '0.875rem',
-              }
-            }}
-          >
-            <Tab label="Diario" value="Diario" />
-            <Tab label="Semanal" value="Semanal" />
-            <Tab label="Mensual" value="Mensual" />
-          </Tabs>
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           Nº Declaraciones realizadas y Total de desembarques declarados (Kg) para el periodo seleccionado.
@@ -93,7 +62,7 @@ export default function IndicadorRecolector() {
         <Box sx={{ width: '100%', height: 350 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={filteredData}
+              data={data}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" />

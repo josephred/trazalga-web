@@ -6,9 +6,12 @@ import {
 } from '@mui/icons-material';
 import StatCard from '../components/dashboard/StatCard';
 import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
+import ControlCuotaDiaria from '../components/dashboard/ControlCuotaDiaria';
+import { useOutletContext } from 'react-router-dom';
 // import PerformanceChart from '../components/dashboard/PerformanceChart';
 
 export default function Dashboard() {
+  const { dateRange } = useOutletContext() || { dateRange: null };
   return (
     <Container maxWidth={false} sx={{ width: '100%', p: 0 }}>
       <Box sx={{ mb: 4 }}>
@@ -39,11 +42,15 @@ export default function Dashboard() {
         </Grid>
 
         <Grid item xs={12}>
-          <IndicadorRecolector />
+          <IndicadorRecolector dateRange={dateRange} />
         </Grid>
 
-        <Grid item xs={12}>
-          <Box sx={{ p: 4, bgcolor: '#fff', borderRadius: 2, border: '1px solid #e0e0e0', textAlign: 'center' }}>
+        <Grid item xs={12} md={6}>
+          <ControlCuotaDiaria dateRange={dateRange} />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Box sx={{ p: 4, bgcolor: '#fff', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 2, border: '1px solid #e0e0e0', textAlign: 'center' }}>
             <Typography color="text.secondary">
               Contenido del dashboard ejecutivo (gráficos y mapas) en desarrollo.
             </Typography>
