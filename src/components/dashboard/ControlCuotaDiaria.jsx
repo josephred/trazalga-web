@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Divider
 } from '@mui/material';
+import api from '../../api/axiosConfig';
 
 export default function ControlCuotaDiaria({ dateRange }) {
   const [cuotas, setCuotas] = useState([]);
@@ -17,24 +18,17 @@ export default function ControlCuotaDiaria({ dateRange }) {
   useEffect(() => {
     const fetchCuotas = async () => {
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8091';
         let queryParams = '';
         if (dateRange && dateRange.startDate && dateRange.endDate) {
           queryParams = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
         }
         
-        const response = await fetch(`${apiUrl}/cuotas/dashboard-diario${queryParams}`);
-        
-        if (!response.ok) {
-          throw new Error('No se pudo cargar la información de cuotas');
-        }
-        
-        const data = await response.json();
-        setCuotas(data);
-        setLoading(false);
+        const response = await api.get(`/cuotas/dashboard-diario${queryParams}`);
+        setCuotas(response.data);
       } catch (err) {
-        console.error("Error fetching cuotas:", err);
-        setError(err.message);
+        console.error('Error fetching cuotas:', err);
+        setError(err.message || 'Error desconocido');
+      } finally {
         setLoading(false);
       }
     };
