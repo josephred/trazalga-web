@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, Card, CardContent, CircularProgress, Alert, FormControl, Select, MenuItem } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../../api/axiosConfig';
 
@@ -7,6 +7,7 @@ export default function IndicadorRecolector({ dateRange }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [chartView, setChartView] = useState('ambos');
 
   useEffect(() => {
     const fetchIndicadores = async () => {
@@ -51,11 +52,22 @@ export default function IndicadorRecolector({ dateRange }) {
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 2 }}>
           <Typography variant="h6" fontWeight="bold" color="#1a3a5c">
-            Indicadores de Recolector: Declaraciones vs Desembarques
+            Evolución de Declaraciones y Desembarques
           </Typography>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <Select
+              value={chartView}
+              onChange={(e) => setChartView(e.target.value)}
+              displayEmpty
+            >
+              <MenuItem value="ambos">Ambos</MenuItem>
+              <MenuItem value="declaraciones">Solo Declaraciones</MenuItem>
+              <MenuItem value="desembarques">Solo Desembarques</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Nº Declaraciones realizadas y Total de desembarques declarados (Kg) para el periodo seleccionado.
+          Evolución diaria del Nº de Declaraciones y Total de Desembarques (Kg) (Incluye Recolectores, Armadores y Áreas de Manejo).
         </Typography>
         <Box sx={{ width: '100%', height: 350 }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -69,8 +81,12 @@ export default function IndicadorRecolector({ dateRange }) {
               <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
               <Tooltip />
               <Legend />
-              <Bar yAxisId="left" dataKey="declaraciones" name="Nº Declaraciones" fill="#8884d8" radius={[4, 4, 0, 0]} barSize={50} />
-              <Bar yAxisId="right" dataKey="desembarque" name="Total Desembarque (Kg)" fill="#82ca9d" radius={[4, 4, 0, 0]} barSize={50} />
+              {(chartView === 'ambos' || chartView === 'declaraciones') && (
+                <Bar yAxisId="left" dataKey="declaraciones" name="Nº Declaraciones" fill="#8884d8" radius={[4, 4, 0, 0]} barSize={50} />
+              )}
+              {(chartView === 'ambos' || chartView === 'desembarques') && (
+                <Bar yAxisId="right" dataKey="desembarque" name="Total Desembarque (Kg)" fill="#82ca9d" radius={[4, 4, 0, 0]} barSize={50} />
+              )}
             </BarChart>
           </ResponsiveContainer>
         </Box>
