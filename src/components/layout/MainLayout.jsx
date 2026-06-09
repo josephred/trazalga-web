@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, 
   ListItemButton, ListItemIcon, ListItemText, Avatar, Button, IconButton,
-  Menu, MenuItem, Divider
+  Menu, MenuItem, Divider, Badge, Snackbar, Alert
 } from '@mui/material';
 import { 
   Home as HomeIcon,
@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import sernapescaLogo from '../../assets/sernapesca.png';
+import { onMessageListener } from '../../firebase';
 
 const drawerWidth = 240;
 
@@ -38,6 +39,27 @@ export default function MainLayout() {
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  // Notifications State
+  const [notifAnchorEl, setNotifAnchorEl] = useState(null);
+  const openNotif = Boolean(notifAnchorEl);
+  const [notifications, setNotifications] = useState([]);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', title: '' });
+
+  useEffect(() => {
+    const unsubscribe = onMessageListener((payload) => {
+      console.log('Notificación recibida en foreground:', payload);
+      const title = payload.notification?.title || 'Nueva Notificación';
+      const body = payload.notification?.body || '';
+      
+      setNotifications(prev => [{ title, body, time: new Date().toLocaleTimeString() }, ...prev]);
+      setSnackbar({ open: true, title, message: body });
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
   // Initialize with last 7 days
   const [dateRange, setDateRange] = useState({
@@ -59,6 +81,19 @@ export default function MainLayout() {
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleNotifClick = (event) => {
+    setNotifAnchorEl(event.currentTarget);
+  };
+
+  const handleNotifClose = () => {
+    setNotifAnchorEl(null);
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar({ ...snackbar, open: false });
   };
 
   const handleLogout = () => {
@@ -227,6 +262,44 @@ export default function MainLayout() {
                 </Button>
               </Box>
 
+              {/* Notification Bell */}
+              <IconButton color="inherit" onClick={handleNotifClick} sx={{ color: '#555' }}>
+                <Badge badgeContent={notifications.length} color="error">
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+              <Menu
+                anchorEl={notifAnchorEl}
+                open={openNotif}
+                onClose={handleNotifClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                PaperProps={{
+                  elevation: 2,
+                  sx: { width: 300, maxHeight: 400, mt: 1.5 }
+                }}
+              >
+                <Box sx={{ px: 2, py: 1, borderBottom: '1px solid #e0e0e0' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Notificaciones</Typography>
+                </Box>
+                {notifications.length === 0 ? (
+                  <MenuItem disabled>No hay notificaciones recientes</MenuItem>
+                ) : (
+                  notifications.map((notif, index) => (
+                    <MenuItem key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{notif.title}</Typography>
+                      <Typography variant="caption" color="text.secondary" noWrap sx={{ width: '100%' }}>{notif.body}</Typography>
+                      <Typography variant="caption" sx={{ color: '#aaa', alignSelf: 'flex-end', fontSize: '0.65rem' }}>{notif.time}</Typography>
+                    </MenuItem>
+                  ))
+                )}
+                {notifications.length > 0 && (
+                  <Box sx={{ p: 1, textAlign: 'center', borderTop: '1px solid #e0e0e0' }}>
+                    <Button size="small" onClick={() => setNotifications([])}>Limpiar todas</Button>
+                  </Box>
+                )}
+              </Menu>
+
               {/* User Profile */}
               <Box 
                 onClick={handleUserMenuClick}
@@ -312,6 +385,19 @@ export default function MainLayout() {
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: 3 }}>
           <Outlet context={{ dateRange }} />
         </Box>
+
+        {/* Global Snackbar for Foreground Notifications */}
+        <Snackbar 
+          open={snackbar.open} 
+          autoHideDuration={6000} 
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert onClose={handleSnackbarClose} severity="info" sx={{ width: '100%', boxShadow: 3 }}>
+            <strong>{snackbar.title}</strong><br/>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
 
       </Box>
     </Box>
