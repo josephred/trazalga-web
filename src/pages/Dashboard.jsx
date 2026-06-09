@@ -7,6 +7,7 @@ import {
 import StatCard from '../components/dashboard/StatCard';
 import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
 import ControlCuotaDiaria from '../components/dashboard/ControlCuotaDiaria';
+import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
 import { useOutletContext } from 'react-router-dom';
 // import PerformanceChart from '../components/dashboard/PerformanceChart';
 
@@ -50,11 +51,7 @@ export default function Dashboard() {
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <Box sx={{ p: 4, bgcolor: '#fff', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 2, border: '1px solid #e0e0e0', textAlign: 'center' }}>
-            <Typography color="text.secondary">
-              Contenido del dashboard ejecutivo (gráficos y mapas) en desarrollo.
-            </Typography>
-          </Box>
+          <ExtraccionVedaWidget dateRange={dateRange} />
         </Grid>
       </Grid>
     </Container>
