@@ -3,12 +3,13 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import api from './api/axiosConfig';
 
 const firebaseConfig = {
-  apiKey: "API_KEY_PLACEHOLDER",
-  authDomain: "PROJECT_ID.firebaseapp.com",
-  projectId: "PROJECT_ID",
-  storageBucket: "PROJECT_ID.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
+  apiKey: "AIzaSyAp_gvYmZW37yeyNdgPjhKHZX0G46XjYhg",
+  authDomain: "trazalga-web.firebaseapp.com",
+  projectId: "trazalga-web",
+  storageBucket: "trazalga-web.firebasestorage.app",
+  messagingSenderId: "846544815480",
+  appId: "1:846544815480:web:55f402a9ec6914b2a9748d",
+  measurementId: "G-D8PH8G23C3"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -22,7 +23,7 @@ export const requestFirebaseNotificationPermission = async () => {
     if (permission === 'granted') {
       console.log('Notification permission granted.');
       const currentToken = await getToken(messaging, { 
-        vapidKey: 'YOUR_PUBLIC_VAPID_KEY_HERE' 
+        vapidKey: 'BDtz9qLdpHVpcDHGfd9zdHrKHRxosF3loHPkZQlLpsnmdslp-_diOPbc-UnV-YN5ej-1fQrAO52xs6ipYDMe3Lw' 
       });
       
       if (currentToken) {
