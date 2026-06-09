@@ -4,10 +4,15 @@ import axios from 'axios';
 import DataTable from '../components/dashboard/DataTable';
 import ReportFilter from '../components/dashboard/ReportFilter';
 
+import TrazabilidadDialog from '../components/dashboard/TrazabilidadDialog';
+
 export default function Reportes() {
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
   const handleGenerateReport = async (filters) => {
     setLoading(true);
@@ -29,6 +34,14 @@ export default function Reportes() {
       setReportData([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRowClick = (row) => {
+    // row debe tener id y tipoReporte para trazar
+    if (row && row.id && row.tipoReporte) {
+      setSelectedRow(row);
+      setDialogOpen(true);
     }
   };
 
@@ -60,11 +73,20 @@ export default function Reportes() {
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Box sx={{ width: '100%', '& .MuiCard-root': { width: '100%' } }}>
-                <DataTable title="Resultados del Reporte" data={reportData} />
+                <DataTable title="Resultados del Reporte" data={reportData} onRowClick={handleRowClick} />
               </Box>
             </Grid>
           </Grid>
         </Box>
+      )}
+
+      {selectedRow && (
+        <TrazabilidadDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          declaracionId={selectedRow.id}
+          tipoReporte={selectedRow.tipoReporte}
+        />
       )}
     </Container>
   );
