@@ -11,9 +11,24 @@ import Administracion from './pages/Administracion';
 import Ayuda from './pages/Ayuda';
 import MainLayout from './components/layout/MainLayout';
 
+import { useEffect } from 'react';
+import { requestFirebaseNotificationPermission, onMessageListener } from '../firebase';
+
 // Un componente simple para proteger rutas (si no hay token, manda al login)
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');
+  
+  useEffect(() => {
+    if (token) {
+      requestFirebaseNotificationPermission();
+      
+      onMessageListener().then(payload => {
+        // En una app real podríamos usar un Context/Store para mostrar un Toast
+        console.log("Nueva notificación recibida:", payload);
+      }).catch(err => console.log('failed: ', err));
+    }
+  }, [token]);
+
   return token ? children : <Navigate to="/login" />;
 };
 

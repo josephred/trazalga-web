@@ -1,9 +1,38 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true
+      },
+      manifest: {
+        name: 'Trazalga Sernapesca',
+        short_name: 'Trazalga',
+        description: 'Plataforma de Trazabilidad de Algas',
+        theme_color: '#1a3a5c',
+        background_color: '#f5f5f5',
+        display: 'standalone',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ]
+      }
+    })
+  ],
   define: {
     __APP_VERSION__: JSON.stringify(
       `Version ${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}.${String(new Date().getHours()).padStart(2, '0')}${String(new Date().getMinutes()).padStart(2, '0')}`
