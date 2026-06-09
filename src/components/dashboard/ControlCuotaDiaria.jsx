@@ -6,7 +6,10 @@ import {
   Box, 
   LinearProgress, 
   CircularProgress,
-  Divider
+  Divider,
+  FormControl,
+  Select,
+  MenuItem
 } from '@mui/material';
 import api from '../../api/axiosConfig';
 
@@ -14,16 +17,21 @@ export default function ControlCuotaDiaria({ dateRange }) {
   const [cuotas, setCuotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [periodo, setPeriodo] = useState('DIARIO');
+  const [perfil, setPerfil] = useState('RECOLECTOR');
 
   useEffect(() => {
     const fetchCuotas = async () => {
       try {
-        let queryParams = '';
+        const params = new URLSearchParams();
         if (dateRange && dateRange.startDate && dateRange.endDate) {
-          queryParams = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+          params.append('startDate', dateRange.startDate);
+          params.append('endDate', dateRange.endDate);
         }
+        params.append('periodo', periodo);
+        params.append('perfil', perfil);
         
-        const response = await api.get(`/cuotas/dashboard-diario${queryParams}`);
+        const response = await api.get(`/cuotas/dashboard-diario?${params.toString()}`);
         setCuotas(response.data);
       } catch (err) {
         console.error('Error fetching cuotas:', err);
@@ -34,7 +42,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
     };
 
     fetchCuotas();
-  }, [dateRange]);
+  }, [dateRange, periodo, perfil]);
 
   const getProgressColor = (porcentaje) => {
     if (porcentaje >= 100) return 'error'; // Rojo
@@ -66,9 +74,35 @@ export default function ControlCuotaDiaria({ dateRange }) {
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent>
-        <Typography variant="h6" color="text.secondary" gutterBottom>
-          Control Cuota Diaria (Volumen Extraído vs Límite)
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1, flexWrap: 'wrap', gap: 2 }}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Control Cuota (Volumen Extraído vs Límite)
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={perfil}
+                onChange={(e) => setPerfil(e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="RECOLECTOR">Recolector</MenuItem>
+                <MenuItem value="ARMADOR">Armador</MenuItem>
+                <MenuItem value="AREA">Área de Manejo</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={periodo}
+                onChange={(e) => setPeriodo(e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="DIARIO">Diario</MenuItem>
+                <MenuItem value="SEMANAL">Semanal</MenuItem>
+                <MenuItem value="MENSUAL">Mensual</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
         <Divider sx={{ mb: 2 }} />
         
         {cuotas.length === 0 ? (
