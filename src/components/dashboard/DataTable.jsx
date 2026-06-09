@@ -14,7 +14,7 @@ import {
     TablePagination
 } from '@mui/material';
 
-const DataTable = ({ title, data = [] }) => {
+const DataTable = ({ title, data = [], onRowClick }) => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -53,7 +53,12 @@ const DataTable = ({ title, data = [] }) => {
                                 paginatedData.map((row) => (
                                     <TableRow
                                         key={row.id}
-                                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { backgroundColor: '#f9f9f9' } }}
+                                        onClick={() => onRowClick && onRowClick(row)}
+                                        sx={{ 
+                                            '&:last-child td, &:last-child th': { border: 0 }, 
+                                            '&:hover': { backgroundColor: '#f9f9f9' },
+                                            cursor: onRowClick ? 'pointer' : 'default'
+                                        }}
                                     >
                                         <TableCell>
                                             <Typography variant="body2" fontWeight="medium">
