@@ -17,13 +17,11 @@ export default function IndicadorRecolector({ dateRange }) {
         }
         const response = await api.get(`/reportes/indicadores-recolector${queryParams}`);
         const d = response.data;
-        const chartData = [
-          {
-            name: 'Rango Seleccionado',
-            declaraciones: d.declaracionesDiarias,
-            desembarque: d.totalDiario
-          }
-        ];
+        const chartData = d.map(item => ({
+          name: item.fecha,
+          declaraciones: item.declaracionesDiarias,
+          desembarque: item.totalDiario
+        }));
         setData(chartData);
       } catch (err) {
         console.error('Error fetching indicadores:', err);
