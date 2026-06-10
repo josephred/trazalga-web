@@ -21,125 +21,89 @@ import 'reactflow/dist/style.css';
 
 import api from '../../api/axiosConfig';
 
-export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoReporte }) {
+export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoReporte, row }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (open && declaracionId && tipoReporte) {
-      fetchTrazabilidad(declaracionId, tipoReporte);
+    if (open && row) {
+      buildFlowFromRow(row);
     } else {
       setNodes([]);
       setEdges([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, declaracionId, tipoReporte]);
+  }, [open, row]);
 
-  const fetchTrazabilidad = async (id, tipo) => {
-    setLoading(true);
-    try {
-      const tipoId = getTipoId(tipo);
-      if (!tipoId) {
-        console.error("Tipo de reporte no reconocido", tipo);
-        setLoading(false);
-        return;
-      }
-      
-      const { data } = await api.get(`/reportes/trazabilidad/${tipoId}/${id}`);
-      
-      // Mapear los datos a Nodos y Edges de React Flow
-      const flowNodes = [];
-      const flowEdges = [];
+  const buildFlowFromRow = (r) => {
+    const flowNodes = [];
+    const flowEdges = [];
+    let yPos = 50;
 
-      // Como actualmente la API devuelve un nodo, crearemos un nodo falso de destino si es recolector/armador
-      // para mostrar la animación de la flecha, o dibujaremos solo el nodo devuelto.
-      
-      data.forEach((nodo, index) => {
-        // Posición X fija (centro), Posición Y calculada por índice para ir de arriba a abajo
-        flowNodes.push({
-          id: `node-${nodo.idDeclaracion}`,
-          position: { x: 250, y: 50 + (index * 200) },
-          data: { 
-            label: (
-              <div style={{ padding: '10px', textAlign: 'center' }}>
-                <strong style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>{nodo.tipoNodo}</strong>
-                <span style={{ fontSize: '12px', color: '#555' }}>{nodo.nombreActor}</span>
-                <br/>
-                <span style={{ fontSize: '10px', color: '#888' }}>{nodo.folio} | {nodo.cantidad} kg</span>
-              </div>
-            ) 
-          },
-          style: { 
-            background: '#fff', 
-            border: `2px solid ${getColorCode(nodo.tipoNodo)}`,
-            borderRadius: '8px',
-            width: 200,
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-          }
-        });
-
-        // Si tuvieramos un array de la cadena completa, conectaríamos el nodo N con el N+1:
-        if (index > 0) {
-          flowEdges.push({
-            id: `edge-${data[index-1].idDeclaracion}-${nodo.idDeclaracion}`,
-            source: `node-${data[index-1].idDeclaracion}`,
-            target: `node-${nodo.idDeclaracion}`,
-            animated: true,
-            style: { stroke: '#1976d2', strokeWidth: 2 },
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              color: '#1976d2',
-            },
-          });
+    const createNode = (id, title, actor, date, color) => {
+      flowNodes.push({
+        id: id,
+        position: { x: 250, y: yPos },
+        data: { 
+          label: (
+            <div style={{ padding: '10px', textAlign: 'center' }}>
+              <strong style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>{title}</strong>
+              <span style={{ fontSize: '12px', color: '#555' }}>{actor}</span>
+              <br/>
+              {date && <span style={{ fontSize: '10px', color: '#888' }}>{new Date(date).toLocaleDateString()}</span>}
+            </div>
+          ) 
+        },
+        style: { 
+          background: '#fff', 
+          border: `2px solid ${color}`,
+          borderRadius: '8px',
+          width: 200,
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
         }
       });
+      yPos += 150;
+    };
 
-      // ---- MOCK PARA EFECTO VISUAL SI SOLO HAY 1 NODO ----
-      if (data.length === 1) {
-        const n = data[0];
-        let destinoNombre = "Destino pendiente";
-        if (n.tipoNodo.includes("Recolector") || n.tipoNodo.includes("Armador")) destinoNombre = "Comercializador / Planta";
-        else if (n.tipoNodo.includes("Comercializador")) destinoNombre = "Planta Destino";
-        
-        flowNodes.push({
-          id: `node-mock-dest`,
-          position: { x: 250, y: 250 },
-          data: { label: <div><strong>{destinoNombre}</strong><br/><span style={{fontSize:'10px'}}>Próximo eslabón...</span></div> },
-          style: { background: '#f5f5f5', border: '2px dashed #ccc', borderRadius: '8px', width: 200 }
-        });
+    const createEdge = (sourceId, targetId) => {
+      flowEdges.push({
+        id: `edge-${sourceId}-${targetId}`,
+        source: sourceId,
+        target: targetId,
+        animated: true,
+        style: { stroke: '#1976d2', strokeWidth: 2 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#1976d2' }
+      });
+    };
 
-        flowEdges.push({
-          id: `edge-mock`,
-          source: `node-${n.idDeclaracion}`,
-          target: `node-mock-dest`,
-          animated: true,
-          style: { stroke: '#aaa', strokeWidth: 2, strokeDasharray: '5 5' },
-          markerEnd: { type: MarkerType.ArrowClosed, color: '#aaa' }
-        });
-      }
+    // 1. Emisor
+    createNode('n1', r.tipoReporte, `${r.emisorNombre} (${r.emisorRut})`, r.fecha, '#1976d2');
 
-      setNodes(flowNodes);
-      setEdges(flowEdges);
+    // 2. Receptor
+    let receptorType = "Receptor";
+    if (r.tipoReporte === 'Recolector' || r.tipoReporte === 'Armador') receptorType = "Comercializador";
+    else if (r.tipoReporte === 'Comercializador') receptorType = "Planta Abastecimiento";
+    
+    createNode('n2', receptorType, `${r.receptorNombre} (${r.receptorRut})`, null, '#ed6c02');
+    createEdge('n1', 'n2');
 
-    } catch (error) {
-      console.error("Error al obtener trazabilidad", error);
-    } finally {
-      setLoading(false);
+    let lastNodeId = 'n2';
+
+    // 3. Planta Abastecimiento Extendida
+    if (r.plantaAbastecimiento && r.plantaAbastecimiento !== '-') {
+      createNode('n3', 'Planta Abastecimiento', r.plantaAbastecimiento, r.fechaComercializador, '#2e7d32');
+      createEdge(lastNodeId, 'n3');
+      lastNodeId = 'n3';
     }
-  };
 
-  const getTipoId = (tipo) => {
-    switch (tipo) {
-      case "Recolector": return 1;
-      case "Armador": return 2;
-      case "Área de Manejo": return 3;
-      case "Comercializador": return 4;
-      case "Planta Abastecimiento": return 5;
-      case "Planta Producción": return 6;
-      case "Planta Destino": return 7;
-      default: return null;
+    // 4. Planta Producción Extendida
+    if (r.plantaProduccion && r.plantaProduccion !== '-') {
+      createNode('n4', 'Planta Producción', r.plantaProduccion, r.fechaPlantaAbastecimiento, '#2e7d32');
+      createEdge(lastNodeId, 'n4');
     }
+
+    setNodes(flowNodes);
+    setEdges(flowEdges);
   };
 
   const getColorCode = (tipoNodo) => {
@@ -162,11 +126,6 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
         </IconButton>
       </DialogTitle>
       <DialogContent dividers sx={{ height: '60vh', p: 0 }}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-            <CircularProgress />
-          </Box>
-        ) : (
           <ReactFlow 
             nodes={nodes} 
             edges={edges} 
@@ -179,7 +138,6 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
             <Controls />
             <MiniMap nodeStrokeWidth={3} zoomable pannable />
           </ReactFlow>
-        )}
       </DialogContent>
     </Dialog>
   );

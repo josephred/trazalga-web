@@ -30,6 +30,8 @@ const DataTable = ({ title, data = [], onRowClick }) => {
     // Paginación lógica
     const paginatedData = data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+    const hasExtendedTraceability = data.length > 0 && 'plantaAbastecimiento' in data[0];
+
     return (
         <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <CardContent>
@@ -46,6 +48,14 @@ const DataTable = ({ title, data = [], onRowClick }) => {
                                 <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Receptor</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Especie</TableCell>
                                 <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }} align="right">Cantidad</TableCell>
+                                {hasExtendedTraceability && (
+                                    <>
+                                        <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Planta Abast.</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Fecha Comerc.</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Planta Prod.</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Fecha P. Abast.</TableCell>
+                                    </>
+                                )}
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -88,6 +98,22 @@ const DataTable = ({ title, data = [], onRowClick }) => {
                                                 {row.cantidad?.toLocaleString('es-CL')}
                                             </Typography>
                                         </TableCell>
+                                        {hasExtendedTraceability && (
+                                            <>
+                                                <TableCell>
+                                                    <Typography variant="body2">{row.plantaAbastecimiento || '-'}</Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2">{row.fechaComercializador ? new Date(row.fechaComercializador).toLocaleDateString() : '-'}</Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2">{row.plantaProduccion || '-'}</Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2">{row.fechaPlantaAbastecimiento ? new Date(row.fechaPlantaAbastecimiento).toLocaleDateString() : '-'}</Typography>
+                                                </TableCell>
+                                            </>
+                                        )}
                                     </TableRow>
                                 ))
                             ) : (

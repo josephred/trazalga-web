@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { 
-  Typography, 
-  Box, 
-  Card, 
-  CardContent, 
-  Switch, 
-  Slider, 
-  FormControlLabel, 
+import {
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  Switch,
+  Slider,
+  FormControlLabel,
   Button,
   Grid,
   Alert
@@ -36,13 +36,13 @@ export default function Administracion() {
   };
 
   const handleToggleActivo = (id, currentVal) => {
-    setConfiguraciones(prev => prev.map(c => 
+    setConfiguraciones(prev => prev.map(c =>
       c.id === id ? { ...c, activo: !currentVal } : c
     ));
   };
 
   const handleSliderChange = (id, newValue) => {
-    setConfiguraciones(prev => prev.map(c => 
+    setConfiguraciones(prev => prev.map(c =>
       c.id === id ? { ...c, umbral: newValue } : c
     ));
   };
@@ -63,11 +63,8 @@ export default function Administracion() {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Administración del Sistema
-      </Typography>
-      
-      <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+
+      <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
         Configuración de Notificaciones (Push)
       </Typography>
 
@@ -82,25 +79,25 @@ export default function Administracion() {
           <Grid item xs={12} md={6} key={config.id}>
             <Card elevation={3} sx={{ borderRadius: 2 }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" color="text.primary" gutterBottom>
                   {config.titulo}
                 </Typography>
                 <Box sx={{ mt: 2, mb: 2 }}>
                   <FormControlLabel
                     control={
-                      <Switch 
-                        checked={config.activo} 
+                      <Switch
+                        checked={config.activo}
                         onChange={() => handleToggleActivo(config.id, config.activo)}
-                        color="primary" 
+                        color="primary"
                       />
                     }
                     label={config.activo ? "Alerta Activada" : "Alerta Desactivada"}
                   />
                 </Box>
-                
+
                 {config.tipoAlerta === 'LIMITE_CUOTA' && (
                   <Box sx={{ mt: 3, mb: 2, px: 2 }}>
-                    <Typography gutterBottom>
+                    <Typography color="text.secondary" gutterBottom>
                       Umbral de disparo: {config.umbral}% de la cuota
                     </Typography>
                     <Slider
@@ -117,9 +114,9 @@ export default function Administracion() {
                 )}
 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
+                  <Button
+                    variant="contained"
+                    color="primary"
                     onClick={() => handleSave(config)}
                   >
                     Guardar Cambios

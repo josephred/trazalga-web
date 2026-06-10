@@ -26,7 +26,7 @@ export default function Reportes() {
           tipoReporte
         }
       });
-      
+
       setReportData(response.data);
     } catch (err) {
       console.error('Error fetching report:', err);
@@ -47,11 +47,6 @@ export default function Reportes() {
 
   return (
     <Container maxWidth={false} sx={{ width: '100%', p: 0 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="body1" color="text.secondary">
-          Seleccione los filtros para generar el reporte de trazabilidad.
-        </Typography>
-      </Box>
 
       {/* Filtros de Reporte */}
       <Box sx={{ mb: 4 }}>
@@ -86,6 +81,7 @@ export default function Reportes() {
           onClose={() => setDialogOpen(false)}
           declaracionId={selectedRow.id}
           tipoReporte={selectedRow.tipoReporte}
+          row={selectedRow}
         />
       )}
     </Container>
