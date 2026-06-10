@@ -9,7 +9,8 @@ import {
   FormControlLabel,
   Button,
   Grid,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import api from '../api/axiosConfig';
 
@@ -18,8 +19,14 @@ export default function Administracion() {
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState(null);
 
+  // Estados para configuración general (Rastreo GPS)
+  const [trackingActivo, setTrackingActivo] = useState(false);
+  const [trackingInterval, setTrackingInterval] = useState(5);
+  const [loadingTracking, setLoadingTracking] = useState(true);
+
   useEffect(() => {
     fetchConfiguraciones();
+    fetchGeneralConfigs();
   }, []);
 
   const fetchConfiguraciones = async () => {
@@ -32,6 +39,25 @@ export default function Administracion() {
       setMensaje({ type: 'error', text: 'Error al cargar las configuraciones de alertas.' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGeneralConfigs = async () => {
+    try {
+      setLoadingTracking(true);
+      const { data } = await api.get('/configuracion-general');
+      const rastreo = data.find(c => c.clave === 'rastreo_activo');
+      const intervalo = data.find(c => c.clave === 'intervalo_rastreo_minutos');
+      if (rastreo) {
+        setTrackingActivo(rastreo.valor === 'true');
+      }
+      if (intervalo) {
+        setTrackingInterval(parseInt(intervalo.valor) || 5);
+      }
+    } catch (error) {
+      console.error("Error cargando configuración de rastreo", error);
+    } finally {
+      setLoadingTracking(false);
     }
   };
 
@@ -57,24 +83,43 @@ export default function Administracion() {
     }
   };
 
+  const handleSaveTracking = async () => {
+    try {
+      setMensaje(null);
+      await api.put(`/configuracion-general/rastreo_activo`, {
+        clave: 'rastreo_activo',
+        valor: trackingActivo ? 'true' : 'false'
+      });
+      await api.put(`/configuracion-general/intervalo_rastreo_minutos`, {
+        clave: 'intervalo_rastreo_minutos',
+        valor: trackingInterval.toString()
+      });
+      setMensaje({ type: 'success', text: 'Configuración de rastreo guardada correctamente.' });
+      setTimeout(() => setMensaje(null), 3000);
+    } catch (error) {
+      console.error("Error al guardar configuración de rastreo", error);
+      setMensaje({ type: 'error', text: 'Error al guardar la configuración de rastreo.' });
+    }
+  };
+
   if (loading) {
     return <Typography sx={{ p: 3 }}>Cargando configuraciones...</Typography>;
   }
 
   return (
     <Box sx={{ p: 3 }}>
-
-      <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
-        Configuración de Notificaciones (Push)
+      <Typography variant="h5" color="text.primary" sx={{ mb: 4, fontWeight: 'bold' }}>
+        Administración del Sistema
       </Typography>
 
       {mensaje && (
-        <Alert severity={mensaje.type} sx={{ mb: 2 }}>
+        <Alert severity={mensaje.type} sx={{ mb: 3 }}>
           {mensaje.text}
         </Alert>
       )}
 
       <Grid container spacing={3}>
+        {/* Panel de alertas push */}
         {configuraciones.map((config) => (
           <Grid item xs={12} md={6} key={config.id}>
             <Card elevation={3} sx={{ borderRadius: 2 }}>
@@ -126,6 +171,74 @@ export default function Administracion() {
             </Card>
           </Grid>
         ))}
+
+        {/* Tarjeta de Rastreo GPS */}
+        <Grid item xs={12} md={6}>
+          <Card elevation={3} sx={{ borderRadius: 2 }}>
+            <CardContent>
+              <Typography variant="h6" color="text.primary" gutterBottom>
+                Rastreo de Ubicación GPS (App Móvil)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Configura si la aplicación móvil registrará periódicamente la posición geográfica de los usuarios para trazabilidad.
+              </Typography>
+
+              {loadingTracking ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : (
+                <>
+                  <Box sx={{ mt: 2, mb: 2 }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={trackingActivo}
+                          onChange={(e) => setTrackingActivo(e.target.checked)}
+                          color="primary"
+                        />
+                      }
+                      label={trackingActivo ? "Rastreo de Ubicación Activado" : "Rastreo de Ubicación Desactivado"}
+                    />
+                  </Box>
+
+                  <Box sx={{ mt: 3, mb: 2, px: 2 }}>
+                    <Typography color="text.secondary" gutterBottom>
+                      Frecuencia de actualización: cada {trackingInterval} minutos
+                    </Typography>
+                    <Slider
+                      value={trackingInterval}
+                      onChange={(e, val) => setTrackingInterval(val)}
+                      valueLabelDisplay="auto"
+                      step={1}
+                      marks={[
+                        { value: 1, label: '1m' },
+                        { value: 5, label: '5m' },
+                        { value: 10, label: '10m' },
+                        { value: 15, label: '15m' },
+                        { value: 30, label: '30m' },
+                        { value: 60, label: '60m' }
+                      ]}
+                      min={1}
+                      max={60}
+                      disabled={!trackingActivo}
+                    />
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSaveTracking}
+                    >
+                      Guardar Cambios Rastreo
+                    </Button>
+                  </Box>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
     </Box>
   );
