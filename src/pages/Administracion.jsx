@@ -13,6 +13,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import api from '../api/axiosConfig';
+import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
 
 export default function Administracion() {
   const [configuraciones, setConfiguraciones] = useState([]);
@@ -239,6 +240,12 @@ export default function Administracion() {
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Mapa de Trayectoria */}
+        <Grid item xs={12}>
+          <MapaTrayectoUsuario />
+        </Grid>
+
       </Grid>
     </Box>
   );

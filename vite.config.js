@@ -56,6 +56,22 @@ export default defineConfig({
           'Accept': 'application/json, text/plain, */*',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
+      },
+      '/v-core': {
+        target: 'https://apps.procesac.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/v-core/, ''),
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            proxyReq.removeHeader('Origin');
+            proxyReq.setHeader('Referer', 'https://apps.procesac.com/');
+          });
+        },
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        }
       }
     }
   }
