@@ -1,5 +1,7 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import globalTheme from './theme';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Consultas from './pages/Consultas';
@@ -29,35 +31,37 @@ const PrivateRoute = ({ children }) => {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Ruta pública */}
-        <Route path="/login" element={<Login />} />
+    <ThemeProvider theme={globalTheme}>
+      <Router>
+        <Routes>
+          {/* Ruta pública */}
+          <Route path="/login" element={<Login />} />
 
-        {/* Rutas protegidas con Layout Principal */}
-        <Route 
-          path="/"
-          element={
-            <PrivateRoute>
-              <MainLayout />
-            </PrivateRoute>
-          } 
-        >
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="consultas" element={<Consultas />} />
-          <Route path="alertas" element={<Alertas />} />
-          <Route path="casos" element={<Casos />} />
-          <Route path="reportes" element={<Reportes />} />
-          <Route path="mapa" element={<Mapa />} />
-          <Route path="administracion" element={<Administracion />} />
-          <Route path="ayuda" element={<Ayuda />} />
-        </Route>
+          {/* Rutas protegidas con Layout Principal */}
+          <Route 
+            path="/"
+            element={
+              <PrivateRoute>
+                <MainLayout />
+              </PrivateRoute>
+            } 
+          >
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="consultas" element={<Consultas />} />
+            <Route path="alertas" element={<Alertas />} />
+            <Route path="casos" element={<Casos />} />
+            <Route path="reportes" element={<Reportes />} />
+            <Route path="mapa" element={<Mapa />} />
+            <Route path="administracion" element={<Administracion />} />
+            <Route path="ayuda" element={<Ayuda />} />
+          </Route>
 
-        {/* Redirección por defecto */}
-        <Route path="*" element={<Navigate to="/dashboard" />} />
-      </Routes>
-    </Router>
+          {/* Redirección por defecto */}
+          <Route path="*" element={<Navigate to="/dashboard" />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 

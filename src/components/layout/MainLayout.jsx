@@ -4,7 +4,6 @@ import {
   ListItemButton, ListItemIcon, ListItemText, Avatar, Button, IconButton,
   Menu, MenuItem, Divider, Badge, Snackbar, Alert
 } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { 
   Home as HomeIcon,
   Search as SearchIcon,
@@ -35,48 +34,6 @@ const menuItems = [
   { text: 'Administración', icon: <SettingsIcon />, path: '/administracion' },
 ];
 
-// Local layout theme to apply Outfit and Inter globally to the viewport
-const layoutTheme = createTheme({
-  palette: {
-    primary: {
-      main: '#0a192f',
-      light: '#172a45',
-      dark: '#020c1b',
-    },
-    secondary: {
-      main: '#0ea5e9',
-    },
-    success: {
-      main: '#10b981',
-    },
-    background: {
-      default: '#f8fafc',
-      paper: '#ffffff',
-    },
-    text: {
-      primary: '#0f172a',
-      secondary: '#64748b',
-    },
-  },
-  typography: {
-    fontFamily: '"Outfit", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h6: {
-      fontWeight: 700,
-      letterSpacing: '-0.01em',
-    },
-    body1: {
-      fontFamily: 'Inter, sans-serif',
-    },
-    body2: {
-      fontFamily: 'Inter, sans-serif',
-    },
-    button: {
-      fontFamily: 'Outfit, sans-serif',
-      fontWeight: 600,
-      textTransform: 'none',
-    },
-  },
-});
 
 export default function MainLayout() {
   const navigate = useNavigate();
@@ -164,8 +121,7 @@ export default function MainLayout() {
   const { title, subtitle } = getCurrentPageTitle();
 
   return (
-    <ThemeProvider theme={layoutTheme}>
-      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f8fafc' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f8fafc' }}>
         
         {/* ═══════════ SIDEBAR (MENÚ LATERAL) ═══════════ */}
         <Drawer
@@ -560,6 +516,5 @@ export default function MainLayout() {
 
         </Box>
       </Box>
-    </ThemeProvider>
   );
 }

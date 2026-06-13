@@ -19,7 +19,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import axios from 'axios';
+import { getUsuarios } from '../../services/usuarioService';
 import api from '../../api/axiosConfig';
 
 // Fix para los iconos de leaflet en react-leaflet
@@ -60,9 +60,9 @@ export default function MapaTrayectoUsuario() {
 
   const fetchUsuarios = async () => {
     try {
-      const res = await axios.get('/v-core/usuario');
-      if (res.data) {
-        setUsuarios(res.data);
+      const data = await getUsuarios();
+      if (data) {
+        setUsuarios(data);
       }
     } catch (err) {
       console.error("Error al obtener usuarios:", err);

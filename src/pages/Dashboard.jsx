@@ -1,5 +1,4 @@
 import { Typography, Container, Grid, Box } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import {
   BarChart as BarChartIcon,
   Inventory as InventoryIcon,
@@ -13,58 +12,8 @@ import ControlCuotaDiaria from '../components/dashboard/ControlCuotaDiaria';
 import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
 import { useOutletContext } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { getResumenGlobal } from '../services/reportesService';
 
-// Local theme definition matching "/administracion" and "/reportes"
-const dashboardTheme = createTheme({
-  palette: {
-    primary: {
-      main: '#0a192f',
-      light: '#172a45',
-      dark: '#020c1b',
-    },
-    secondary: {
-      main: '#0ea5e9',
-    },
-    success: {
-      main: '#10b981',
-    },
-    background: {
-      default: '#f8fafc',
-      paper: '#ffffff',
-    },
-    text: {
-      primary: '#0f172a',
-      secondary: '#64748b',
-    },
-  },
-  typography: {
-    fontFamily: '"Outfit", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 800,
-      letterSpacing: '-0.02em',
-    },
-    h5: {
-      fontWeight: 800,
-      letterSpacing: '-0.02em',
-    },
-    h6: {
-      fontWeight: 700,
-      letterSpacing: '-0.01em',
-    },
-    body1: {
-      fontFamily: 'Inter, sans-serif',
-    },
-    body2: {
-      fontFamily: 'Inter, sans-serif',
-    },
-    button: {
-      fontFamily: 'Outfit, sans-serif',
-      fontWeight: 600,
-      textTransform: 'none',
-    },
-  },
-});
 
 export default function Dashboard() {
   const { dateRange } = useOutletContext() || { dateRange: null };
@@ -76,22 +25,8 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchResumen = async () => {
       try {
-        let url = '/v-api/reportes/resumen-global';
-        const params = new URLSearchParams();
-        
-        if (dateRange && dateRange[0]) {
-          params.append('startDate', dateRange[0].format('YYYY-MM-DD'));
-        }
-        if (dateRange && dateRange[1]) {
-          params.append('endDate', dateRange[1].format('YYYY-MM-DD'));
-        }
-        
-        if (params.toString()) {
-          url += '?' + params.toString();
-        }
-
-        const response = await axios.get(url);
-        setResumen(response.data);
+        const data = await getResumenGlobal(dateRange);
+        setResumen(data);
       } catch (error) {
         console.error('Error fetching resumen global:', error);
       }
@@ -101,8 +36,7 @@ export default function Dashboard() {
   }, [dateRange]);
 
   return (
-    <ThemeProvider theme={dashboardTheme}>
-      <Container maxWidth={false} sx={{ width: '100%', p: 0, minHeight: '85vh' }}>
+    <Container maxWidth={false} sx={{ width: '100%', p: 0, minHeight: '85vh' }}>
         
         {/* Encabezado del Dashboard */}
         <Box sx={{ mb: 4 }}>
@@ -159,6 +93,5 @@ export default function Dashboard() {
           </Grid>
         </Grid>
       </Container>
-    </ThemeProvider>
   );
 }

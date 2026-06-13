@@ -14,7 +14,7 @@ import {
   Tabs,
   Tab
 } from '@mui/material';
-import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import {
   AdminPanelSettings as AdminPanelSettingsIcon,
   NotificationsActive as NotificationsActiveIcon,
@@ -29,52 +29,6 @@ import {
 import api from '../api/axiosConfig';
 import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
 
-// Local theme definition for premium UX/UI styling matching "harmony clara" request
-const adminTheme = createTheme({
-  palette: {
-    primary: {
-      main: '#0a192f',
-      light: '#172a45',
-      dark: '#020c1b',
-    },
-    secondary: {
-      main: '#0ea5e9',
-    },
-    success: {
-      main: '#10b981',
-    },
-    background: {
-      default: '#f8fafc',
-      paper: '#ffffff',
-    },
-    text: {
-      primary: '#0f172a',
-      secondary: '#64748b',
-    },
-  },
-  typography: {
-    fontFamily: '"Outfit", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h5: {
-      fontWeight: 800,
-      letterSpacing: '-0.02em',
-    },
-    h6: {
-      fontWeight: 700,
-      letterSpacing: '-0.01em',
-    },
-    body1: {
-      fontFamily: 'Inter, sans-serif',
-    },
-    body2: {
-      fontFamily: 'Inter, sans-serif',
-    },
-    button: {
-      fontFamily: 'Outfit, sans-serif',
-      fontWeight: 600,
-      textTransform: 'none',
-    },
-  },
-});
 
 // Styled Switch matching IOS visual cues
 const IOSSwitch = styled((props) => (
@@ -260,8 +214,7 @@ export default function Administracion() {
   }
 
   return (
-    <ThemeProvider theme={adminTheme}>
-      <Box sx={{ p: { xs: 1, md: 3 }, bgcolor: 'background.default', minHeight: '85vh' }}>
+    <Box sx={{ p: { xs: 1, md: 3 }, bgcolor: 'background.default', minHeight: '85vh' }}>
         
         {/* Banner de Cabecera Premium */}
         <Box
@@ -709,6 +662,5 @@ export default function Administracion() {
         )}
 
       </Box>
-    </ThemeProvider>
   );
 }

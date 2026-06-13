@@ -1,58 +1,11 @@
 import { useState } from 'react';
 import { Typography, Container, Grid, Box, CircularProgress, Alert } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Assessment as AssessmentIcon } from '@mui/icons-material';
-import axios from 'axios';
+import { getReportes } from '../services/reportesService';
 import DataTable from '../components/dashboard/DataTable';
 import ReportFilter from '../components/dashboard/ReportFilter';
 import TrazabilidadDialog from '../components/dashboard/TrazabilidadDialog';
 
-// Local theme definition matching "harmony clara" request
-const reportTheme = createTheme({
-  palette: {
-    primary: {
-      main: '#0a192f',
-      light: '#172a45',
-      dark: '#020c1b',
-    },
-    secondary: {
-      main: '#0ea5e9',
-    },
-    success: {
-      main: '#10b981',
-    },
-    background: {
-      default: '#f8fafc',
-      paper: '#ffffff',
-    },
-    text: {
-      primary: '#0f172a',
-      secondary: '#64748b',
-    },
-  },
-  typography: {
-    fontFamily: '"Outfit", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h5: {
-      fontWeight: 800,
-      letterSpacing: '-0.02em',
-    },
-    h6: {
-      fontWeight: 700,
-      letterSpacing: '-0.01em',
-    },
-    body1: {
-      fontFamily: 'Inter, sans-serif',
-    },
-    body2: {
-      fontFamily: 'Inter, sans-serif',
-    },
-    button: {
-      fontFamily: 'Outfit, sans-serif',
-      fontWeight: 600,
-      textTransform: 'none',
-    },
-  },
-});
 
 export default function Reportes() {
   const [reportData, setReportData] = useState([]);
@@ -66,16 +19,8 @@ export default function Reportes() {
     setLoading(true);
     setError(null);
     try {
-      const { fechaInicio, fechaFin, tipoReporte } = filters;
-      const response = await axios.get('https://apps.procesac.com/api/reportes', {
-        params: {
-          fechaInicio,
-          fechaFin,
-          tipoReporte
-        }
-      });
-
-      setReportData(response.data);
+      const data = await getReportes(filters);
+      setReportData(data);
     } catch (err) {
       console.error('Error fetching report:', err);
       setError('Error al obtener los datos del reporte. Por favor, intente de nuevo.');
@@ -96,8 +41,7 @@ export default function Reportes() {
   const totalVolume = reportData.reduce((sum, row) => sum + (Number(row.cantidad) || 0), 0);
 
   return (
-    <ThemeProvider theme={reportTheme}>
-      <Container maxWidth={false} sx={{ width: '100%', p: 0, minHeight: '85vh' }}>
+    <Container maxWidth={false} sx={{ width: '100%', p: 0, minHeight: '85vh' }}>
         
         {/* Cabecera Premium estilo Banner con KPIs Dinámicos */}
         <Box
@@ -250,6 +194,5 @@ export default function Reportes() {
           />
         )}
       </Container>
-    </ThemeProvider>
   );
 }
