@@ -4,10 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   TextField,
   Button,
   Grid,
@@ -15,6 +11,11 @@ import {
   Alert,
   Autocomplete
 } from '@mui/material';
+import {
+  Search as SearchIcon,
+  DirectionsRun as DirectionsRunIcon,
+  Map as MapIcon
+} from '@mui/icons-material';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -59,7 +60,6 @@ export default function MapaTrayectoUsuario() {
 
   const fetchUsuarios = async () => {
     try {
-      // Usamos el proxy /v-core que apunta directo a la raiz del backend
       const res = await axios.get('/v-core/usuario');
       if (res.data) {
         setUsuarios(res.data);
@@ -119,17 +119,39 @@ export default function MapaTrayectoUsuario() {
     : [-33.45694, -70.64827]; // Centro de Santiago de Chile por defecto
 
   return (
-    <Card elevation={3} sx={{ borderRadius: 2, mt: 4 }}>
-      <CardContent>
-        <Typography variant="h6" color="text.primary" gutterBottom>
+    <Card
+      elevation={0}
+      sx={{
+        borderRadius: 4,
+        border: '1px solid #e2e8f0',
+        bgcolor: '#ffffff',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
+      }}
+    >
+      <Box
+        sx={{
+          p: 3,
+          borderBottom: '1px solid #f1f5f9',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          bgcolor: '#fbfbfb',
+        }}
+      >
+        <MapIcon sx={{ color: '#0ea5e9' }} />
+        <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
           Trayectoria de Usuario (Mapa)
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Filtra por usuario y rango de fechas para visualizar su historial de ubicaciones en el mapa.
+      </Box>
+
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="body2" sx={{ color: '#64748b', mb: 3, fontFamily: 'Inter', lineHeight: 1.6 }}>
+          Filtra por usuario y rango de fechas para visualizar su historial de ubicaciones en el mapa interactivo.
         </Typography>
 
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
-          <Grid item xs={12} md={4}>
+        {/* Filtros de Búsqueda */}
+        <Grid container spacing={2.5} alignItems="center" sx={{ mb: 3 }}>
+          <Grid item xs={12} md={4.5}>
             <Autocomplete
               options={usuarios}
               getOptionLabel={(option) => `${option.rut} - ${option.nombres} ${option.apellidop}`}
@@ -142,14 +164,21 @@ export default function MapaTrayectoUsuario() {
                   {...params} 
                   label="Buscar y Seleccionar Usuario" 
                   variant="outlined" 
+                  InputProps={{
+                    ...params.InputProps,
+                    sx: { borderRadius: 3, fontFamily: 'Inter' }
+                  }}
+                  InputLabelProps={{
+                    sx: { fontFamily: 'Inter' }
+                  }}
                 />
               )}
-              sx={{ minWidth: 250 }}
+              sx={{ minWidth: 200 }} // Ancho mínimo de al menos 200px
               noOptionsText="No se encontraron usuarios"
               isOptionEqualToValue={(option, value) => option.id === value.id}
             />
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} sm={6} md={2.5}>
             <TextField
               fullWidth
               label="Fecha Inicio"
@@ -158,10 +187,14 @@ export default function MapaTrayectoUsuario() {
               onChange={(e) => setFechaInicio(e.target.value)}
               InputLabelProps={{
                 shrink: true,
+                sx: { fontFamily: 'Inter' }
+              }}
+              InputProps={{
+                sx: { borderRadius: 3, fontFamily: 'Inter' }
               }}
             />
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} sm={6} md={2.5}>
             <TextField
               fullWidth
               label="Fecha Fin"
@@ -170,36 +203,104 @@ export default function MapaTrayectoUsuario() {
               onChange={(e) => setFechaFin(e.target.value)}
               InputLabelProps={{
                 shrink: true,
+                sx: { fontFamily: 'Inter' }
+              }}
+              InputProps={{
+                sx: { borderRadius: 3, fontFamily: 'Inter' }
               }}
             />
           </Grid>
-          <Grid item xs={12} md={2}>
+          <Grid item xs={12} md={2.5}>
             <Button
               fullWidth
               variant="contained"
               color="primary"
               onClick={handleBuscarTrayecto}
               disabled={loading}
-              sx={{ height: '56px' }}
+              startIcon={loading ? null : <SearchIcon />}
+              sx={{
+                height: '56px',
+                borderRadius: 3,
+                bgcolor: '#0a192f',
+                '&:hover': {
+                  bgcolor: '#172a45',
+                },
+                boxShadow: 'none',
+                fontFamily: 'Outfit',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                textTransform: 'none',
+              }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Buscar'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Buscar Ruta'}
             </Button>
           </Grid>
         </Grid>
 
         {error && (
-          <Alert severity={error.includes("No se encontraron") ? "info" : "error"} sx={{ mb: 3 }}>
+          <Alert 
+            severity={error.includes("No se encontraron") ? "info" : "error"} 
+            sx={{ 
+              mb: 3, 
+              borderRadius: 3, 
+              fontFamily: 'Inter',
+              border: `1px solid ${error.includes("No se encontraron") ? '#bfdbfe' : '#fecaca'}`,
+            }}
+          >
             {error}
           </Alert>
         )}
 
-        <Box sx={{ height: 700, width: '100%', borderRadius: 1, overflow: 'hidden', border: '1px solid #ccc' }}>
-          {/* Es importante proveer una prop key vinculada al centro para que el mapa se re-centre si cambia mucho la ruta */}
+        {/* Contenedor del Mapa Leaflet */}
+        <Box 
+          sx={{ 
+            height: 520, 
+            width: '100%', 
+            borderRadius: 4, 
+            overflow: 'hidden', 
+            border: '1px solid #e2e8f0',
+            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)',
+            position: 'relative'
+          }}
+        >
+          {/* Tarjeta de Resumen Flotante sobre el Mapa */}
+          {trayecto.length > 0 && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                zIndex: 1000,
+                bgcolor: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid #e2e8f0',
+                borderRadius: 3,
+                p: 2,
+                boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
+                maxWidth: 240,
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 1, mb: 1, fontFamily: 'Outfit' }}>
+                <DirectionsRunIcon fontSize="small" sx={{ color: '#0ea5e9' }} />
+                Resumen de Trayecto
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.8rem', mb: 0.5, fontFamily: 'Inter' }}>
+                <strong>Puntos:</strong> {trayecto.length} registrados
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.8rem', mb: 0.5, fontFamily: 'Inter' }}>
+                <strong>Inicio:</strong> {new Date(trayecto[0].fechaRegistro).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ({new Date(trayecto[0].fechaRegistro).toLocaleDateString([], {day: '2-digit', month: '2-digit'})})
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.8rem', fontFamily: 'Inter' }}>
+                <strong>Término:</strong> {new Date(trayecto[trayecto.length - 1].fechaRegistro).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ({new Date(trayecto[trayecto.length - 1].fechaRegistro).toLocaleDateString([], {day: '2-digit', month: '2-digit'})})
+              </Typography>
+            </Box>
+          )}
+
           <MapContainer 
             key={`${center[0]}-${center[1]}`} 
             center={center} 
             zoom={trayecto.length > 0 ? 14 : 5} 
-            style={{ height: '100%', width: '100%' }}
+            style={{ height: '100%', width: '100%', zIndex: 1 }}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -208,24 +309,28 @@ export default function MapaTrayectoUsuario() {
             
             {trayecto.length > 0 && (
               <>
-                <Polyline positions={getPolylinePositions()} color="blue" weight={4} opacity={0.7} />
+                <Polyline positions={getPolylinePositions()} color="#2563eb" weight={5} opacity={0.85} />
                 
                 {/* Marcador de Inicio */}
                 <Marker position={[trayecto[0].latitud, trayecto[0].longitud]}>
                   <Popup>
-                    <strong>Punto de Inicio</strong><br/>
-                    Fecha: {new Date(trayecto[0].fechaRegistro).toLocaleString()}<br/>
-                    Precisión GPS: {trayecto[0].precisionGps ? `${Math.round(trayecto[0].precisionGps)}m` : 'N/A'}
+                    <Box sx={{ p: 0.5, fontFamily: 'Inter' }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#16a34a' }}>Punto de Inicio</Typography>
+                      <Typography variant="caption" display="block">Fecha: {new Date(trayecto[0].fechaRegistro).toLocaleString()}</Typography>
+                      <Typography variant="caption" display="block">Precisión GPS: {trayecto[0].precisionGps ? `${Math.round(trayecto[0].precisionGps)}m` : 'N/A'}</Typography>
+                    </Box>
                   </Popup>
                 </Marker>
-
+ 
                 {/* Marcador de Fin */}
                 {trayecto.length > 1 && (
                   <Marker position={[trayecto[trayecto.length - 1].latitud, trayecto[trayecto.length - 1].longitud]}>
                     <Popup>
-                      <strong>Último Punto</strong><br/>
-                      Fecha: {new Date(trayecto[trayecto.length - 1].fechaRegistro).toLocaleString()}<br/>
-                      Precisión GPS: {trayecto[trayecto.length - 1].precisionGps ? `${Math.round(trayecto[trayecto.length - 1].precisionGps)}m` : 'N/A'}
+                      <Box sx={{ p: 0.5, fontFamily: 'Inter' }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#dc2626' }}>Último Punto Registrado</Typography>
+                        <Typography variant="caption" display="block">Fecha: {new Date(trayecto[trayecto.length - 1].fechaRegistro).toLocaleString()}</Typography>
+                        <Typography variant="caption" display="block">Precisión GPS: {trayecto[trayecto.length - 1].precisionGps ? `${Math.round(trayecto[trayecto.length - 1].precisionGps)}m` : 'N/A'}</Typography>
+                      </Box>
                     </Popup>
                   </Marker>
                 )}

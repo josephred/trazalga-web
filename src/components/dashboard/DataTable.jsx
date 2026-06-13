@@ -9,10 +9,13 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper,
     Chip,
-    TablePagination
+    TablePagination,
+    Box
 } from '@mui/material';
+import {
+    InboxOutlined as EmptyIcon
+} from '@mui/icons-material';
 
 const DataTable = ({ title, data = [], onRowClick }) => {
     const [page, setPage] = useState(0);
@@ -32,95 +35,148 @@ const DataTable = ({ title, data = [], onRowClick }) => {
 
     const hasExtendedTraceability = data.length > 0 && 'plantaAbastecimiento' in data[0];
 
+    // Función auxiliar para colorear chips de especie con tonos pastel elegantes
+    const getSpeciesColor = (especie) => {
+        const name = (especie || '').toLowerCase();
+        if (name.includes('huiro') || name.includes('negro')) {
+            return { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' }; // Verde suave
+        }
+        if (name.includes('luga')) {
+            return { bg: '#fdf2f8', text: '#9d174d', border: '#fbcfe8' }; // Rosa suave
+        }
+        return { bg: '#f0f9ff', text: '#0369a1', border: '#bae6fd' }; // Azul suave
+    };
+
     return (
-        <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-            <CardContent>
-                <Typography variant="h6" gutterBottom fontWeight="bold">
+        <Card
+            elevation={0}
+            sx={{
+                borderRadius: 4,
+                border: '1px solid #e2e8f0',
+                bgcolor: '#ffffff',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
+                width: '100%',
+                overflow: 'hidden',
+            }}
+        >
+            <Box
+                sx={{
+                    p: 3,
+                    borderBottom: '1px solid #f1f5f9',
+                    bgcolor: '#fbfbfb',
+                }}
+            >
+                <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
                     {title}
                 </Typography>
-                <TableContainer sx={{ mt: 2, overflowX: 'auto' }}>
-                    <Table sx={{ width: '100%' }} aria-label="report table">
+            </Box>
+
+            <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
+                <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+                    <Table sx={{ minWidth: 650 }} aria-label="report table" stickyHeader>
                         <TableHead>
                             <TableRow>
-                                <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>ID/Folio</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Fecha</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Emisor</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Receptor</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Especie</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }} align="right">Cantidad</TableCell>
+                                <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>ID/Folio</TableCell>
+                                <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Fecha de Emisión</TableCell>
+                                <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Emisor</TableCell>
+                                <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Receptor</TableCell>
+                                <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Especie Declarada</TableCell>
+                                <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }} align="right">Cantidad (kg)</TableCell>
                                 {hasExtendedTraceability && (
                                     <>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Planta Abast.</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Fecha Comerc.</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Planta Prod.</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Fecha P. Abast.</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Planta Abast.</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Fecha Comerc.</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Planta Prod.</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Fecha P. Abast.</TableCell>
                                     </>
                                 )}
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {paginatedData.length > 0 ? (
-                                paginatedData.map((row) => (
-                                    <TableRow
-                                        key={row.id}
-                                        onClick={() => onRowClick && onRowClick(row)}
-                                        sx={{ 
-                                            '&:last-child td, &:last-child th': { border: 0 }, 
-                                            '&:hover': { backgroundColor: '#f9f9f9' },
-                                            cursor: onRowClick ? 'pointer' : 'default'
-                                        }}
-                                    >
-                                        <TableCell>
-                                            <Typography variant="body2" fontWeight="medium">
-                                                ID: {row.id}
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary" display="block">
-                                                {row.folio}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2">{row.fecha}</Typography>
-                                            <Typography variant="caption" color="text.secondary">{row.hora}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2">{row.emisorNombre}</Typography>
-                                            <Typography variant="caption" color="text.secondary">{row.emisorRut}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2">{row.receptorNombre}</Typography>
-                                            <Typography variant="caption" color="text.secondary">{row.receptorRut}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip label={row.especie} size="small" variant="outlined" sx={{ fontWeight: 'medium' }} />
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <Typography variant="body2" fontWeight="bold">
-                                                {row.cantidad?.toLocaleString('es-CL')}
-                                            </Typography>
-                                        </TableCell>
-                                        {hasExtendedTraceability && (
-                                            <>
-                                                <TableCell>
-                                                    <Typography variant="body2">{row.plantaAbastecimiento || '-'}</Typography>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Typography variant="body2">{row.fechaComercializador ? new Date(row.fechaComercializador).toLocaleDateString() : '-'}</Typography>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Typography variant="body2">{row.plantaProduccion || '-'}</Typography>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Typography variant="body2">{row.fechaPlantaAbastecimiento ? new Date(row.fechaPlantaAbastecimiento).toLocaleDateString() : '-'}</Typography>
-                                                </TableCell>
-                                            </>
-                                        )}
-                                    </TableRow>
-                                ))
+                                paginatedData.map((row) => {
+                                    const chipColors = getSpeciesColor(row.especie);
+                                    return (
+                                        <TableRow
+                                            key={row.id}
+                                            onClick={() => onRowClick && onRowClick(row)}
+                                            sx={{ 
+                                                '&:last-child td, &:last-child th': { border: 0 }, 
+                                                '&:hover': { backgroundColor: '#f8fafc' },
+                                                cursor: onRowClick ? 'pointer' : 'default',
+                                                transition: 'background-color 0.2s ease',
+                                            }}
+                                        >
+                                            <TableCell sx={{ py: 1.8 }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', fontFamily: 'Inter' }}>
+                                                    ID: {row.id}
+                                                </Typography>
+                                                <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontFamily: 'Inter', fontWeight: 500 }}>
+                                                    Folio: {row.folio}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell sx={{ py: 1.8 }}>
+                                                <Typography variant="body2" sx={{ color: '#334155', fontFamily: 'Inter', fontWeight: 500 }}>{row.fecha}</Typography>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'Inter' }}>{row.hora}</Typography>
+                                            </TableCell>
+                                            <TableCell sx={{ py: 1.8 }}>
+                                                <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600, fontFamily: 'Inter' }}>{row.emisorNombre}</Typography>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'Inter' }}>RUT: {row.emisorRut}</Typography>
+                                            </TableCell>
+                                            <TableCell sx={{ py: 1.8 }}>
+                                                <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600, fontFamily: 'Inter' }}>{row.receptorNombre}</Typography>
+                                                <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'Inter' }}>RUT: {row.receptorRut}</Typography>
+                                            </TableCell>
+                                            <TableCell sx={{ py: 1.8 }}>
+                                                <Chip 
+                                                    label={row.especie} 
+                                                    size="small" 
+                                                    sx={{ 
+                                                        fontWeight: 600, 
+                                                        bgcolor: chipColors.bg, 
+                                                        color: chipColors.text, 
+                                                        borderColor: chipColors.border,
+                                                        borderWidth: '1px',
+                                                        borderStyle: 'solid',
+                                                        fontFamily: 'Outfit',
+                                                        fontSize: '0.75rem',
+                                                        borderRadius: '6px',
+                                                    }} 
+                                                />
+                                            </TableCell>
+                                            <TableCell align="right" sx={{ py: 1.8 }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 800, color: '#0ea5e9', fontFamily: 'Outfit', fontSize: '0.95rem' }}>
+                                                    {row.cantidad?.toLocaleString('es-CL')}
+                                                </Typography>
+                                            </TableCell>
+                                            {hasExtendedTraceability && (
+                                                <>
+                                                    <TableCell sx={{ py: 1.8 }}>
+                                                        <Typography variant="body2" sx={{ color: '#334155', fontFamily: 'Inter' }}>{row.plantaAbastecimiento || '-'}</Typography>
+                                                    </TableCell>
+                                                    <TableCell sx={{ py: 1.8 }}>
+                                                        <Typography variant="body2" sx={{ color: '#334155', fontFamily: 'Inter' }}>{row.fechaComercializador ? new Date(row.fechaComercializador).toLocaleDateString() : '-'}</Typography>
+                                                    </TableCell>
+                                                    <TableCell sx={{ py: 1.8 }}>
+                                                        <Typography variant="body2" sx={{ color: '#334155', fontFamily: 'Inter' }}>{row.plantaProduccion || '-'}</Typography>
+                                                    </TableCell>
+                                                    <TableCell sx={{ py: 1.8 }}>
+                                                        <Typography variant="body2" sx={{ color: '#334155', fontFamily: 'Inter' }}>{row.fechaPlantaAbastecimiento ? new Date(row.fechaPlantaAbastecimiento).toLocaleDateString() : '-'}</Typography>
+                                                    </TableCell>
+                                                </>
+                                            )}
+                                        </TableRow>
+                                    );
+                                })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
-                                        <Typography variant="body1" color="text.secondary">
-                                            No se encontraron registros para los filtros seleccionados.
+                                    <TableCell colSpan={hasExtendedTraceability ? 10 : 6} align="center" sx={{ py: 8 }}>
+                                        <EmptyIcon sx={{ fontSize: 48, color: '#cbd5e1', mb: 1.5 }} />
+                                        <Typography variant="body1" sx={{ color: '#64748b', fontWeight: 600, fontFamily: 'Outfit' }}>
+                                            No se encontraron transacciones
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', mt: 0.5, fontFamily: 'Inter' }}>
+                                            Ajusta los filtros de fecha o tipo de reporte y vuelve a buscar.
                                         </Typography>
                                     </TableCell>
                                 </TableRow>
@@ -136,10 +192,15 @@ const DataTable = ({ title, data = [], onRowClick }) => {
                     page={page}
                     onPageChange={handleChangePage}
                     onRowsPerPageChange={handleChangeRowsPerPage}
-                    labelRowsPerPage="Registros por página:"
+                    labelRowsPerPage="Filas por página:"
                     sx={{
+                        borderTop: '1px solid #f1f5f9',
+                        bgcolor: '#fbfbfb',
+                        fontFamily: 'Inter',
                         '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-                            margin: 0
+                            margin: 0,
+                            fontFamily: 'Inter',
+                            fontSize: '0.825rem',
                         }
                     }}
                 />

@@ -1,8 +1,11 @@
 import { Typography, Container, Grid, Box } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import {
   BarChart as BarChartIcon,
   Inventory as InventoryIcon,
-  Group as GroupIcon
+  Group as GroupIcon,
+  WarningAmber as WarningIcon,
+  CheckCircleOutline as OKIcon
 } from '@mui/icons-material';
 import StatCard from '../components/dashboard/StatCard';
 import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
@@ -11,7 +14,57 @@ import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
 import { useOutletContext } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-// import PerformanceChart from '../components/dashboard/PerformanceChart';
+
+// Local theme definition matching "/administracion" and "/reportes"
+const dashboardTheme = createTheme({
+  palette: {
+    primary: {
+      main: '#0a192f',
+      light: '#172a45',
+      dark: '#020c1b',
+    },
+    secondary: {
+      main: '#0ea5e9',
+    },
+    success: {
+      main: '#10b981',
+    },
+    background: {
+      default: '#f8fafc',
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#0f172a',
+      secondary: '#64748b',
+    },
+  },
+  typography: {
+    fontFamily: '"Outfit", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h4: {
+      fontWeight: 800,
+      letterSpacing: '-0.02em',
+    },
+    h5: {
+      fontWeight: 800,
+      letterSpacing: '-0.02em',
+    },
+    h6: {
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+    },
+    body1: {
+      fontFamily: 'Inter, sans-serif',
+    },
+    body2: {
+      fontFamily: 'Inter, sans-serif',
+    },
+    button: {
+      fontFamily: 'Outfit, sans-serif',
+      fontWeight: 600,
+      textTransform: 'none',
+    },
+  },
+});
 
 export default function Dashboard() {
   const { dateRange } = useOutletContext() || { dateRange: null };
@@ -48,58 +101,64 @@ export default function Dashboard() {
   }, [dateRange]);
 
   return (
-    <Container maxWidth={false} sx={{ width: '100%', p: 0 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="body1" color="text.secondary">
-          Resumen general de indicadores y alertas.
-        </Typography>
-      </Box>
+    <ThemeProvider theme={dashboardTheme}>
+      <Container maxWidth={false} sx={{ width: '100%', p: 0, minHeight: '85vh' }}>
+        
+        {/* Encabezado del Dashboard */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="body1" sx={{ color: '#64748b', fontFamily: 'Inter', fontSize: '0.95rem' }}>
+            Indicadores ejecutivos y resumen general de transacciones registradas en el sistema.
+          </Typography>
+        </Box>
 
-      <Grid container spacing={3}>
-        {/* Real Data Stat Cards */}
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <StatCard 
-            title="Declaraciones totales" 
-            value={resumen.declaracionesTotales.toLocaleString('es-CL')} 
-            trend={0} 
-            color="#1976d2" 
-            icon={BarChartIcon} 
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <StatCard 
-            title="Volumen declarado (kg)" 
-            value={resumen.volumenTotal.toLocaleString('es-CL', { maximumFractionDigits: 0 })} 
-            trend={0} 
-            color="#2e7d32" 
-            icon={InventoryIcon} 
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <StatCard title="Alertas activas" value="384" trend={23} color="#ed6c02" icon={BarChartIcon} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <StatCard title="Casos abiertos" value="67" trend={8} color="#9c27b0" icon={InventoryIcon} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <StatCard title="% Inconsistencias" value="12,6%" trend={1.8} color="#0288d1" icon={BarChartIcon} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={2}>
-          <StatCard title="Actores fiscalizados" value="215" color="#1976d2" icon={GroupIcon} />
-        </Grid>
+        {/* Malla de Indicadores Clave (KPIs) */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <StatCard 
+              title="Declaraciones totales" 
+              value={resumen.declaracionesTotales.toLocaleString('es-CL')} 
+              trend={0} 
+              color="#0ea5e9" 
+              icon={BarChartIcon} 
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <StatCard 
+              title="Volumen total (kg)" 
+              value={resumen.volumenTotal.toLocaleString('es-CL', { maximumFractionDigits: 0 })} 
+              trend={0} 
+              color="#10b981" 
+              icon={InventoryIcon} 
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <StatCard title="Alertas activas" value="384" trend={23} color="#f59e0b" icon={BarChartIcon} />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <StatCard title="Casos abiertos" value="67" trend={-8} color="#8b5cf6" icon={InventoryIcon} />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <StatCard title="% Inconsistencias" value="12,6%" trend={1.8} color="#ef4444" icon={BarChartIcon} />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <StatCard title="Actores fiscalizados" value="215" color="#0ea5e9" icon={GroupIcon} />
+          </Grid>
 
-        <Grid item xs={12}>
-          <IndicadorRecolector dateRange={dateRange} />
-        </Grid>
+          {/* Gráfico Principal de Desembarques y Declaraciones */}
+          <Grid item xs={12}>
+            <IndicadorRecolector dateRange={dateRange} />
+          </Grid>
 
-        <Grid item xs={12} md={6}>
-          <ControlCuotaDiaria dateRange={dateRange} />
-        </Grid>
+          {/* Fila Inferior: Control de Cuotas y Alertas de Veda */}
+          <Grid item xs={12} md={6}>
+            <ControlCuotaDiaria dateRange={dateRange} />
+          </Grid>
 
-        <Grid item xs={12} md={6}>
-          <ExtraccionVedaWidget dateRange={dateRange} />
+          <Grid item xs={12} md={6}>
+            <ExtraccionVedaWidget dateRange={dateRange} />
+          </Grid>
         </Grid>
-      </Grid>
-    </Container>
+      </Container>
+    </ThemeProvider>
   );
 }

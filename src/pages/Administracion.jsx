@@ -10,15 +10,160 @@ import {
   Button,
   Grid,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Tabs,
+  Tab
 } from '@mui/material';
+import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
+import {
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  NotificationsActive as NotificationsActiveIcon,
+  GpsFixed as GpsFixedIcon,
+  GpsOff as GpsOffIcon,
+  Map as MapIcon,
+  Save as SaveIcon,
+  Tune as TuneIcon,
+  Speed as SpeedIcon,
+  TrendingUp as TrendingUpIcon
+} from '@mui/icons-material';
 import api from '../api/axiosConfig';
 import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
+
+// Local theme definition for premium UX/UI styling matching "harmony clara" request
+const adminTheme = createTheme({
+  palette: {
+    primary: {
+      main: '#0a192f',
+      light: '#172a45',
+      dark: '#020c1b',
+    },
+    secondary: {
+      main: '#0ea5e9',
+    },
+    success: {
+      main: '#10b981',
+    },
+    background: {
+      default: '#f8fafc',
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#0f172a',
+      secondary: '#64748b',
+    },
+  },
+  typography: {
+    fontFamily: '"Outfit", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h5: {
+      fontWeight: 800,
+      letterSpacing: '-0.02em',
+    },
+    h6: {
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+    },
+    body1: {
+      fontFamily: 'Inter, sans-serif',
+    },
+    body2: {
+      fontFamily: 'Inter, sans-serif',
+    },
+    button: {
+      fontFamily: 'Outfit, sans-serif',
+      fontWeight: 600,
+      textTransform: 'none',
+    },
+  },
+});
+
+// Styled Switch matching IOS visual cues
+const IOSSwitch = styled((props) => (
+  <Switch focusVisibleClassName=".Mui-focusVisible" disableRipple {...props} />
+))(({ theme }) => ({
+  width: 42,
+  height: 26,
+  padding: 0,
+  '& .MuiSwitch-switchBase': {
+    padding: 0,
+    margin: 2,
+    transitionDuration: '300ms',
+    '&.Mui-checked': {
+      transform: 'translateX(16px)',
+      color: '#fff',
+      '& + .MuiSwitch-track': {
+        backgroundColor: '#10b981',
+        opacity: 1,
+        border: 0,
+      },
+    },
+  },
+  '& .MuiSwitch-thumb': {
+    boxSizing: 'border-box',
+    width: 22,
+    height: 22,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  },
+  '& .MuiSwitch-track': {
+    borderRadius: 26 / 2,
+    backgroundColor: '#cbd5e1',
+    opacity: 1,
+  },
+}));
+
+// Premium Styled Slider with gradient highlight
+const ModernSlider = styled(Slider)(({ theme }) => ({
+  color: '#0ea5e9',
+  height: 6,
+  '& .MuiSlider-track': {
+    border: 'none',
+    background: 'linear-gradient(90deg, #10b981 0%, #0ea5e9 100%)',
+  },
+  '& .MuiSlider-thumb': {
+    height: 18,
+    width: 18,
+    backgroundColor: '#fff',
+    border: '2px solid currentColor',
+    '&:hover, &.Mui-active': {
+      boxShadow: '0px 0px 0px 8px rgba(14, 165, 233, 0.16)',
+    },
+  },
+  '& .MuiSlider-rail': {
+    opacity: 0.28,
+    backgroundColor: '#cbd5e1',
+  },
+}));
+
+const getAlertColor = (tipoAlerta) => {
+  switch (tipoAlerta) {
+    case 'LIMITE_CUOTA':
+      return '#f59e0b';
+    case 'DESVIO_RUTA':
+      return '#ef4444';
+    case 'APLICACION_INACTIVA':
+      return '#64748b';
+    default:
+      return '#0ea5e9';
+  }
+};
+
+const getAlertIcon = (tipoAlerta) => {
+  switch (tipoAlerta) {
+    case 'LIMITE_CUOTA':
+      return <SpeedIcon sx={{ fontSize: 24 }} />;
+    case 'DESVIO_RUTA':
+      return <TrendingUpIcon sx={{ fontSize: 24 }} />;
+    case 'APLICACION_INACTIVA':
+      return <GpsOffIcon sx={{ fontSize: 24 }} />;
+    default:
+      return <NotificationsActiveIcon sx={{ fontSize: 24 }} />;
+  }
+};
 
 export default function Administracion() {
   const [configuraciones, setConfiguraciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
 
   // Estados para configuración general (Rastreo GPS)
   const [trackingActivo, setTrackingActivo] = useState(false);
@@ -77,8 +222,8 @@ export default function Administracion() {
   const handleSave = async (config) => {
     try {
       await api.put(`/configuracion-alertas/${config.id}`, config);
-      setMensaje({ type: 'success', text: 'Configuración guardada correctamente.' });
-      setTimeout(() => setMensaje(null), 3000);
+      setMensaje({ type: 'success', text: `Configuración de alerta "${config.titulo}" guardada correctamente.` });
+      setTimeout(() => setMensaje(null), 4000);
     } catch (error) {
       setMensaje({ type: 'error', text: 'Error al guardar la configuración.' });
     }
@@ -96,7 +241,7 @@ export default function Administracion() {
         valor: trackingInterval.toString()
       });
       setMensaje({ type: 'success', text: 'Configuración de rastreo guardada correctamente.' });
-      setTimeout(() => setMensaje(null), 3000);
+      setTimeout(() => setMensaje(null), 4000);
     } catch (error) {
       console.error("Error al guardar configuración de rastreo", error);
       setMensaje({ type: 'error', text: 'Error al guardar la configuración de rastreo.' });
@@ -104,149 +249,466 @@ export default function Administracion() {
   };
 
   if (loading) {
-    return <Typography sx={{ p: 3 }}>Cargando configuraciones...</Typography>;
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 2 }}>
+        <CircularProgress size={50} color="primary" />
+        <Typography variant="body1" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+          Cargando panel de administración...
+        </Typography>
+      </Box>
+    );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h5" color="text.primary" sx={{ mb: 4, fontWeight: 'bold' }}>
-        Administración del Sistema
-      </Typography>
+    <ThemeProvider theme={adminTheme}>
+      <Box sx={{ p: { xs: 1, md: 3 }, bgcolor: 'background.default', minHeight: '85vh' }}>
+        
+        {/* Banner de Cabecera Premium */}
+        <Box
+          sx={{
+            background: 'linear-gradient(135deg, #0a192f 0%, #172a45 100%)',
+            borderRadius: 4,
+            p: { xs: 3, md: 4 },
+            mb: 4,
+            color: '#fff',
+            boxShadow: '0 10px 30px rgba(10, 25, 47, 0.08)',
+            position: 'relative',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', md: 'center' },
+            gap: 3,
+          }}
+        >
+          {/* Círculos abstractos de fondo */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -50,
+              right: -50,
+              width: 150,
+              height: 150,
+              background: 'rgba(14, 165, 233, 0.15)',
+              borderRadius: '50%',
+              filter: 'blur(30px)',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: -50,
+              left: '50%',
+              width: 180,
+              height: 180,
+              background: 'rgba(16, 185, 129, 0.1)',
+              borderRadius: '50%',
+              filter: 'blur(40px)',
+            }}
+          />
 
-      {mensaje && (
-        <Alert severity={mensaje.type} sx={{ mb: 3 }}>
-          {mensaje.text}
-        </Alert>
-      )}
+          <Box sx={{ zIndex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <AdminPanelSettingsIcon sx={{ fontSize: 36, color: '#0ea5e9' }} />
+              <Typography variant="h5" sx={{ fontWeight: 800, fontFamily: 'Outfit', m: 0 }}>
+                Administración del Sistema
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ opacity: 0.8, maxWidth: 650, fontFamily: 'Inter', lineHeight: 1.6 }}>
+              Ajusta los parámetros globales de rastreo satelital, cuotas de extracción y personaliza la sensibilidad de las alertas automáticas del ecosistema Trazalga.
+            </Typography>
+          </Box>
 
-      <Grid container spacing={3}>
-        {/* Panel de alertas push */}
-        {configuraciones.map((config) => (
-          <Grid item xs={12} md={6} key={config.id}>
-            <Card elevation={3} sx={{ borderRadius: 2 }}>
-              <CardContent>
-                <Typography variant="h6" color="text.primary" gutterBottom>
-                  {config.titulo}
-                </Typography>
-                <Box sx={{ mt: 2, mb: 2 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={config.activo}
-                        onChange={() => handleToggleActivo(config.id, config.activo)}
-                        color="primary"
-                      />
-                    }
-                    label={config.activo ? "Alerta Activada" : "Alerta Desactivada"}
+          {/* Micro KPI Widgets */}
+          <Box sx={{ display: 'flex', gap: 2, zIndex: 1, flexWrap: 'wrap', width: { xs: '100%', md: 'auto' } }}>
+            <Box
+              sx={{
+                bgcolor: 'rgba(255, 255, 255, 0.08)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: 3,
+                px: 2.5,
+                py: 1.5,
+                textAlign: 'center',
+                flexGrow: 1,
+                minWidth: 110,
+              }}
+            >
+              <Typography variant="caption" sx={{ display: 'block', opacity: 0.6, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Servicio GPS
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: trackingActivo ? '#10b981' : '#ef4444', mt: 0.5 }}>
+                {trackingActivo ? 'ACTIVO' : 'INACTIVO'}
+              </Typography>
+            </Box>
+            
+            <Box
+              sx={{
+                bgcolor: 'rgba(255, 255, 255, 0.08)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: 3,
+                px: 2.5,
+                py: 1.5,
+                textAlign: 'center',
+                flexGrow: 1,
+                minWidth: 110,
+              }}
+            >
+              <Typography variant="caption" sx={{ display: 'block', opacity: 0.6, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Intervalo
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: '#0ea5e9', mt: 0.5 }}>
+                {trackingInterval} min
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                bgcolor: 'rgba(255, 255, 255, 0.08)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: 3,
+                px: 2.5,
+                py: 1.5,
+                textAlign: 'center',
+                flexGrow: 1,
+                minWidth: 110,
+              }}
+            >
+              <Typography variant="caption" sx={{ display: 'block', opacity: 0.6, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Alertas
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: '#f59e0b', mt: 0.5 }}>
+                {configuraciones.filter(c => c.activo).length} / {configuraciones.length}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Notificaciones / Mensajes */}
+        {mensaje && (
+          <Alert
+            severity={mensaje.type}
+            sx={{
+              mb: 4,
+              borderRadius: 3,
+              fontFamily: 'Inter',
+              fontWeight: 500,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+              border: `1px solid ${mensaje.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
+            }}
+          >
+            {mensaje.text}
+          </Alert>
+        )}
+
+        {/* Pestañas de Navegación del Panel */}
+        <Tabs
+          value={activeTab}
+          onChange={(e, val) => setActiveTab(val)}
+          sx={{
+            mb: 4,
+            borderBottom: '1px solid #e2e8f0',
+            '& .MuiTabs-indicator': {
+              height: 3,
+              borderRadius: '3px 3px 0 0',
+              backgroundColor: '#0ea5e9',
+            },
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '1rem',
+              fontFamily: 'Outfit',
+              color: '#64748b',
+              pb: 1.5,
+              '&.Mui-selected': {
+                color: '#0ea5e9',
+              },
+            },
+          }}
+        >
+          <Tab icon={<TuneIcon sx={{ mr: 1 }} />} iconPosition="start" label="Configuración de Alertas" />
+          <Tab icon={<MapIcon sx={{ mr: 1 }} />} iconPosition="start" label="Consola de Trazabilidad y GPS" />
+        </Tabs>
+
+        {/* Renderizado de Pestaña 1: Configuración de Alertas */}
+        {activeTab === 0 && (
+          <Grid container spacing={3}>
+            {configuraciones.map((config) => (
+              <Grid item xs={12} md={6} key={config.id}>
+                <Card
+                  elevation={0}
+                  sx={{
+                    borderRadius: 4,
+                    border: '1px solid #e2e8f0',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    bgcolor: '#ffffff',
+                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
+                    '&:hover': {
+                      borderColor: '#cbd5e1',
+                      boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
+                      transform: 'translateY(-2px)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  {/* Borde sutil del color del disparador al lado izquierdo */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: 5,
+                      bgcolor: config.activo ? getAlertColor(config.tipoAlerta) : '#cbd5e1',
+                      transition: 'background-color 0.3s ease',
+                    }}
                   />
-                </Box>
 
-                {config.tipoAlerta === 'LIMITE_CUOTA' && (
-                  <Box sx={{ mt: 3, mb: 2, px: 2 }}>
-                    <Typography color="text.secondary" gutterBottom>
-                      Umbral de disparo: {config.umbral}% de la cuota
-                    </Typography>
-                    <Slider
-                      value={config.umbral || 80}
-                      onChange={(e, val) => handleSliderChange(config.id, val)}
-                      valueLabelDisplay="auto"
-                      step={5}
-                      marks
-                      min={10}
-                      max={100}
-                      disabled={!config.activo}
-                    />
-                  </Box>
-                )}
+                  <CardContent sx={{ p: 3, flexGrow: 1, pl: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                      <Box
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 3,
+                          bgcolor: config.activo ? `${getAlertColor(config.tipoAlerta)}15` : '#f1f5f9',
+                          color: config.activo ? getAlertColor(config.tipoAlerta) : '#94a3b8',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.3s ease',
+                        }}
+                      >
+                        {getAlertIcon(config.tipoAlerta)}
+                      </Box>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'Outfit', color: '#0f172a' }}>
+                          {config.titulo}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'Inter' }}>
+                          Tipo: {config.tipoAlerta}
+                        </Typography>
+                      </Box>
+                    </Box>
 
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleSave(config)}
-                  >
-                    Guardar Cambios
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, mt: 3 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: config.activo ? '#0f172a' : '#64748b', fontFamily: 'Inter' }}>
+                        Estado de la alerta:
+                      </Typography>
+                      <FormControlLabel
+                        control={
+                          <IOSSwitch
+                            checked={config.activo}
+                            onChange={() => handleToggleActivo(config.id, config.activo)}
+                          />
+                        }
+                        label={config.activo ? "Activa" : "Inactiva"}
+                        labelPlacement="start"
+                        sx={{
+                          m: 0,
+                          '& .MuiFormControlLabel-label': {
+                            fontSize: '0.875rem',
+                            fontWeight: 700,
+                            mr: 1.5,
+                            color: config.activo ? '#10b981' : '#64748b',
+                            fontFamily: 'Inter',
+                          }
+                        }}
+                      />
+                    </Box>
 
-        {/* Tarjeta de Rastreo GPS */}
-        <Grid item xs={12} md={6}>
-          <Card elevation={3} sx={{ borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="h6" color="text.primary" gutterBottom>
-                Rastreo de Ubicación GPS (App Móvil)
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Configura si la aplicación móvil registrará periódicamente la posición geográfica de los usuarios para trazabilidad.
-              </Typography>
-
-              {loadingTracking ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                  <CircularProgress size={24} />
-                </Box>
-              ) : (
-                <>
-                  <Box sx={{ mt: 2, mb: 2 }}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={trackingActivo}
-                          onChange={(e) => setTrackingActivo(e.target.checked)}
-                          color="primary"
+                    {config.tipoAlerta === 'LIMITE_CUOTA' && (
+                      <Box sx={{ mt: 3, mb: 1, p: 2.5, borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ color: '#475569', fontWeight: 600, fontFamily: 'Inter' }}>
+                            Umbral de disparo:
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: config.activo ? '#0ea5e9' : '#94a3b8', fontWeight: 800, fontFamily: 'Inter' }}>
+                            {config.umbral || 80}% de la cuota
+                          </Typography>
+                        </Box>
+                        <ModernSlider
+                          value={config.umbral || 80}
+                          onChange={(e, val) => handleSliderChange(config.id, val)}
+                          valueLabelDisplay="auto"
+                          step={5}
+                          min={10}
+                          max={100}
+                          disabled={!config.activo}
+                          sx={{ mt: 1 }}
                         />
-                      }
-                      label={trackingActivo ? "Rastreo de Ubicación Activado" : "Rastreo de Ubicación Desactivado"}
-                    />
-                  </Box>
+                      </Box>
+                    )}
+                  </CardContent>
 
-                  <Box sx={{ mt: 3, mb: 2, px: 2 }}>
-                    <Typography color="text.secondary" gutterBottom>
-                      Frecuencia de actualización: cada {trackingInterval} minutos
-                    </Typography>
-                    <Slider
-                      value={trackingInterval}
-                      onChange={(e, val) => setTrackingInterval(val)}
-                      valueLabelDisplay="auto"
-                      step={1}
-                      marks={[
-                        { value: 1, label: '1m' },
-                        { value: 5, label: '5m' },
-                        { value: 10, label: '10m' },
-                        { value: 15, label: '15m' },
-                        { value: 30, label: '30m' },
-                        { value: 60, label: '60m' }
-                      ]}
-                      min={1}
-                      max={60}
-                      disabled={!trackingActivo}
-                    />
-                  </Box>
-
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
+                  <Box sx={{ p: 2.5, pt: 0, display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #f1f5f9', bgcolor: '#fbfbfb' }}>
                     <Button
                       variant="contained"
-                      color="primary"
-                      onClick={handleSaveTracking}
+                      size="small"
+                      startIcon={<SaveIcon />}
+                      onClick={() => handleSave(config)}
+                      sx={{
+                        bgcolor: '#0a192f',
+                        '&:hover': {
+                          bgcolor: '#172a45',
+                        },
+                        boxShadow: 'none',
+                        borderRadius: 2.5,
+                        px: 2.5,
+                        py: 1,
+                        fontFamily: 'Outfit',
+                      }}
                     >
-                      Guardar Cambios Rastreo
+                      Guardar Configuración
                     </Button>
                   </Box>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
 
-        {/* Mapa de Trayectoria */}
-        <Grid item xs={12}>
-          <MapaTrayectoUsuario />
-        </Grid>
+        {/* Renderizado de Pestaña 2: Consola de Trazabilidad y GPS */}
+        {activeTab === 1 && (
+          <Grid container spacing={4}>
+            {/* Columna Izquierda: Configuración del GPS Móvil */}
+            <Grid item xs={12} lg={4}>
+              <Card
+                elevation={0}
+                sx={{
+                  borderRadius: 4,
+                  border: '1px solid #e2e8f0',
+                  bgcolor: '#ffffff',
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <Box
+                  sx={{
+                    p: 3,
+                    borderBottom: '1px solid #f1f5f9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    bgcolor: '#fbfbfb',
+                  }}
+                >
+                  <GpsFixedIcon sx={{ color: '#0ea5e9' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+                    Parámetros de Rastreo
+                  </Typography>
+                </Box>
 
-      </Grid>
-    </Box>
+                {loadingTracking ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1, p: 4 }}>
+                    <CircularProgress size={32} />
+                  </Box>
+                ) : (
+                  <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1 }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: '#64748b', mb: 3, fontFamily: 'Inter', lineHeight: 1.6 }}>
+                        Habilita o deshabilita la emisión periódica de coordenadas de la aplicación móvil de recolección y ajusta el intervalo de envío a la base de datos.
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          p: 2.5,
+                          borderRadius: 3,
+                          border: '1px solid',
+                          borderColor: trackingActivo ? '#bbf7d0' : '#e2e8f0',
+                          bgcolor: trackingActivo ? '#f0fdf4' : '#f8fafc',
+                          mb: 3,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'all 0.3s ease',
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: trackingActivo ? '#166534' : '#475569', fontFamily: 'Inter' }}>
+                            {trackingActivo ? "Rastreo Habilitado" : "Rastreo Inhabilitado"}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'Inter' }}>
+                            Estado global en teléfonos
+                          </Typography>
+                        </Box>
+                        <IOSSwitch
+                          checked={trackingActivo}
+                          onChange={(e) => setTrackingActivo(e.target.checked)}
+                        />
+                      </Box>
+
+                      <Box sx={{ p: 2.5, borderRadius: 3, border: '1px solid #e2e8f0', bgcolor: '#f8fafc', mb: 3 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ color: '#475569', fontWeight: 600, fontFamily: 'Inter' }}>
+                            Intervalo de actualización:
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: trackingActivo ? '#0ea5e9' : '#94a3b8', fontWeight: 800, fontFamily: 'Inter' }}>
+                            cada {trackingInterval} minutos
+                          </Typography>
+                        </Box>
+                        <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 2, fontFamily: 'Inter', fontSize: '0.75rem' }}>
+                          Menor frecuencia ahorra batería en el móvil del recolector.
+                        </Typography>
+                        <ModernSlider
+                          value={trackingInterval}
+                          onChange={(e, val) => setTrackingInterval(val)}
+                          valueLabelDisplay="auto"
+                          step={1}
+                          marks={[
+                            { value: 1, label: '1m' },
+                            { value: 15, label: '15m' },
+                            { value: 30, label: '30m' },
+                            { value: 45, label: '45m' },
+                            { value: 60, label: '60m' }
+                          ]}
+                          min={1}
+                          max={60}
+                          disabled={!trackingActivo}
+                          sx={{ mt: 1 }}
+                        />
+                      </Box>
+                    </Box>
+
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      startIcon={<SaveIcon />}
+                      onClick={handleSaveTracking}
+                      sx={{
+                        bgcolor: '#0ea5e9',
+                        '&:hover': {
+                          bgcolor: '#0284c7',
+                        },
+                        py: 1.5,
+                        borderRadius: 3,
+                        boxShadow: '0 4px 14px rgba(14, 165, 233, 0.2)',
+                        fontFamily: 'Outfit',
+                        fontSize: '0.95rem',
+                      }}
+                    >
+                      Guardar Configuración GPS
+                    </Button>
+                  </CardContent>
+                )}
+              </Card>
+            </Grid>
+
+            {/* Columna Derecha: Mapa y buscador de trayectoria */}
+            <Grid item xs={12} lg={8}>
+              <MapaTrayectoUsuario />
+            </Grid>
+          </Grid>
+        )}
+
+      </Box>
+    </ThemeProvider>
   );
 }

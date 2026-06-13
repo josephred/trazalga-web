@@ -6,7 +6,6 @@ import {
 import {
     FilterList as FilterIcon,
     CalendarMonth as CalendarIcon,
-    Description as ReportIcon,
     Search as SearchIcon
 } from '@mui/icons-material';
 
@@ -69,9 +68,6 @@ const thirtyDaysAgo = () => {
     return formatDate(d);
 };
 
-// ══════════════════════════════════════════════════════════════════
-//  Componente ReportFilter
-// ══════════════════════════════════════════════════════════════════
 const ReportFilter = ({ onGenerate }) => {
     const [fechaInicio, setFechaInicio] = useState(thirtyDaysAgo());
     const [fechaFin, setFechaFin] = useState(today());
@@ -104,7 +100,6 @@ const ReportFilter = ({ onGenerate }) => {
         setLoadingSub(true);
         setSubSeleccion('');
 
-        // Simula una llamada a la API con un pequeño delay
         const timeout = setTimeout(() => {
             const options = MOCK_SUB_OPTIONS[tipoReporte] || [];
             setSubOptions(options);
@@ -130,25 +125,33 @@ const ReportFilter = ({ onGenerate }) => {
 
     return (
         <Card
+            elevation={0}
             sx={{
-                borderRadius: 3,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                borderRadius: 4,
+                border: '1px solid #e2e8f0',
+                bgcolor: '#ffffff',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
                 width: '100%',
-                border: '1px solid',
-                borderColor: 'divider',
                 overflow: 'visible',
             }}
         >
             <CardContent sx={{ p: 3 }}>
-                {/* Header */}
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                    <FilterIcon color="primary" />
-                    <Typography variant="h6" fontWeight="bold">
+                {/* Header de la sección de filtros */}
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        mb: 2,
+                    }}
+                >
+                    <FilterIcon sx={{ color: '#0ea5e9' }} />
+                    <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a', m: 0 }}>
                         Filtros de Reporte
                     </Typography>
-                </Stack>
+                </Box>
 
-                <Divider sx={{ mb: 3 }} />
+                <Divider sx={{ mb: 3, borderColor: '#f1f5f9' }} />
 
                 {/* Inputs nativos ocultos para disparar el calendario */}
                 <input
@@ -167,25 +170,30 @@ const ReportFilter = ({ onGenerate }) => {
                     min={fechaInicio}
                 />
 
-                <Grid container spacing={2} alignItems="flex-end">
+                <Grid container spacing={2.5} alignItems="flex-end">
                     {/* Fecha Inicio */}
-                    <Grid item xs={12} md={6} lg={2}>
+                    <Grid item xs={12} sm={6} md={3} lg={2.5}>
                         <TextField
                             id="filter-fecha-inicio"
                             label="Fecha Inicio"
                             type="text"
                             value={fechaInicio}
-                            readOnly
-                            onClick={() => openPicker(inputInicioRef)}
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); openPicker(inputInicioRef); }}>
-                                            <CalendarIcon fontSize="small" />
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                                sx: { borderRadius: 2, cursor: 'pointer' }
+                            slotProps={{
+                                input: {
+                                    readOnly: true,
+                                    onClick: () => openPicker(inputInicioRef),
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); openPicker(inputInicioRef); }}>
+                                                <CalendarIcon fontSize="small" sx={{ color: '#64748b' }} />
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                    sx: { borderRadius: 3, cursor: 'pointer', fontFamily: 'Inter' }
+                                },
+                                inputLabel: {
+                                    sx: { fontFamily: 'Inter' }
+                                }
                             }}
                             fullWidth
                             size="small"
@@ -193,23 +201,28 @@ const ReportFilter = ({ onGenerate }) => {
                     </Grid>
 
                     {/* Fecha Fin */}
-                    <Grid item xs={12} md={6} lg={2}>
+                    <Grid item xs={12} sm={6} md={3} lg={2.5}>
                         <TextField
                             id="filter-fecha-fin"
                             label="Fecha Fin"
                             type="text"
                             value={fechaFin}
-                            readOnly
-                            onClick={() => openPicker(inputFinRef)}
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); openPicker(inputFinRef); }}>
-                                            <CalendarIcon fontSize="small" />
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                                sx: { borderRadius: 2, cursor: 'pointer' }
+                            slotProps={{
+                                input: {
+                                    readOnly: true,
+                                    onClick: () => openPicker(inputFinRef),
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); openPicker(inputFinRef); }}>
+                                                <CalendarIcon fontSize="small" sx={{ color: '#64748b' }} />
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                    sx: { borderRadius: 3, cursor: 'pointer', fontFamily: 'Inter' }
+                                },
+                                inputLabel: {
+                                    sx: { fontFamily: 'Inter' }
+                                }
                             }}
                             fullWidth
                             size="small"
@@ -217,7 +230,7 @@ const ReportFilter = ({ onGenerate }) => {
                     </Grid>
 
                     {/* Tipo de Reporte */}
-                    <Grid item xs={12} md={4} lg={3}>
+                    <Grid item xs={12} sm={6} md={3} lg={2.5}>
                         <TextField
                             id="filter-tipo-reporte"
                             select
@@ -226,27 +239,33 @@ const ReportFilter = ({ onGenerate }) => {
                             onChange={(e) => setTipoReporte(e.target.value)}
                             fullWidth
                             size="small"
-                            sx={{
-                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                minWidth: { lg: 200 }
+                            slotProps={{
+                                input: {
+                                    sx: { borderRadius: 3, fontFamily: 'Inter' }
+                                },
+                                inputLabel: {
+                                    sx: { fontFamily: 'Inter' }
+                                }
                             }}
+                            sx={{ minWidth: { lg: 200 } }}
                         >
                             {REPORT_TYPES.map((type) => (
-                                <MenuItem key={type.id} value={type.id}>
-                                    <Stack direction="row" alignItems="center" spacing={1}>
+                                <MenuItem key={type.id} value={type.id} sx={{ fontFamily: 'Inter' }}>
+                                    <Stack direction="row" alignItems="center" spacing={1.5}>
                                         <Chip
                                             label={type.id}
                                             size="small"
                                             sx={{
-                                                minWidth: 28,
-                                                height: 22,
-                                                fontSize: '0.7rem',
-                                                fontWeight: 'bold',
-                                                backgroundColor: 'primary.main',
+                                                minWidth: 24,
+                                                height: 20,
+                                                fontSize: '0.65rem',
+                                                fontWeight: 800,
+                                                backgroundColor: '#0ea5e9',
                                                 color: 'white',
+                                                fontFamily: 'Outfit',
                                             }}
                                         />
-                                        <span>{type.label}</span>
+                                        <span style={{ fontSize: '0.9rem', color: '#0f172a' }}>{type.label}</span>
                                     </Stack>
                                 </MenuItem>
                             ))}
@@ -254,7 +273,7 @@ const ReportFilter = ({ onGenerate }) => {
                     </Grid>
 
                     {/* Sub-Seleccion (Solo si hay tipo seleccionado) */}
-                    <Grid item xs={12} md={4} lg={3}>
+                    <Grid item xs={12} sm={6} md={3} lg={2.5}>
                         <TextField
                             id="filter-sub-seleccion"
                             select
@@ -264,13 +283,18 @@ const ReportFilter = ({ onGenerate }) => {
                             fullWidth
                             size="small"
                             disabled={!tipoReporte || loadingSub || subOptions.length === 0}
-                            sx={{
-                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                minWidth: { lg: 200 }
+                            slotProps={{
+                                input: {
+                                    sx: { borderRadius: 3, fontFamily: 'Inter' }
+                                },
+                                inputLabel: {
+                                    sx: { fontFamily: 'Inter' }
+                                }
                             }}
+                            sx={{ minWidth: { lg: 200 } }}
                         >
                             {subOptions.map((opt) => (
-                                <MenuItem key={opt.id} value={opt.id}>
+                                <MenuItem key={opt.id} value={opt.id} sx={{ fontFamily: 'Inter', fontSize: '0.9rem' }}>
                                     {opt.nombre}
                                 </MenuItem>
                             ))}
@@ -278,25 +302,29 @@ const ReportFilter = ({ onGenerate }) => {
                     </Grid>
 
                     {/* Botón Generar */}
-                    <Grid item xs={12} md={4} lg={2}>
+                    <Grid item xs={12} md={12} lg={2}>
                         <Button
                             id="btn-generar-reporte"
                             variant="contained"
                             fullWidth
                             disabled={!isFormValid}
                             onClick={handleGenerar}
+                            startIcon={<SearchIcon />}
                             sx={{
                                 height: '40px', // Alineado con TextField size="small"
-                                borderRadius: 2,
+                                borderRadius: 3,
                                 textTransform: 'none',
-                                fontWeight: 'bold',
-                                boxShadow: '0 4px 14px rgba(25, 118, 210, 0.3)',
+                                fontWeight: 700,
+                                fontFamily: 'Outfit',
+                                bgcolor: '#0a192f',
                                 '&:hover': {
-                                    boxShadow: '0 6px 20px rgba(25, 118, 210, 0.4)',
+                                    bgcolor: '#172a45',
                                 },
+                                boxShadow: 'none',
+                                transition: 'all 0.2s ease',
                             }}
                         >
-                            Generar Reporte
+                            Buscar
                         </Button>
                     </Grid>
                 </Grid>

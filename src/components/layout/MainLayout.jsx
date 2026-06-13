@@ -4,6 +4,7 @@ import {
   ListItemButton, ListItemIcon, ListItemText, Avatar, Button, IconButton,
   Menu, MenuItem, Divider, Badge, Snackbar, Alert
 } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { 
   Home as HomeIcon,
   Search as SearchIcon,
@@ -33,6 +34,49 @@ const menuItems = [
   { text: 'Mapa', icon: <LocationIcon />, path: '/mapa' },
   { text: 'Administración', icon: <SettingsIcon />, path: '/administracion' },
 ];
+
+// Local layout theme to apply Outfit and Inter globally to the viewport
+const layoutTheme = createTheme({
+  palette: {
+    primary: {
+      main: '#0a192f',
+      light: '#172a45',
+      dark: '#020c1b',
+    },
+    secondary: {
+      main: '#0ea5e9',
+    },
+    success: {
+      main: '#10b981',
+    },
+    background: {
+      default: '#f8fafc',
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#0f172a',
+      secondary: '#64748b',
+    },
+  },
+  typography: {
+    fontFamily: '"Outfit", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h6: {
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+    },
+    body1: {
+      fontFamily: 'Inter, sans-serif',
+    },
+    body2: {
+      fontFamily: 'Inter, sans-serif',
+    },
+    button: {
+      fontFamily: 'Outfit, sans-serif',
+      fontWeight: 600,
+      textTransform: 'none',
+    },
+  },
+});
 
 export default function MainLayout() {
   const navigate = useNavigate();
@@ -109,10 +153,10 @@ export default function MainLayout() {
       case '/consultas': return { title: 'Consultas', subtitle: 'Búsqueda de información en el sistema' };
       case '/alertas': return { title: 'Alertas', subtitle: 'Gestión y monitoreo de alertas' };
       case '/casos': return { title: 'Casos', subtitle: 'Seguimiento de casos registrados' };
-      case '/reportes': return { title: 'Reportes', subtitle: 'Generación de reportes de gestión' };
-      case '/mapa': return { title: 'Mapa SIG', subtitle: 'Distribución geográfica' };
-      case '/administracion': return { title: 'Administración', subtitle: 'Configuración del sistema' };
-      case '/ayuda': return { title: 'Ayuda', subtitle: 'Documentación y soporte' };
+      case '/reportes': return { title: 'Reportes y Trazabilidad', subtitle: 'Consulta de transacciones históricas' };
+      case '/mapa': return { title: 'Mapa SIG', subtitle: 'Distribución geográfica del recurso' };
+      case '/administracion': return { title: 'Configuración de Parámetros', subtitle: 'Ajustes globales de alertas y rastreo móvil' };
+      case '/ayuda': return { title: 'Ayuda', subtitle: 'Documentación y soporte técnico' };
       default: return { title: 'TRAZALGA', subtitle: '' };
     }
   };
@@ -120,286 +164,402 @@ export default function MainLayout() {
   const { title, subtitle } = getCurrentPageTitle();
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f7fa' }}>
-      
-      {/* ═══════════ SIDEBAR ═══════════ */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-            bgcolor: '#0a192f', // Dark blue as in the image
-            color: '#fff',
-            display: 'flex',
-            flexDirection: 'column',
-          },
-        }}
-      >
-        {/* Sidebar Header / Logo */}
-        <Box sx={{ 
-          p: 1, 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          borderBottom: '1px solid rgba(255,255,255,0.1)'
-        }}>
-          <img src={sernapescaLogo} alt="Sernapesca" style={{ height: 160 }} />
-        </Box>
-
-        {/* Menu Items */}
-        <List sx={{ flex: 1, pt: 2 }}>
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton 
-                  onClick={() => navigate(item.path)}
-                  sx={{
-                    bgcolor: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                    borderLeft: isActive ? '4px solid #1976d2' : '4px solid transparent',
-                    '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.05)',
-                    }
-                  }}
-                >
-                  <ListItemIcon sx={{ color: isActive ? '#64b5f6' : '#a0aec0', minWidth: 40 }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text} 
-                    sx={{ 
-                      '& .MuiListItemText-primary': { 
-                        fontWeight: isActive ? 600 : 400,
-                        color: isActive ? '#fff' : '#a0aec0'
-                      } 
-                    }} 
-                  />
-                </ListItemButton>
-              </ListItem>
-            );
-          })}
-        </List>
-
-        {/* Ayuda Item at Bottom */}
-        <List>
-          <ListItem disablePadding>
-            <ListItemButton onClick={() => navigate('/ayuda')}>
-              <ListItemIcon sx={{ color: '#a0aec0', minWidth: 40 }}>
-                <HelpIcon />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Ayuda" 
-                sx={{ '& .MuiListItemText-primary': { color: '#a0aec0' } }} 
-              />
-            </ListItemButton>
-          </ListItem>
-        </List>
-      </Drawer>
-
-      {/* ═══════════ MAIN CONTENT AREA ═══════════ */}
-      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+    <ThemeProvider theme={layoutTheme}>
+      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f8fafc' }}>
         
-        {/* ═══════════ TOPBAR ═══════════ */}
-        <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: '1px solid #e0e0e0', bgcolor: '#fff' }}>
-          <Toolbar sx={{ px: 3, py: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            
-            {/* Topbar Left: System Info */}
-            <Box sx={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1a1a1a', lineHeight: 1.2 }}>
-                  TRAZALGA
-                </Typography>
-                <Typography sx={{ fontSize: '0.65rem', color: '#555', lineHeight: 1 }}>
-                  Portal de Reportería para el Control de<br/>Trazabilidad de Algas Pardas
-                </Typography>
-                <Typography sx={{ fontSize: '0.65rem', color: '#1976d2', fontWeight: 600, mt: 0.5 }}>
-                  IV Región de Coquimbo
-                </Typography>
-              </Box>
+        {/* ═══════════ SIDEBAR (MENÚ LATERAL) ═══════════ */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            width: drawerWidth,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              background: 'linear-gradient(180deg, #050d1a 0%, #0a192f 50%, #020c1b 100%)',
+              color: '#fff',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRight: '1px solid rgba(255, 255, 255, 0.04)',
+            },
+          }}
+        >
+          {/* Header del Menú / Logo */}
+          <Box sx={{ 
+            p: 2, 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            bgcolor: 'rgba(0,0,0,0.12)'
+          }}>
+            <img src={sernapescaLogo} alt="Sernapesca" style={{ height: 130, objectFit: 'contain' }} />
+          </Box>
 
-              {/* Topbar Center: Page Title */}
-              <Box sx={{ borderLeft: '1px solid #e0e0e0', pl: 4 }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: '#2d3748', lineHeight: 1.2 }}>
-                  {title}
-                </Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: '#718096' }}>
-                  {subtitle}
-                </Typography>
-              </Box>
-            </Box>
+          {/* Enlaces del Menú */}
+          <List sx={{ flex: 1, pt: 2, px: 0 }}>
+            {menuItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <ListItem key={item.text} disablePadding>
+                  <ListItemButton 
+                    onClick={() => navigate(item.path)}
+                    sx={{
+                      py: 1.5,
+                      px: 3,
+                      bgcolor: isActive ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
+                      borderLeft: isActive ? '4px solid #0ea5e9' : '4px solid transparent',
+                      color: isActive ? '#fff' : '#94a3b8',
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        bgcolor: 'rgba(255, 255, 255, 0.04)',
+                        color: '#fff',
+                        pl: 3.5, // Micro-animación de deslizamiento
+                        '& .MuiListItemIcon-root': {
+                          color: '#0ea5e9',
+                        }
+                      }
+                    }}
+                  >
+                    <ListItemIcon sx={{ 
+                      color: isActive ? '#0ea5e9' : '#64748b', 
+                      minWidth: 36,
+                      transition: 'color 0.2s ease',
+                    }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={item.text} 
+                      sx={{ 
+                        margin: 0,
+                        '& .MuiListItemText-primary': { 
+                          fontWeight: isActive ? 700 : 500,
+                          fontSize: '0.9rem',
+                          fontFamily: 'Outfit',
+                        } 
+                      }} 
+                    />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          </List>
 
-            {/* Topbar Right: Actions & User */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              
-              {/* Date Filters */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: '#fff', border: '1px solid #ccc', borderRadius: 1, px: 1, py: 0.5 }}>
-                  <CalendarTodayIcon fontSize="small" sx={{ color: '#555', mr: 1 }} />
-                  <input 
-                    type="date" 
-                    value={dateRange.startDate} 
-                    onChange={handleStartDateChange} 
-                    style={{ border: 'none', outline: 'none', color: '#555', fontSize: '0.875rem', backgroundColor: 'transparent' }} 
-                  />
-                  <Typography sx={{ color: '#555', mx: 1 }}> - </Typography>
-                  <input 
-                    type="date" 
-                    value={dateRange.endDate} 
-                    onChange={handleEndDateChange} 
-                    style={{ border: 'none', outline: 'none', color: '#555', fontSize: '0.875rem', backgroundColor: 'transparent' }} 
-                  />
-                </Box>
-                <Button 
-                  variant="contained" 
-                  size="small" 
-                  startIcon={<FilterListIcon />}
-                  sx={{ textTransform: 'none', bgcolor: '#0a192f' }}
-                >
-                  Filtros
-                </Button>
-              </Box>
-
-              {/* Notification Bell */}
-              <IconButton color="inherit" onClick={handleNotifClick} sx={{ color: '#555' }}>
-                <Badge badgeContent={notifications.length} color="error">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-              <Menu
-                anchorEl={notifAnchorEl}
-                open={openNotif}
-                onClose={handleNotifClose}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                PaperProps={{
-                  elevation: 2,
-                  sx: { width: 300, maxHeight: 400, mt: 1.5 }
-                }}
-              >
-                <Box sx={{ px: 2, py: 1, borderBottom: '1px solid #e0e0e0' }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Notificaciones</Typography>
-                </Box>
-                {notifications.length === 0 ? (
-                  <MenuItem disabled>No hay notificaciones recientes</MenuItem>
-                ) : (
-                  notifications.map((notif, index) => (
-                    <MenuItem key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{notif.title}</Typography>
-                      <Typography variant="caption" color="text.secondary" noWrap sx={{ width: '100%' }}>{notif.body}</Typography>
-                      <Typography variant="caption" sx={{ color: '#aaa', alignSelf: 'flex-end', fontSize: '0.65rem' }}>{notif.time}</Typography>
-                    </MenuItem>
-                  ))
-                )}
-                {notifications.length > 0 && (
-                  <Box sx={{ p: 1, textAlign: 'center', borderTop: '1px solid #e0e0e0' }}>
-                    <Button size="small" onClick={() => setNotifications([])}>Limpiar todas</Button>
-                  </Box>
-                )}
-              </Menu>
-
-              {/* User Profile */}
-              <Box 
-                onClick={handleUserMenuClick}
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 1.5, 
-                  borderLeft: '1px solid #e0e0e0', 
-                  pl: 3,
-                  cursor: 'pointer',
+          {/* Item Ayuda al final */}
+          <List sx={{ px: 0, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <ListItem disablePadding>
+              <ListItemButton 
+                onClick={() => navigate('/ayuda')}
+                sx={{
+                  py: 1.5,
+                  px: 3,
+                  color: location.pathname === '/ayuda' ? '#fff' : '#64748b',
+                  bgcolor: location.pathname === '/ayuda' ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
+                  borderLeft: location.pathname === '/ayuda' ? '4px solid #0ea5e9' : '4px solid transparent',
                   '&:hover': {
-                    '& .MuiAvatar-root': {
-                      bgcolor: '#1976d2',
+                    bgcolor: 'rgba(255, 255, 255, 0.04)',
+                    color: '#fff',
+                    pl: 3.5,
+                    '& .MuiListItemIcon-root': {
+                      color: '#0ea5e9',
                     }
                   }
                 }}
               >
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#2d3748' }}>
-                    Analista Regional
+                <ListItemIcon sx={{ color: location.pathname === '/ayuda' ? '#0ea5e9' : '#64748b', minWidth: 36 }}>
+                  <HelpIcon />
+                </ListItemIcon>
+                <ListItemText 
+                  primary="Ayuda" 
+                  sx={{ 
+                    margin: 0,
+                    '& .MuiListItemText-primary': { 
+                      fontFamily: 'Outfit',
+                      fontWeight: location.pathname === '/ayuda' ? 700 : 500,
+                      fontSize: '0.9rem',
+                    } 
+                  }} 
+                />
+              </ListItemButton>
+            </ListItem>
+          </List>
+        </Drawer>
+
+        {/* ═══════════ ÁREA DE CONTENIDO PRINCIPAL ═══════════ */}
+        <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+          
+          {/* ═══════════ HEADER (BARRA SUPERIOR) ═══════════ */}
+          <AppBar 
+            position="static" 
+            color="transparent" 
+            elevation={0} 
+            sx={{ 
+              borderBottom: '1px solid #f1f5f9', 
+              bgcolor: 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(12px)',
+            }}
+          >
+            <Toolbar sx={{ px: 3, py: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              
+              {/* Sección Izquierda: Marca y Región */}
+              <Box sx={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 900, color: '#0a192f', fontFamily: 'Outfit', lineHeight: 1.1, letterSpacing: '0.5px' }}>
+                    TRAZALGA
                   </Typography>
-                  <Typography sx={{ fontSize: '0.65rem', color: '#718096' }}>
-                    IV Región
+                  <Typography sx={{ fontSize: '0.625rem', color: '#64748b', fontFamily: 'Inter', lineHeight: 1.2, mt: 0.25 }}>
+                    Portal de Control de Trazabilidad<br/>de Algas Pardas
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.625rem', color: '#0ea5e9', fontWeight: 700, fontFamily: 'Inter', mt: 0.5 }}>
+                    IV Región de Coquimbo
                   </Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: '#0a192f', width: 36, height: 36, transition: 'all 0.3s' }} />
+
+                {/* Título de Página y Subtítulo */}
+                <Box sx={{ borderLeft: '1px solid #e2e8f0', pl: 4 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontFamily: 'Outfit', lineHeight: 1.2 }}>
+                    {title}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.725rem', color: '#64748b', fontFamily: 'Inter' }}>
+                    {subtitle}
+                  </Typography>
+                </Box>
               </Box>
 
-              <Menu
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleClose}
-                onClick={handleClose}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                PaperProps={{
-                  elevation: 0,
-                  sx: {
-                    overflow: 'visible',
-                    filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-                    mt: 1.5,
-                    '& .MuiAvatar-root': {
-                      width: 32,
-                      height: 32,
-                      ml: -0.5,
-                      mr: 1,
-                    },
-                    '&::before': {
-                      content: '""',
-                      display: 'block',
-                      position: 'absolute',
-                      top: 0,
-                      right: 14,
-                      width: 10,
-                      height: 10,
-                      bgcolor: 'background.paper',
-                      transform: 'translateY(-50%) rotate(45deg)',
-                      zIndex: 0,
-                    },
-                  },
-                }}
-              >
-                <MenuItem onClick={() => navigate('/perfil')}>
-                  <ListItemIcon>
-                    <PersonIcon fontSize="small" />
-                  </ListItemIcon>
-                  Mi Perfil
-                </MenuItem>
-                <Divider />
-                <MenuItem onClick={handleLogout} sx={{ color: '#d32f2f' }}>
-                  <ListItemIcon>
-                    <LogoutIcon fontSize="small" sx={{ color: '#d32f2f' }} />
-                  </ListItemIcon>
-                  Cerrar sesión
-                </MenuItem>
-              </Menu>
+              {/* Sección Derecha: Acciones Rápidas y Usuario */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                
+                {/* Filtro de Fecha Rápido */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    bgcolor: '#f8fafc', 
+                    border: '1px solid #e2e8f0', 
+                    borderRadius: '24px', 
+                    px: 2, 
+                    py: 0.5,
+                    transition: 'border-color 0.2s',
+                    '&:focus-within': {
+                      borderColor: '#cbd5e1'
+                    }
+                  }}>
+                    <CalendarTodayIcon sx={{ color: '#64748b', mr: 1, fontSize: '0.9rem' }} />
+                    <input 
+                      type="date" 
+                      value={dateRange.startDate} 
+                      onChange={handleStartDateChange} 
+                      style={{ 
+                        border: 'none', 
+                        outline: 'none', 
+                        color: '#334155', 
+                        fontSize: '0.8rem', 
+                        backgroundColor: 'transparent',
+                        fontFamily: 'Inter',
+                        fontWeight: 600,
+                      }} 
+                    />
+                    <Typography sx={{ color: '#94a3b8', mx: 1, fontSize: '0.8rem' }}> - </Typography>
+                    <input 
+                      type="date" 
+                      value={dateRange.endDate} 
+                      onChange={handleEndDateChange} 
+                      style={{ 
+                        border: 'none', 
+                        outline: 'none', 
+                        color: '#334155', 
+                        fontSize: '0.8rem', 
+                        backgroundColor: 'transparent',
+                        fontFamily: 'Inter',
+                        fontWeight: 600,
+                      }} 
+                    />
+                  </Box>
+                  <Button 
+                    variant="contained" 
+                    size="small" 
+                    startIcon={<FilterListIcon />}
+                    sx={{ 
+                      textTransform: 'none', 
+                      bgcolor: '#0a192f', 
+                      '&:hover': { bgcolor: '#172a45' },
+                      borderRadius: '24px',
+                      px: 2.5,
+                      py: 0.75,
+                      fontFamily: 'Outfit',
+                      fontSize: '0.825rem',
+                      boxShadow: 'none',
+                    }}
+                  >
+                    Filtros
+                  </Button>
+                </Box>
 
-            </Box>
-          </Toolbar>
-        </AppBar>
+                {/* Campana de Notificaciones */}
+                <IconButton color="inherit" onClick={handleNotifClick} sx={{ color: '#64748b' }}>
+                  <Badge badgeContent={notifications.length} color="error" slotProps={{ badge: { sx: { bgcolor: '#ef4444' } } }}>
+                    <NotificationsIcon />
+                  </Badge>
+                </IconButton>
+                
+                <Menu
+                  anchorEl={notifAnchorEl}
+                  open={openNotif}
+                  onClose={handleNotifClose}
+                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                  slotProps={{
+                    paper: {
+                      elevation: 3,
+                      sx: { width: 300, maxHeight: 400, mt: 1.5, borderRadius: 3, border: '1px solid #e2e8f0' }
+                    }
+                  }}
+                >
+                  <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #f1f5f9' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Notificaciones</Typography>
+                  </Box>
+                  {notifications.length === 0 ? (
+                    <MenuItem disabled sx={{ py: 2, fontFamily: 'Inter', fontSize: '0.85rem' }}>No hay notificaciones recientes</MenuItem>
+                  ) : (
+                    notifications.map((notif, index) => (
+                      <MenuItem key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 1.5 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>{notif.title}</Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap sx={{ width: '100%', fontFamily: 'Inter' }}>{notif.body}</Typography>
+                        <Typography variant="caption" sx={{ color: '#94a3b8', alignSelf: 'flex-end', fontSize: '0.65rem', mt: 0.5 }}>{notif.time}</Typography>
+                      </MenuItem>
+                    ))
+                  )}
+                  {notifications.length > 0 && (
+                    <Box sx={{ p: 1, textAlign: 'center', borderTop: '1px solid #f1f5f9' }}>
+                      <Button size="small" onClick={() => setNotifications([])} sx={{ textTransform: 'none', fontFamily: 'Outfit' }}>Limpiar todas</Button>
+                    </Box>
+                  )}
+                </Menu>
 
-        {/* ═══════════ PAGE CONTENT (Outlet) ═══════════ */}
-        <Box sx={{ flexGrow: 1, overflow: 'auto', p: 3 }}>
-          <Outlet context={{ dateRange }} />
+                {/* Perfil del Usuario */}
+                <Box 
+                  onClick={handleUserMenuClick}
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1.5, 
+                    borderLeft: '1px solid #f1f5f9', 
+                    pl: 3,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      '& .MuiAvatar-root': {
+                        borderColor: '#0ea5e9',
+                      }
+                    }
+                  }}
+                >
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a', fontFamily: 'Outfit' }}>
+                      Analista Regional
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.65rem', color: '#64748b', fontFamily: 'Inter' }}>
+                      IV Región
+                    </Typography>
+                  </Box>
+                  <Avatar 
+                    sx={{ 
+                      bgcolor: '#0a192f', 
+                      width: 36, 
+                      height: 36, 
+                      transition: 'all 0.3s',
+                      border: '2px solid transparent'
+                    }} 
+                  />
+                </Box>
+
+                <Menu
+                  anchorEl={anchorEl}
+                  open={open}
+                  onClose={handleClose}
+                  onClick={handleClose}
+                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                  slotProps={{
+                    paper: {
+                      elevation: 3,
+                      sx: {
+                        overflow: 'visible',
+                        mt: 1.5,
+                        borderRadius: 3,
+                        border: '1px solid #e2e8f0',
+                        '& .MuiAvatar-root': {
+                          width: 32,
+                          height: 32,
+                          ml: -0.5,
+                          mr: 1,
+                        },
+                        '&::before': {
+                          content: '""',
+                          display: 'block',
+                          position: 'absolute',
+                          top: 0,
+                          right: 14,
+                          width: 10,
+                          height: 10,
+                          bgcolor: 'background.paper',
+                          transform: 'translateY(-50%) rotate(45deg)',
+                          zIndex: 0,
+                          borderLeft: '1px solid #e2e8f0',
+                          borderTop: '1px solid #e2e8f0',
+                        },
+                      },
+                    }
+                  }}
+                >
+                  <MenuItem onClick={() => navigate('/perfil')} sx={{ fontFamily: 'Inter', fontSize: '0.875rem' }}>
+                    <ListItemIcon>
+                      <PersonIcon fontSize="small" />
+                    </ListItemIcon>
+                    Mi Perfil
+                  </MenuItem>
+                  <Divider sx={{ borderColor: '#f1f5f9' }} />
+                  <MenuItem onClick={handleLogout} sx={{ color: '#ef4444', fontFamily: 'Inter', fontSize: '0.875rem' }}>
+                    <ListItemIcon>
+                      <LogoutIcon fontSize="small" sx={{ color: '#ef4444' }} />
+                    </ListItemIcon>
+                    Cerrar sesión
+                  </MenuItem>
+                </Menu>
+
+              </Box>
+            </Toolbar>
+          </AppBar>
+
+          {/* ═══════════ CONTENIDO DE PÁGINAS (Outlet) ═══════════ */}
+          <Box sx={{ flexGrow: 1, overflow: 'auto', p: 3, bgcolor: '#f8fafc' }}>
+            <Outlet context={{ dateRange }} />
+          </Box>
+
+          {/* Alerta de notificación flotante global */}
+          <Snackbar 
+            open={snackbar.open} 
+            autoHideDuration={6000} 
+            onClose={handleSnackbarClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          >
+            <Alert 
+              onClose={handleSnackbarClose} 
+              severity="info" 
+              sx={{ 
+                width: '100%', 
+                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', 
+                borderRadius: 3, 
+                border: '1px solid #bfdbfe',
+                fontFamily: 'Inter' 
+              }}
+            >
+              <strong style={{ fontFamily: 'Outfit' }}>{snackbar.title}</strong><br/>
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+
         </Box>
-
-        {/* Global Snackbar for Foreground Notifications */}
-        <Snackbar 
-          open={snackbar.open} 
-          autoHideDuration={6000} 
-          onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert onClose={handleSnackbarClose} severity="info" sx={{ width: '100%', boxShadow: 3 }}>
-            <strong>{snackbar.title}</strong><br/>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-
       </Box>
-    </Box>
+    </ThemeProvider>
   );
 }

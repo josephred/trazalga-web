@@ -3,6 +3,40 @@ import { Box, Typography, Card, CardContent, CircularProgress, Alert, FormContro
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../../api/axiosConfig';
 
+// Custom Tooltip component for a premium look
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <Box
+        sx={{
+          bgcolor: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid #e2e8f0',
+          borderRadius: 3,
+          p: 1.5,
+          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)',
+        }}
+      >
+        <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, fontFamily: 'Outfit', color: '#0f172a' }}>
+          Fecha: {label}
+        </Typography>
+        {payload.map((item, idx) => (
+          <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.fill }} />
+            <Typography variant="caption" sx={{ color: '#475569', fontFamily: 'Inter', fontWeight: 600 }}>
+              {item.name}:
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#0f172a', fontFamily: 'Outfit', fontWeight: 800, ml: 'auto' }}>
+              {item.value.toLocaleString('es-CL')}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+  return null;
+};
+
 export default function IndicadorRecolector({ dateRange }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,55 +71,106 @@ export default function IndicadorRecolector({ dateRange }) {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
         <CircularProgress />
       </Box>
     );
   }
 
   if (error) {
-    return <Alert severity="error">{error}</Alert>;
+    return (
+      <Alert 
+        severity="error" 
+        sx={{ 
+          borderRadius: 3, 
+          fontFamily: 'Inter', 
+          border: '1px solid #fecaca' 
+        }}
+      >
+        {error}
+      </Alert>
+    );
   }
 
   return (
-    <Card sx={{ mb: 4, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-      <CardContent>
+    <Card 
+      elevation={0}
+      sx={{ 
+        mb: 4, 
+        borderRadius: 4, 
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
+          borderColor: '#cbd5e1',
+        }
+      }}
+    >
+      <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h6" fontWeight="bold" color="#1a3a5c">
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
             Evolución de Declaraciones y Desembarques
           </Typography>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
             <Select
               value={chartView}
               onChange={(e) => setChartView(e.target.value)}
               displayEmpty
+              slotProps={{
+                input: {
+                  sx: { borderRadius: 3, fontFamily: 'Inter', fontSize: '0.875rem' }
+                }
+              }}
             >
-              <MenuItem value="ambos">Ambos</MenuItem>
-              <MenuItem value="declaraciones">Solo Declaraciones</MenuItem>
-              <MenuItem value="desembarques">Solo Desembarques</MenuItem>
+              <MenuItem value="ambos" sx={{ fontFamily: 'Inter', fontSize: '0.875rem' }}>Ambos Indicadores</MenuItem>
+              <MenuItem value="declaraciones" sx={{ fontFamily: 'Inter', fontSize: '0.875rem' }}>Solo Declaraciones</MenuItem>
+              <MenuItem value="desembarques" sx={{ fontFamily: 'Inter', fontSize: '0.875rem' }}>Solo Desembarques</MenuItem>
             </Select>
           </FormControl>
         </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        <Typography variant="body2" sx={{ color: '#64748b', mb: 4, fontFamily: 'Inter', lineHeight: 1.6 }}>
           Evolución diaria del Nº de Declaraciones y Total de Desembarques (Kg) (Incluye Recolectores, Armadores y Áreas de Manejo).
         </Typography>
+
         <Box sx={{ width: '100%', height: 350 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-              <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-              <Tooltip />
-              <Legend />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis 
+                dataKey="name" 
+                tick={{ fill: '#64748b', fontSize: 11, fontFamily: 'Inter' }}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={false}
+              />
+              <YAxis 
+                yAxisId="left" 
+                orientation="left" 
+                tick={{ fill: '#0ea5e9', fontSize: 11, fontFamily: 'Inter' }}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={false}
+              />
+              <YAxis 
+                yAxisId="right" 
+                orientation="right" 
+                tick={{ fill: '#10b981', fontSize: 11, fontFamily: 'Inter' }}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={false}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(241, 245, 249, 0.4)' }} />
+              <Legend 
+                wrapperStyle={{ fontFamily: 'Outfit', fontSize: '0.85rem', paddingTop: '15px' }}
+                iconType="circle"
+                iconSize={8}
+              />
               {(chartView === 'ambos' || chartView === 'declaraciones') && (
-                <Bar yAxisId="left" dataKey="declaraciones" name="Nº Declaraciones" fill="#8884d8" radius={[4, 4, 0, 0]} barSize={50} />
+                <Bar yAxisId="left" dataKey="declaraciones" name="Nº Declaraciones" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={28} />
               )}
               {(chartView === 'ambos' || chartView === 'desembarques') && (
-                <Bar yAxisId="right" dataKey="desembarque" name="Total Desembarque (Kg)" fill="#82ca9d" radius={[4, 4, 0, 0]} barSize={50} />
+                <Bar yAxisId="right" dataKey="desembarque" name="Total Desembarque (Kg)" fill="#10b981" radius={[4, 4, 0, 0]} barSize={28} />
               )}
             </BarChart>
           </ResponsiveContainer>

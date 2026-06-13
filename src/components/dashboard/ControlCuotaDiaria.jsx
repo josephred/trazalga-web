@@ -44,15 +44,27 @@ export default function ControlCuotaDiaria({ dateRange }) {
     fetchCuotas();
   }, [dateRange, periodo, perfil]);
 
-  const getProgressColor = (porcentaje) => {
-    if (porcentaje >= 100) return 'error'; // Rojo
-    if (porcentaje >= 80) return 'warning'; // Naranja
-    return 'success'; // Verde
+  // Colores y fondos explícitos y refinados para las barras de progreso
+  const getProgressColors = (porcentaje) => {
+    if (porcentaje >= 100) return { bar: '#ef4444', bg: '#fef2f2', label: '#b91c1c' }; // Rojo
+    if (porcentaje >= 80) return { bar: '#f59e0b', bg: '#fffbeb', label: '#b45309' }; // Naranja/Amber
+    return { bar: '#10b981', bg: '#f0fdf4', label: '#047857' }; // Verde
   };
 
   if (loading) {
     return (
-      <Card sx={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+      <Card 
+        elevation={0}
+        sx={{ 
+          height: '100%', 
+          borderRadius: 4, 
+          border: '1px solid #e2e8f0',
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: 250 
+        }}
+      >
         <CircularProgress />
       </Card>
     );
@@ -60,75 +72,117 @@ export default function ControlCuotaDiaria({ dateRange }) {
 
   if (error) {
     return (
-      <Card sx={{ height: '100%' }}>
-        <CardContent>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+      <Card 
+        elevation={0}
+        sx={{ 
+          height: '100%', 
+          borderRadius: 4, 
+          border: '1px solid #e2e8f0',
+        }}
+      >
+        <CardContent sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a', mb: 2 }}>
             Control Cuota Diaria
           </Typography>
-          <Typography color="error">{error}</Typography>
+          <Typography color="error" sx={{ fontFamily: 'Inter', fontSize: '0.9rem' }}>{error}</Typography>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            Control Cuota (Volumen Extraído vs Límite)
+    <Card 
+      elevation={0}
+      sx={{ 
+        height: '100%',
+        borderRadius: 4, 
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
+          borderColor: '#cbd5e1',
+        }
+      }}
+    >
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+            Control de Cuotas
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 1.5 }}>
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <Select
                 value={perfil}
                 onChange={(e) => setPerfil(e.target.value)}
                 displayEmpty
+                slotProps={{
+                  input: {
+                    sx: { borderRadius: 3, fontFamily: 'Inter', fontSize: '0.85rem' }
+                  }
+                }}
               >
-                <MenuItem value="RECOLECTOR">Recolector</MenuItem>
-                <MenuItem value="ARMADOR">Armador</MenuItem>
-                <MenuItem value="AREA">Área de Manejo</MenuItem>
+                <MenuItem value="RECOLECTOR" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Recolector</MenuItem>
+                <MenuItem value="ARMADOR" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Armador</MenuItem>
+                <MenuItem value="AREA" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Área Manejo</MenuItem>
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl size="small" sx={{ minWidth: 100 }}>
               <Select
                 value={periodo}
                 onChange={(e) => setPeriodo(e.target.value)}
                 displayEmpty
+                slotProps={{
+                  input: {
+                    sx: { borderRadius: 3, fontFamily: 'Inter', fontSize: '0.85rem' }
+                  }
+                }}
               >
-                <MenuItem value="DIARIO">Diario</MenuItem>
-                <MenuItem value="SEMANAL">Semanal</MenuItem>
-                <MenuItem value="MENSUAL">Mensual</MenuItem>
+                <MenuItem value="DIARIO" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Diario</MenuItem>
+                <MenuItem value="SEMANAL" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Semanal</MenuItem>
+                <MenuItem value="MENSUAL" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Mensual</MenuItem>
               </Select>
             </FormControl>
           </Box>
         </Box>
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ mb: 3, borderColor: '#f1f5f9' }} />
         
         {cuotas.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">
-            No hay cuotas diarias activas configuradas.
-          </Typography>
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter' }}>
+              No hay cuotas activas configuradas para este perfil/periodo.
+            </Typography>
+          </Box>
         ) : (
           cuotas.map((cuota, index) => {
-            // Asegurar que el porcentaje no sobrepase el 100% visualmente en la barra
             const displayPercentage = cuota.porcentajeUso > 100 ? 100 : cuota.porcentajeUso;
+            const colors = getProgressColors(cuota.porcentajeUso);
             
             return (
-              <Box key={index} sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" fontWeight="bold">
+              <Box key={index} sx={{ mb: 3, '&:last-child': { mb: 1 } }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'baseline' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
                     {cuota.especieNombre}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {cuota.volumenExtraido} / {cuota.limiteCuota} kg ({cuota.porcentajeUso}%)
+                  <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.825rem', color: '#64748b' }}>
+                    {cuota.volumenExtraido?.toLocaleString('es-CL')} / {cuota.limiteCuota?.toLocaleString('es-CL')} kg{' '}
+                    <span style={{ fontWeight: 700, color: colors.label }}>
+                      ({cuota.porcentajeUso}%)
+                    </span>
                   </Typography>
                 </Box>
                 <LinearProgress 
                   variant="determinate" 
                   value={displayPercentage} 
-                  color={getProgressColor(cuota.porcentajeUso)}
-                  sx={{ height: 10, borderRadius: 5 }}
+                  sx={{ 
+                    height: 8, 
+                    borderRadius: 4, 
+                    bgcolor: '#e2e8f0',
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 4,
+                      bgcolor: colors.bar,
+                    }
+                  }}
                 />
               </Box>
             );
