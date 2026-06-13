@@ -1,7 +1,20 @@
 export default async function handler(req, res) {
     const { path } = req.query;
     const apiPath = Array.isArray(path) ? path.join('/') : path;
-    const targetUrl = `https://apps.procesac.com/api/${apiPath}`;
+
+    // Reconstruir los parámetros de consulta (query params) excluyendo 'path'
+    const queryParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(req.query)) {
+        if (key !== 'path') {
+            if (Array.isArray(value)) {
+                value.forEach(val => queryParams.append(key, val));
+            } else {
+                queryParams.append(key, value);
+            }
+        }
+    }
+    const queryString = queryParams.toString();
+    const targetUrl = `https://apps.procesac.com/api/${apiPath}${queryString ? '?' + queryString : ''}`;
 
     // En Vercel, req.body ya viene parseado si es JSON. 
     // Debemos volver a convertirlo a string si vamos a usar fetch para reenviarlo.
