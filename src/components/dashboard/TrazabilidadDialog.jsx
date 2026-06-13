@@ -185,23 +185,28 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
           </ReactFlow>
         </Box>
         <Box sx={{ flex: 1, position: 'relative' }}>
-          {row && row.latitud && row.longitud ? (
-            <MapContainer center={[row.latitud, row.longitud]} zoom={13} style={{ height: '100%', width: '100%' }}>
+          {row ? (
+            <MapContainer 
+              center={[row.latitud || -41.4693, row.longitud || -72.9424]} 
+              zoom={row.latitud ? 13 : 5} 
+              style={{ height: '100%', width: '100%' }}
+            >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution='&copy; OpenStreetMap contributors'
               />
-              <Marker position={[row.latitud, row.longitud]}>
+              <Marker position={[row.latitud || -41.4693, row.longitud || -72.9424]}>
                 <Popup>
                   <strong>{row.emisorNombre}</strong><br/>
                   Rut: {row.emisorRut}<br/>
-                  Declaración: {row.tipoReporte}
+                  Declaración: {row.tipoReporte}<br/>
+                  {!row.latitud && <span style={{color: 'red', fontSize: '10px'}}>(Ubicación de prueba)</span>}
                 </Popup>
               </Marker>
             </MapContainer>
           ) : (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888' }}>
-              <Typography>Geolocalización no disponible para esta declaración.</Typography>
+              <Typography>Cargando mapa...</Typography>
             </Box>
           )}
         </Box>
