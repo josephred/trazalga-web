@@ -48,9 +48,12 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
           label: (
             <div style={{ padding: '10px', textAlign: 'center' }}>
               <strong style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>{title}</strong>
-              <span style={{ fontSize: '12px', color: '#555' }}>{actor}</span>
-              <br/>
-              {date && <span style={{ fontSize: '10px', color: '#888' }}>{new Date(date).toLocaleDateString()}</span>}
+              <span style={{ fontSize: '12px', color: '#555', display: 'block', marginBottom: '4px' }}>{actor}</span>
+              {r.cantidad && <span style={{ fontSize: '11px', color: '#666', display: 'block' }}>Cant: {r.cantidad} kg</span>}
+              {r.especie && <span style={{ fontSize: '11px', color: '#666', display: 'block' }}>Especie: {r.especie}</span>}
+              {r.composicion && <span style={{ fontSize: '11px', color: '#666', display: 'block' }}>Comp: {r.composicion}</span>}
+              {r.estadoHumedad && <span style={{ fontSize: '11px', color: '#666', display: 'block' }}>Humedad: {r.estadoHumedad}</span>}
+              {date && <span style={{ fontSize: '10px', color: '#888', display: 'block', marginTop: '4px' }}>{new Date(date).toLocaleDateString()}</span>}
             </div>
           ) 
         },
@@ -58,7 +61,7 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
           background: '#fff', 
           border: `2px solid ${color}`,
           borderRadius: '8px',
-          width: 200,
+          width: 220,
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
         }
       });
