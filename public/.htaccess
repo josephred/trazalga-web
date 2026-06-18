@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+
+# Servir archivos y directorios reales directamente (JS, CSS, imágenes, etc.)
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Proxy hacia el backend real (apps.procesac.com)
+RewriteRule ^v-api/(.*)$ proxy.php?mode=api&path=$1 [QSA,L]
+RewriteRule ^v-core/(.*)$ proxy.php?mode=core&path=$1 [QSA,L]
+
+# SPA fallback: cualquier otra ruta va a index.html
+RewriteRule ^ index.html [L]
+</IfModule>
