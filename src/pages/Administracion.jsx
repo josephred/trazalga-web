@@ -12,7 +12,8 @@ import {
   Alert,
   CircularProgress,
   Tabs,
-  Tab
+  Tab,
+  Chip
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -24,7 +25,17 @@ import {
   Save as SaveIcon,
   Tune as TuneIcon,
   Speed as SpeedIcon,
-  TrendingUp as TrendingUpIcon
+  TrendingUp as TrendingUpIcon,
+  CloudSync as CloudSyncIcon,
+  Public as PublicIcon,
+  Category as CategoryIcon,
+  Phishing as PhishingIcon,
+  DirectionsBoat as DirectionsBoatIcon,
+  Pool as PoolIcon,
+  Terrain as TerrainIcon,
+  CheckCircle as CheckCircleIcon,
+  ErrorOutline as ErrorOutlineIcon,
+  PlayArrow as PlayArrowIcon
 } from '@mui/icons-material';
 import api from '../api/axiosConfig';
 import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
@@ -113,11 +124,68 @@ const getAlertIcon = (tipoAlerta) => {
   }
 };
 
+// Tareas de poblamiento de datos maestros desde el API de Sernapesca
+// (consumen los endpoints POST /sync/sernapesca/* del backend).
+const SYNC_TASKS = [
+  {
+    key: 'regiones',
+    label: 'Regiones, Comunas y Caletas',
+    descripcion: 'Jerarquía geográfica completa.',
+    path: '/sync/sernapesca/regiones',
+    color: '#0ea5e9',
+    icon: <PublicIcon />,
+  },
+  {
+    key: 'tipos-extraccion',
+    label: 'Tipos de Extracción',
+    descripcion: 'Métodos de recolección.',
+    path: '/sync/sernapesca/tipos-extraccion',
+    color: '#8b5cf6',
+    icon: <CategoryIcon />,
+  },
+  {
+    key: 'especies',
+    label: 'Especies',
+    descripcion: 'Especies autorizadas para recolección.',
+    path: '/sync/sernapesca/especies',
+    color: '#10b981',
+    icon: <PhishingIcon />,
+  },
+  {
+    key: 'embarcaciones',
+    label: 'Embarcaciones',
+    descripcion: 'Naves por región (puede tardar).',
+    path: '/sync/sernapesca/embarcaciones',
+    color: '#f59e0b',
+    icon: <DirectionsBoatIcon />,
+  },
+  {
+    key: 'buzos',
+    label: 'Buzos / Recolectores',
+    descripcion: 'Recolectores de orilla por región.',
+    path: '/sync/sernapesca/buzos',
+    color: '#06b6d4',
+    icon: <PoolIcon />,
+  },
+  {
+    key: 'amerb',
+    label: 'Áreas de Manejo (AMERB)',
+    descripcion: 'Áreas de manejo por región.',
+    path: '/sync/sernapesca/amerb',
+    color: '#ec4899',
+    icon: <TerrainIcon />,
+  },
+];
+
 export default function Administracion() {
   const [configuraciones, setConfiguraciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
+
+  // Estado del poblamiento de datos maestros (pestaña Sernapesca)
+  const [syncResults, setSyncResults] = useState({});
+  const [syncLoading, setSyncLoading] = useState(null); // key de la tarea en curso, o 'ALL'
 
   // Estados para configuración general (Rastreo GPS)
   const [trackingActivo, setTrackingActivo] = useState(false);
@@ -180,6 +248,35 @@ export default function Administracion() {
       setTimeout(() => setMensaje(null), 4000);
     } catch (error) {
       setMensaje({ type: 'error', text: 'Error al guardar la configuración.' });
+    }
+  };
+
+  // Ejecuta una tarea de poblamiento (o "todas") y guarda el resumen por entidad.
+  const runSync = async (task) => {
+    if (syncLoading) return;
+    setSyncLoading(task.key);
+    setMensaje(null);
+    try {
+      const { data } = await api.post(task.path);
+      const arr = Array.isArray(data) ? data : [data];
+      setSyncResults((prev) => {
+        const next = { ...prev };
+        arr.forEach((r) => {
+          if (r && r.entidad) next[r.entidad] = r;
+        });
+        return next;
+      });
+      const insertados = arr.reduce((sum, r) => sum + (r.insertados || 0), 0);
+      setMensaje({ type: 'success', text: `${task.label}: ${insertados} registro(s) insertado(s).` });
+      setTimeout(() => setMensaje(null), 5000);
+    } catch (error) {
+      console.error('Error en poblamiento Sernapesca', error);
+      setMensaje({
+        type: 'error',
+        text: `Error al cargar "${task.label}". Verifica que el backend y el API de Sernapesca estén accesibles.`,
+      });
+    } finally {
+      setSyncLoading(null);
     }
   };
 
@@ -383,6 +480,7 @@ export default function Administracion() {
         >
           <Tab icon={<TuneIcon sx={{ mr: 1 }} />} iconPosition="start" label="Configuración de Alertas" />
           <Tab icon={<MapIcon sx={{ mr: 1 }} />} iconPosition="start" label="Consola de Trazabilidad y GPS" />
+          <Tab icon={<CloudSyncIcon sx={{ mr: 1 }} />} iconPosition="start" label="Carga de Datos Maestros" />
         </Tabs>
 
         {/* Renderizado de Pestaña 1: Configuración de Alertas */}
@@ -659,6 +757,180 @@ export default function Administracion() {
               <MapaTrayectoUsuario />
             </Grid>
           </Grid>
+        )}
+
+        {/* Renderizado de Pestaña 3: Carga de Datos Maestros (Sernapesca) */}
+        {activeTab === 2 && (
+          <Box>
+            {/* Cabecera con acción global */}
+            <Card
+              elevation={0}
+              sx={{
+                borderRadius: 4,
+                border: '1px solid #e2e8f0',
+                bgcolor: '#ffffff',
+                p: { xs: 2.5, md: 3 },
+                mb: 4,
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                alignItems: { xs: 'flex-start', md: 'center' },
+                justifyContent: 'space-between',
+                gap: 2,
+              }}
+            >
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a', mb: 0.5 }}>
+                  Poblamiento desde el API de Sernapesca
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', maxWidth: 640, lineHeight: 1.6 }}>
+                  Sincroniza las tablas maestras (regiones, comunas, caletas, especies, embarcaciones, buzos y AMERB)
+                  consumiendo el servicio público de Sernapesca. Las cargas son idempotentes: puedes repetirlas sin
+                  duplicar registros.
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                startIcon={syncLoading === 'ALL' ? <CircularProgress size={18} color="inherit" /> : <CloudSyncIcon />}
+                disabled={!!syncLoading}
+                onClick={() => runSync({ key: 'ALL', label: 'Todas las tablas', path: '/sync/sernapesca/all' })}
+                sx={{
+                  bgcolor: '#0a192f',
+                  '&:hover': { bgcolor: '#172a45' },
+                  boxShadow: 'none',
+                  borderRadius: 2.5,
+                  px: 3,
+                  py: 1.25,
+                  fontFamily: 'Outfit',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                {syncLoading === 'ALL' ? 'Cargando todo...' : 'Cargar Todo'}
+              </Button>
+            </Card>
+
+            {/* Tarjetas por tabla */}
+            <Grid container spacing={3}>
+              {SYNC_TASKS.map((task) => {
+                const isLoading = syncLoading === task.key;
+                return (
+                  <Grid item xs={12} sm={6} lg={4} key={task.key}>
+                    <Card
+                      elevation={0}
+                      sx={{
+                        borderRadius: 4,
+                        border: '1px solid #e2e8f0',
+                        bgcolor: '#ffffff',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          borderColor: '#cbd5e1',
+                          boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04)',
+                          transform: 'translateY(-2px)',
+                        },
+                      }}
+                    >
+                      <CardContent sx={{ p: 3, flexGrow: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              borderRadius: 3,
+                              bgcolor: `${task.color}15`,
+                              color: task.color,
+                              display: 'flex',
+                            }}
+                          >
+                            {task.icon}
+                          </Box>
+                          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.05rem', fontFamily: 'Outfit', color: '#0f172a' }}>
+                            {task.label}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter' }}>
+                          {task.descripcion}
+                        </Typography>
+                      </CardContent>
+                      <Box sx={{ p: 2.5, pt: 0 }}>
+                        <Button
+                          fullWidth
+                          variant="outlined"
+                          startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : <PlayArrowIcon />}
+                          disabled={!!syncLoading}
+                          onClick={() => runSync(task)}
+                          sx={{
+                            borderRadius: 2.5,
+                            py: 1,
+                            fontFamily: 'Outfit',
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            borderColor: '#e2e8f0',
+                            color: '#0f172a',
+                            '&:hover': { borderColor: task.color, color: task.color, bgcolor: `${task.color}08` },
+                          }}
+                        >
+                          {isLoading ? 'Cargando...' : 'Cargar'}
+                        </Button>
+                      </Box>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+
+            {/* Resumen de resultados */}
+            {Object.keys(syncResults).length > 0 && (
+              <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#ffffff', mt: 4, overflow: 'hidden' }}>
+                <Box sx={{ p: 2.5, borderBottom: '1px solid #f1f5f9', bgcolor: '#fbfbfb' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+                    Resumen de la última carga
+                  </Typography>
+                </Box>
+                <Box>
+                  {Object.values(syncResults).map((r) => (
+                    <Box
+                      key={r.entidad}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        justifyContent: 'space-between',
+                        gap: 1.5,
+                        py: 1.75,
+                        px: 2.5,
+                        borderBottom: '1px solid #f1f5f9',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        {r.ok ? (
+                          <CheckCircleIcon sx={{ color: '#10b981', fontSize: 22 }} />
+                        ) : (
+                          <ErrorOutlineIcon sx={{ color: '#ef4444', fontSize: 22 }} />
+                        )}
+                        <Typography sx={{ fontWeight: 700, fontFamily: 'Inter', color: '#0f172a', textTransform: 'capitalize' }}>
+                          {r.entidad.replace(/_/g, ' ')}
+                        </Typography>
+                      </Box>
+                      {r.ok ? (
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          <Chip size="small" variant="outlined" label={`Obtenidos: ${r.obtenidos}`} />
+                          <Chip size="small" color="success" label={`Insertados: ${r.insertados}`} />
+                          {r.actualizados > 0 && <Chip size="small" color="info" label={`Actualizados: ${r.actualizados}`} />}
+                          <Chip size="small" sx={{ bgcolor: '#f1f5f9', color: '#64748b' }} label={`Omitidos: ${r.omitidos}`} />
+                        </Box>
+                      ) : (
+                        <Typography variant="caption" sx={{ color: '#ef4444', fontFamily: 'Inter' }}>
+                          {r.mensaje || 'No disponible'}
+                        </Typography>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              </Card>
+            )}
+          </Box>
         )}
 
       </Box>
