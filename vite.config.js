@@ -44,7 +44,10 @@ export default defineConfig({
         target: 'https://apps.procesac.com',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/v-api/, '/api'),
+        rewrite: (path) => {
+          const stripped = path.replace(/^\/v-api/, '');
+          return stripped.startsWith('/sync') ? stripped : '/api' + stripped;
+        },
         configure: (proxy, _options) => {
           proxy.on('proxyReq', (proxyReq, req, _res) => {
             // Removemos completamente la cabecera Origin para intentar saltar el chequeo CORS

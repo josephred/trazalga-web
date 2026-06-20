@@ -14,7 +14,11 @@ export default async function handler(req, res) {
         }
     }
     const queryString = queryParams.toString();
-    const targetUrl = `https://apps.procesac.com/api/${apiPath}${queryString ? '?' + queryString : ''}`;
+    let basePath = 'api/';
+    if (apiPath.startsWith('sync/')) {
+        basePath = '';
+    }
+    const targetUrl = `https://apps.procesac.com/${basePath}${apiPath}${queryString ? '?' + queryString : ''}`;
 
     // En Vercel, req.body ya viene parseado si es JSON. 
     // Debemos volver a convertirlo a string si vamos a usar fetch para reenviarlo.
