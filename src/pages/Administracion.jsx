@@ -35,7 +35,8 @@ import {
   Terrain as TerrainIcon,
   CheckCircle as CheckCircleIcon,
   ErrorOutline as ErrorOutlineIcon,
-  PlayArrow as PlayArrowIcon
+  PlayArrow as PlayArrowIcon,
+  DeleteSweep as DeleteSweepIcon
 } from '@mui/icons-material';
 import api from '../api/axiosConfig';
 import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
@@ -274,6 +275,26 @@ export default function Administracion() {
       setMensaje({
         type: 'error',
         text: `Error al cargar "${task.label}". Verifica que el backend y el API de Sernapesca estén accesibles.`,
+      });
+    } finally {
+      setSyncLoading(null);
+    }
+  };
+
+  const handleVaciarTablas = async () => {
+    if (!window.confirm("¿Estás seguro de que deseas vaciar las tablas de declaraciones y maestros? Esta acción no se puede deshacer.")) {
+      return;
+    }
+    setMensaje(null);
+    try {
+      setSyncLoading('VACIAR');
+      await api.delete('/admin/database/vaciar-tablas');
+      setMensaje({ type: 'success', text: 'Tablas maestras y declaraciones vaciadas correctamente.' });
+    } catch (error) {
+      console.error('Error al vaciar las tablas', error);
+      setMensaje({
+        type: 'error',
+        text: 'Error al vaciar las tablas. Verifica que el backend esté accesible.',
       });
     } finally {
       setSyncLoading(null);
@@ -788,25 +809,44 @@ export default function Administracion() {
                   duplicar registros.
                 </Typography>
               </Box>
-              <Button
-                variant="contained"
-                startIcon={syncLoading === 'ALL' ? <CircularProgress size={18} color="inherit" /> : <CloudSyncIcon />}
-                disabled={!!syncLoading}
-                onClick={() => runSync({ key: 'ALL', label: 'Todas las tablas', path: '/sync/sernapesca/all' })}
-                sx={{
-                  bgcolor: '#0a192f',
-                  '&:hover': { bgcolor: '#172a45' },
-                  boxShadow: 'none',
-                  borderRadius: 2.5,
-                  px: 3,
-                  py: 1.25,
-                  fontFamily: 'Outfit',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                }}
-              >
-                {syncLoading === 'ALL' ? 'Cargando todo...' : 'Cargar Todo'}
-              </Button>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={syncLoading === 'VACIAR' ? <CircularProgress size={18} color="inherit" /> : <DeleteSweepIcon />}
+                  disabled={!!syncLoading}
+                  onClick={handleVaciarTablas}
+                  sx={{
+                    borderRadius: 2.5,
+                    px: 3,
+                    py: 1.25,
+                    fontFamily: 'Outfit',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  {syncLoading === 'VACIAR' ? 'Vaciando...' : 'Vaciar Tablas'}
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={syncLoading === 'ALL' ? <CircularProgress size={18} color="inherit" /> : <CloudSyncIcon />}
+                  disabled={!!syncLoading}
+                  onClick={() => runSync({ key: 'ALL', label: 'Todas las tablas', path: '/sync/sernapesca/all' })}
+                  sx={{
+                    bgcolor: '#0a192f',
+                    '&:hover': { bgcolor: '#172a45' },
+                    boxShadow: 'none',
+                    borderRadius: 2.5,
+                    px: 3,
+                    py: 1.25,
+                    fontFamily: 'Outfit',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  {syncLoading === 'ALL' ? 'Cargando todo...' : 'Cargar Todo'}
+                </Button>
+              </Box>
             </Card>
 
             {/* Tarjetas por tabla */}
