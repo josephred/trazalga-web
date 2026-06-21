@@ -153,14 +153,6 @@ const SYNC_TASKS = [
     icon: <PhishingIcon />,
   },
   {
-    key: 'embarcaciones',
-    label: 'Embarcaciones',
-    descripcion: 'Naves por región (puede tardar).',
-    path: '/sync/sernapesca/embarcaciones',
-    color: '#f59e0b',
-    icon: <DirectionsBoatIcon />,
-  },
-  {
     key: 'buzos',
     label: 'Buzos / Recolectores',
     descripcion: 'Recolectores de orilla por región.',
