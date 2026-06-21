@@ -153,14 +153,6 @@ const SYNC_TASKS = [
     icon: <PhishingIcon />,
   },
   {
-    key: 'buzos',
-    label: 'Buzos / Recolectores',
-    descripcion: 'Recolectores de orilla por región.',
-    path: '/sync/sernapesca/buzos',
-    color: '#06b6d4',
-    icon: <PoolIcon />,
-  },
-  {
     key: 'amerb',
     label: 'Áreas de Manejo (AMERB)',
     descripcion: 'Áreas de manejo por región.',
