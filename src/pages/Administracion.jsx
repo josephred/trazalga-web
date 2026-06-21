@@ -40,7 +40,7 @@ import {
 } from '@mui/icons-material';
 import api from '../api/axiosConfig';
 import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
-
+import FactoryIcon from '@mui/icons-material/Factory';
 
 // Styled Switch matching IOS visual cues
 const IOSSwitch = styled((props) => (
@@ -175,6 +175,14 @@ const SYNC_TASKS = [
     path: '/sync/sernapesca/amerb',
     color: '#ec4899',
     icon: <TerrainIcon />,
+  },
+  {
+    key: 'plantas',
+    label: 'Plantas Destino',
+    descripcion: 'Plantas (destinatarios) por región.',
+    path: '/sync/sernapesca/plantas',
+    color: '#f43f5e',
+    icon: <FactoryIcon />,
   },
 ];
 
