@@ -168,6 +168,22 @@ const SYNC_TASKS = [
     color: '#f43f5e',
     icon: <FactoryIcon />,
   },
+  {
+    key: 'buzos',
+    label: 'Buzos',
+    descripcion: 'Sincronizar registro de buzos.',
+    path: '/sync/sernapesca/buzos',
+    color: '#f59e0b',
+    icon: <PoolIcon />,
+  },
+  {
+    key: 'embarcaciones',
+    label: 'Embarcaciones',
+    descripcion: 'Sincronizar registro de embarcaciones.',
+    path: '/sync/sernapesca/embarcaciones',
+    color: '#3b82f6',
+    icon: <DirectionsBoatIcon />,
+  },
 ];
 
 export default function Administracion() {
@@ -260,8 +276,14 @@ export default function Administracion() {
         return next;
       });
       const insertados = arr.reduce((sum, r) => sum + (r.insertados || 0), 0);
-      setMensaje({ type: 'success', text: `${task.label}: ${insertados} registro(s) insertado(s).` });
-      setTimeout(() => setMensaje(null), 5000);
+      const obtenidos = arr.reduce((sum, r) => sum + (r.obtenidos || 0), 0);
+      const omitidos = arr.reduce((sum, r) => sum + (r.omitidos || 0), 0);
+      
+      setMensaje({ 
+        type: 'success', 
+        text: `${task.label}: Se obtuvieron ${obtenidos} registros del API. ${insertados} insertados, ${omitidos} omitidos (ya existentes).` 
+      });
+      setTimeout(() => setMensaje(null), 8000);
     } catch (error) {
       console.error('Error en poblamiento Sernapesca', error);
       setMensaje({
