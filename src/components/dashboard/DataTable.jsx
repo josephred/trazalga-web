@@ -79,7 +79,7 @@ const DataTable = ({ title, data = [], onRowClick }) => {
                                 <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>ID/Folio</TableCell>
                                 <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Fecha de Emisión</TableCell>
                                 <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Emisor</TableCell>
-                                <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Receptor</TableCell>
+                                <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Comerciante</TableCell>
                                 <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Especie Declarada</TableCell>
                                 <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }} align="right">Cantidad (kg)</TableCell>
                                 {hasExtendedTraceability && (
@@ -87,7 +87,7 @@ const DataTable = ({ title, data = [], onRowClick }) => {
                                         <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Planta Abast.</TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Fecha Comerc.</TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Planta Prod.</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Fecha P. Abast.</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', borderBottom: '2px solid #e2e8f0', fontFamily: 'Outfit', py: 2 }}>Fecha P. Destino.</TableCell>
                                     </>
                                 )}
                             </TableRow>
@@ -100,8 +100,8 @@ const DataTable = ({ title, data = [], onRowClick }) => {
                                         <TableRow
                                             key={row.id}
                                             onClick={() => onRowClick && onRowClick(row)}
-                                            sx={{ 
-                                                '&:last-child td, &:last-child th': { border: 0 }, 
+                                            sx={{
+                                                '&:last-child td, &:last-child th': { border: 0 },
                                                 '&:hover': { backgroundColor: '#f8fafc' },
                                                 cursor: onRowClick ? 'pointer' : 'default',
                                                 transition: 'background-color 0.2s ease',
@@ -128,20 +128,20 @@ const DataTable = ({ title, data = [], onRowClick }) => {
                                                 <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'Inter' }}>RUT: {row.receptorRut}</Typography>
                                             </TableCell>
                                             <TableCell sx={{ py: 1.8 }}>
-                                                <Chip 
-                                                    label={row.especie} 
-                                                    size="small" 
-                                                    sx={{ 
-                                                        fontWeight: 600, 
-                                                        bgcolor: chipColors.bg, 
-                                                        color: chipColors.text, 
+                                                <Chip
+                                                    label={row.especie}
+                                                    size="small"
+                                                    sx={{
+                                                        fontWeight: 600,
+                                                        bgcolor: chipColors.bg,
+                                                        color: chipColors.text,
                                                         borderColor: chipColors.border,
                                                         borderWidth: '1px',
                                                         borderStyle: 'solid',
                                                         fontFamily: 'Outfit',
                                                         fontSize: '0.75rem',
                                                         borderRadius: '6px',
-                                                    }} 
+                                                    }}
                                                 />
                                             </TableCell>
                                             <TableCell align="right" sx={{ py: 1.8 }}>
