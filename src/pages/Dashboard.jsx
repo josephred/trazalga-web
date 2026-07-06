@@ -10,6 +10,7 @@ import StatCard from '../components/dashboard/StatCard';
 import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
 import ControlCuotaDiaria from '../components/dashboard/ControlCuotaDiaria';
 import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
+import VolumenPorEspecie from '../components/dashboard/VolumenPorEspecie';
 import { useOutletContext } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getResumenGlobal } from '../services/reportesService';
@@ -83,7 +84,11 @@ export default function Dashboard() {
             <IndicadorRecolector dateRange={dateRange} />
           </Grid>
 
-          {/* Fila Inferior: Control de Cuotas y Alertas de Veda */}
+          {/* Volumen extraído por especie y Control de Cuotas */}
+          <Grid item xs={12} md={6}>
+            <VolumenPorEspecie dateRange={dateRange} />
+          </Grid>
+
           <Grid item xs={12} md={6}>
             <ControlCuotaDiaria dateRange={dateRange} />
           </Grid>
