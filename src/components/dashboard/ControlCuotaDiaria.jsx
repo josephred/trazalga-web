@@ -161,9 +161,32 @@ export default function ControlCuotaDiaria({ dateRange }) {
             return (
               <Box key={index} sx={{ mb: 3, '&:last-child': { mb: 1 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'baseline' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
-                    {cuota.especieNombre}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+                      {cuota.especieNombre}
+                    </Typography>
+                    {cuota.alcance && cuota.alcance !== 'Global' && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontFamily: 'Inter',
+                          color: '#64748b',
+                          bgcolor: '#f1f5f9',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: 2,
+                          px: 1,
+                          py: 0.1,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: 180
+                        }}
+                        title={cuota.alcance}
+                      >
+                        {cuota.alcance}
+                      </Typography>
+                    )}
+                  </Box>
                   <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.825rem', color: '#64748b' }}>
                     {cuota.volumenExtraido?.toLocaleString('es-CL')} / {cuota.limiteCuota?.toLocaleString('es-CL')} kg{' '}
                     <span style={{ fontWeight: 700, color: colors.label }}>
