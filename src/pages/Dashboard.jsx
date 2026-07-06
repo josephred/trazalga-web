@@ -12,6 +12,7 @@ import ControlCuotaDiaria from '../components/dashboard/ControlCuotaDiaria';
 import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
 import VolumenPorEspecie from '../components/dashboard/VolumenPorEspecie';
 import TiempoValidacionWidget from '../components/dashboard/TiempoValidacionWidget';
+import VariacionPesoWidget from '../components/dashboard/VariacionPesoWidget';
 import { useOutletContext } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getResumenGlobal } from '../services/reportesService';
@@ -100,6 +101,10 @@ export default function Dashboard() {
 
           <Grid item xs={12} md={6}>
             <TiempoValidacionWidget dateRange={dateRange} />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <VariacionPesoWidget dateRange={dateRange} />
           </Grid>
         </Grid>
       </Container>
