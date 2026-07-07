@@ -36,7 +36,8 @@ import {
   CheckCircle as CheckCircleIcon,
   ErrorOutline as ErrorOutlineIcon,
   PlayArrow as PlayArrowIcon,
-  DeleteSweep as DeleteSweepIcon
+  DeleteSweep as DeleteSweepIcon,
+  Link as LinkIcon
 } from '@mui/icons-material';
 import api from '../api/axiosConfig';
 import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
@@ -187,6 +188,14 @@ const SYNC_TASKS = [
     path: '/sync/sernapesca/embarcaciones',
     color: '#3b82f6',
     icon: <DirectionsBoatIcon />,
+  },
+  {
+    key: 'usuario-embarcacion',
+    label: 'Relación Usuario - Embarcación',
+    descripcion: 'Asocia los usuarios con sus embarcaciones de Sernapesca.',
+    path: '/sync/sernapesca/usuario-embarcacion',
+    color: '#a855f7',
+    icon: <LinkIcon />,
   },
 ];
 
