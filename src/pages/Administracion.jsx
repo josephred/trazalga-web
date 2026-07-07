@@ -289,14 +289,20 @@ export default function Administracion() {
         });
         return next;
       });
-      const insertados = arr.reduce((sum, r) => sum + (r.insertados || 0), 0);
-      const obtenidos = arr.reduce((sum, r) => sum + (r.obtenidos || 0), 0);
-      const omitidos = arr.reduce((sum, r) => sum + (r.omitidos || 0), 0);
-      
-      setMensaje({ 
-        type: 'success', 
-        text: `${task.label}: Se obtuvieron ${obtenidos} registros del API. ${insertados} insertados, ${omitidos} omitidos (ya existentes).` 
-      });
+
+      const customMsg = arr.find(r => r.mensaje)?.mensaje;
+      if (customMsg) {
+        setMensaje({ type: 'success', text: customMsg });
+      } else {
+        const insertados = arr.reduce((sum, r) => sum + (r.insertados || 0), 0);
+        const obtenidos = arr.reduce((sum, r) => sum + (r.obtenidos || 0), 0);
+        const omitidos = arr.reduce((sum, r) => sum + (r.omitidos || 0), 0);
+        
+        setMensaje({ 
+          type: 'success', 
+          text: `${task.label}: Se obtuvieron ${obtenidos} registros del API. ${insertados} insertados, ${omitidos} omitidos (ya existentes).` 
+        });
+      }
       setTimeout(() => setMensaje(null), 8000);
     } catch (error) {
       console.error('Error en poblamiento Sernapesca', error);
