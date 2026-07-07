@@ -62,10 +62,15 @@ export default function MainLayout() {
     };
   }, []);
 
-  // Initialize with last 7 days
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0]
+  // Inicializa desde el día 1 del mes actual hasta hoy (en fecha local, no UTC)
+  const [dateRange, setDateRange] = useState(() => {
+    const formatoLocal = (d) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const hoy = new Date();
+    return {
+      startDate: formatoLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 1)),
+      endDate: formatoLocal(hoy)
+    };
   });
 
   const handleStartDateChange = (e) => {
