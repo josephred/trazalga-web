@@ -40,12 +40,16 @@ import {
 } from '@mui/icons-material';
 import api from '../api/axiosConfig';
 import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
+import CuotasExtraccionMaestro from '../components/admin/CuotasExtraccionMaestro';
+import VedasEspecieMaestro from '../components/admin/VedasEspecieMaestro';
 import FactoryIcon from '@mui/icons-material/Factory';
+import ScaleIcon from '@mui/icons-material/Scale';
+import BlockIcon from '@mui/icons-material/Block';
 
 // Styled Switch matching IOS visual cues
 const IOSSwitch = styled((props) => (
   <Switch focusVisibleClassName=".Mui-focusVisible" disableRipple {...props} />
-))(({ theme }) => ({
+))(() => ({
   width: 42,
   height: 26,
   padding: 0,
@@ -77,7 +81,7 @@ const IOSSwitch = styled((props) => (
 }));
 
 // Premium Styled Slider with gradient highlight
-const ModernSlider = styled(Slider)(({ theme }) => ({
+const ModernSlider = styled(Slider)(() => ({
   color: '#0ea5e9',
   height: 6,
   '& .MuiSlider-track': {
@@ -255,7 +259,8 @@ export default function Administracion() {
       await api.put(`/configuracion-alertas/${config.id}`, config);
       setMensaje({ type: 'success', text: `Configuración de alerta "${config.titulo}" guardada correctamente.` });
       setTimeout(() => setMensaje(null), 4000);
-    } catch (error) {
+    } catch (err) {
+      console.error(err);
       setMensaje({ type: 'error', text: 'Error al guardar la configuración.' });
     }
   };
@@ -514,6 +519,8 @@ export default function Administracion() {
           }}
         >
           <Tab icon={<TuneIcon sx={{ mr: 1 }} />} iconPosition="start" label="Configuración de Alertas" />
+          <Tab icon={<ScaleIcon sx={{ mr: 1 }} />} iconPosition="start" label="Cuotas de Extracción" />
+          <Tab icon={<BlockIcon sx={{ mr: 1 }} />} iconPosition="start" label="Vedas de Especies" />
           <Tab icon={<MapIcon sx={{ mr: 1 }} />} iconPosition="start" label="Consola de Trazabilidad y GPS" />
           <Tab icon={<CloudSyncIcon sx={{ mr: 1 }} />} iconPosition="start" label="Carga de Datos Maestros" />
         </Tabs>
@@ -659,8 +666,14 @@ export default function Administracion() {
           </Grid>
         )}
 
-        {/* Renderizado de Pestaña 2: Consola de Trazabilidad y GPS */}
-        {activeTab === 1 && (
+        {/* Renderizado de Pestaña 2: Mantenedor de Cuotas de Extracción */}
+        {activeTab === 1 && <CuotasExtraccionMaestro />}
+
+        {/* Renderizado de Pestaña 3: Mantenedor de Vedas de Especies */}
+        {activeTab === 2 && <VedasEspecieMaestro />}
+
+        {/* Renderizado de Pestaña 4: Consola de Trazabilidad y GPS */}
+        {activeTab === 3 && (
           <Grid container spacing={4}>
             {/* Columna Izquierda: Configuración del GPS Móvil */}
             <Grid item xs={12} lg={4}>
@@ -794,8 +807,8 @@ export default function Administracion() {
           </Grid>
         )}
 
-        {/* Renderizado de Pestaña 3: Carga de Datos Maestros (Sernapesca) */}
-        {activeTab === 2 && (
+        {/* Renderizado de Pestaña 5: Carga de Datos Maestros (Sernapesca) */}
+        {activeTab === 4 && (
           <Box>
             {/* Cabecera con acción global */}
             <Card
