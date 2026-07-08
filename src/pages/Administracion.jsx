@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Typography,
   Box,
@@ -274,6 +274,45 @@ export default function Administracion() {
     }
   };
 
+  // Polling del avance de la sincronización usuario-embarcación en segundo plano
+  const uexPollRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (uexPollRef.current) clearInterval(uexPollRef.current);
+    };
+  }, []);
+
+  const pollUsuarioEmbarcacion = () => {
+    if (uexPollRef.current) clearInterval(uexPollRef.current);
+    uexPollRef.current = setInterval(async () => {
+      try {
+        const { data } = await api.get('/sync/sernapesca/usuario-embarcacion/estado');
+        setSyncResults((prev) => ({
+          ...prev,
+          usuario_embarcacion: {
+            entidad: 'usuario_embarcacion',
+            ok: !data.ultimoError,
+            obtenidos: data.procesados,
+            insertados: data.vinculados,
+            actualizados: data.embarcacionesCreadas,
+            omitidos: data.omitidos,
+            mensaje: data.mensaje,
+          },
+        }));
+        if (!data.enCurso) {
+          clearInterval(uexPollRef.current);
+          uexPollRef.current = null;
+          setMensaje({ type: data.ultimoError ? 'error' : 'success', text: `Relación Usuario-Embarcación — ${data.mensaje}` });
+          setTimeout(() => setMensaje(null), 8000);
+        }
+      } catch {
+        clearInterval(uexPollRef.current);
+        uexPollRef.current = null;
+      }
+    }, 4000);
+  };
+
   // Ejecuta una tarea de poblamiento (o "todas") y guarda el resumen por entidad.
   const runSync = async (task) => {
     if (syncLoading) return;
@@ -289,6 +328,12 @@ export default function Administracion() {
         });
         return next;
       });
+
+      // Si la respuesta incluye la tarea usuario-embarcación (corre en segundo plano),
+      // seguimos su avance con el endpoint de estado.
+      if (arr.some((r) => r && r.entidad === 'usuario_embarcacion' && r.ok)) {
+        pollUsuarioEmbarcacion();
+      }
 
       const customMsg = arr.find(r => r.mensaje)?.mensaje;
       if (customMsg) {
