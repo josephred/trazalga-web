@@ -34,10 +34,8 @@ export default function CasosAbiertosWidget({ dateRange }) {
       try {
         setLoading(true);
         let queryParams = '';
-        if (dateRange && dateRange[0] && dateRange[1]) {
-          const start = typeof dateRange[0].format === 'function' ? dateRange[0].format('YYYY-MM-DD') : dateRange[0];
-          const end = typeof dateRange[1].format === 'function' ? dateRange[1].format('YYYY-MM-DD') : dateRange[1];
-          queryParams = `?startDate=${start}&endDate=${end}`;
+        if (dateRange && dateRange.startDate && dateRange.endDate) {
+          queryParams = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
         }
         
         const response = await api.get(`/reportes/casos-abiertos${queryParams}`);
