@@ -14,6 +14,7 @@ import VolumenPorEspecie from '../components/dashboard/VolumenPorEspecie';
 import TiempoValidacionWidget from '../components/dashboard/TiempoValidacionWidget';
 import VariacionPesoWidget from '../components/dashboard/VariacionPesoWidget';
 import CasosAbiertosWidget from '../components/dashboard/CasosAbiertosWidget';
+import CurvaSnakeWidget from '../components/dashboard/CurvaSnakeWidget';
 import { useOutletContext } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getResumenGlobal } from '../services/reportesService';
@@ -176,6 +177,11 @@ export default function Dashboard() {
 
           <Grid item xs={12} md={6}>
             <CasosAbiertosWidget dateRange={dateRange} />
+          </Grid>
+
+          {/* Curva Snake acumulada (AMERB) — ancho completo */}
+          <Grid item xs={12}>
+            <CurvaSnakeWidget dateRange={dateRange} />
           </Grid>
         </Grid>
       </Container>
