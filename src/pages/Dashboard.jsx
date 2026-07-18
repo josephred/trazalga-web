@@ -10,6 +10,7 @@ import StatCard from '../components/dashboard/StatCard';
 import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
 import ControlCuotaDiaria from '../components/dashboard/ControlCuotaDiaria';
 import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
+import DobleOperacionWidget from '../components/dashboard/DobleOperacionWidget';
 import VolumenPorEspecie from '../components/dashboard/VolumenPorEspecie';
 import TiempoValidacionWidget from '../components/dashboard/TiempoValidacionWidget';
 import VariacionPesoWidget from '../components/dashboard/VariacionPesoWidget';
@@ -177,6 +178,10 @@ export default function Dashboard() {
 
           <Grid item xs={12} md={6}>
             <CasosAbiertosWidget dateRange={dateRange} />
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <DobleOperacionWidget dateRange={dateRange} />
           </Grid>
 
           {/* Curva Snake acumulada (AMERB) — ancho completo */}
