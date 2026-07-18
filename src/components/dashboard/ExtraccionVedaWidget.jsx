@@ -176,7 +176,7 @@ export default function ExtraccionVedaWidget({ dateRange }) {
                     color: hasInfractions ? '#ef4444' : '#0f172a' 
                   }}
                 >
-                  {metrics.totalKgVeda.toLocaleString('es-CL')}
+                  {((metrics && metrics.totalKgVeda) || 0).toLocaleString('es-CL')}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b', fontFamily: 'Inter' }}>
                   Volumen (Kg)
@@ -258,7 +258,7 @@ export default function ExtraccionVedaWidget({ dateRange }) {
                         <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.actor}</TableCell>
                         <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.especie}</TableCell>
                         <TableCell sx={{ py: 1.5, fontFamily: 'Outfit', fontWeight: 700, color: '#ef4444' }} align="right">
-                          {row.kg.toLocaleString('es-CL')}
+                          {((row && row.kg) || 0).toLocaleString('es-CL')}
                         </TableCell>
                       </TableRow>
                     ))}

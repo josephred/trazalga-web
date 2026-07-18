@@ -58,7 +58,7 @@ export default function Dashboard() {
           <Grid item xs={12} sm={6} md={4} lg={2}>
             <StatCard
               title="Declaraciones totales"
-              value={resumen.declaracionesTotales.toLocaleString('es-CL')}
+              value={(resumen.declaracionesTotales || 0).toLocaleString('es-CL')}
               color="#0ea5e9"
               icon={BarChartIcon}
               subtitle="Recolector, armador y área"
@@ -67,7 +67,7 @@ export default function Dashboard() {
           <Grid item xs={12} sm={6} md={4} lg={2}>
             <StatCard
               title="Volumen total (kg)"
-              value={resumen.volumenTotal.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
+              value={(resumen.volumenTotal || 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
               color="#10b981"
               icon={InventoryIcon}
               subtitle="Desembarque declarado"
@@ -76,7 +76,7 @@ export default function Dashboard() {
           <Grid item xs={12} sm={6} md={4} lg={2}>
             <StatCard
               title="Alertas activas"
-              value={resumen.alertasActivas.toLocaleString('es-CL')}
+              value={(resumen.alertasActivas || 0).toLocaleString('es-CL')}
               color="#f59e0b"
               icon={WarningIcon}
               subtitle="En veda + peso fuera de umbral"
@@ -85,7 +85,7 @@ export default function Dashboard() {
           <Grid item xs={12} sm={6} md={4} lg={2}>
             <StatCard
               title="Casos abiertos"
-              value={resumen.casosAbiertos.toLocaleString('es-CL')}
+              value={(resumen.casosAbiertos || 0).toLocaleString('es-CL')}
               color="#8b5cf6"
               icon={InventoryIcon}
               subtitle="En negociación o rechazadas"
@@ -94,7 +94,7 @@ export default function Dashboard() {
           <Grid item xs={12} sm={6} md={4} lg={2}>
             <StatCard
               title="% Inconsistencias"
-              value={`${resumen.inconsistenciasPct.toLocaleString('es-CL', { maximumFractionDigits: 1 })}%`}
+              value={`${(resumen.inconsistenciasPct || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}%`}
               color="#ef4444"
               icon={BarChartIcon}
               subtitle="En veda o rechazadas"
@@ -103,7 +103,7 @@ export default function Dashboard() {
           <Grid item xs={12} sm={6} md={4} lg={2}>
             <StatCard
               title="Actores fiscalizados"
-              value={resumen.actoresFiscalizados.toLocaleString('es-CL')}
+              value={(resumen.actoresFiscalizados || 0).toLocaleString('es-CL')}
               color="#0ea5e9"
               icon={GroupIcon}
               subtitle="Con declaraciones en el período"

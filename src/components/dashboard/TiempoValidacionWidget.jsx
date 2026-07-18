@@ -30,7 +30,7 @@ const formatHoras = (horas) => {
     const resto = Math.round(horas % 24);
     return `${dias}d ${resto}h`;
   }
-  return `${horas.toLocaleString('es-CL', { maximumFractionDigits: 1 })} h`;
+  return `${((horas) || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })} h`;
 };
 
 export default function TiempoValidacionWidget({ dateRange }) {
@@ -157,7 +157,7 @@ export default function TiempoValidacionWidget({ dateRange }) {
               </Box>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: '#0f172a' }}>
-                  {metrics.validadas.toLocaleString('es-CL')}
+                  {((metrics && metrics.validadas) || 0).toLocaleString('es-CL')}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b', fontFamily: 'Inter' }}>
                   Validadas
@@ -172,7 +172,7 @@ export default function TiempoValidacionWidget({ dateRange }) {
                     color: hasRiesgo ? '#f59e0b' : '#0f172a'
                   }}
                 >
-                  {metrics.pendientesMas48h.toLocaleString('es-CL')}
+                  {((metrics && metrics.pendientesMas48h) || 0).toLocaleString('es-CL')}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: hasRiesgo ? '#b45309' : '#64748b', fontFamily: 'Inter' }}>
                   Pendientes &gt;48h

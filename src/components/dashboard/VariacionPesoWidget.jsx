@@ -170,7 +170,7 @@ export default function VariacionPesoWidget({ dateRange }) {
             <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', my: 2, flexWrap: 'wrap', gap: 2 }}>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: '#0f172a' }}>
-                  {metrics.totalConciliaciones.toLocaleString('es-CL')}
+                  {((metrics && metrics.totalConciliaciones) || 0).toLocaleString('es-CL')}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b', fontFamily: 'Inter' }}>
                   Conciliaciones
@@ -179,7 +179,7 @@ export default function VariacionPesoWidget({ dateRange }) {
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: '#0f172a' }}>
                   {metrics.promedioVariacionPct !== null && metrics.promedioVariacionPct !== undefined
-                    ? `${metrics.promedioVariacionPct.toLocaleString('es-CL', { maximumFractionDigits: 1 })}%`
+                    ? `${((metrics && metrics.promedioVariacionPct) || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}%`
                     : '—'}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b', fontFamily: 'Inter' }}>
@@ -195,7 +195,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                     color: hasAlertas ? '#ef4444' : '#0f172a'
                   }}
                 >
-                  {metrics.fueraUmbral.toLocaleString('es-CL')}
+                  {((metrics && metrics.fueraUmbral) || 0).toLocaleString('es-CL')}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: hasAlertas ? '#b91c1c' : '#64748b', fontFamily: 'Inter' }}>
                   Fuera de umbral
@@ -296,10 +296,10 @@ export default function VariacionPesoWidget({ dateRange }) {
                           <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.actor}</TableCell>
                           <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.especie}</TableCell>
                           <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }} align="right">
-                            {row.kgOrigen?.toLocaleString('es-CL', { maximumFractionDigits: 1 })}
+                            {((row && row.kgOrigen) || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}
                           </TableCell>
                           <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }} align="right">
-                            {row.kgDestino?.toLocaleString('es-CL', { maximumFractionDigits: 1 })}
+                            {((row && row.kgDestino) || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}
                           </TableCell>
                           <TableCell
                             sx={{
@@ -310,7 +310,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                             }}
                             align="right"
                           >
-                            {row.variacionPct > 0 ? '+' : ''}{row.variacionPct?.toLocaleString('es-CL', { maximumFractionDigits: 1 })}%
+                            {row && row.variacionPct > 0 ? '+' : ''}{((row && row.variacionPct) || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}%
                           </TableCell>
                         </TableRow>
                       );
