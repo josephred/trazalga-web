@@ -51,9 +51,32 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
     setDetailData(null);
   };
 
+  const getNumericTipo = (tipo) => {
+    if (!tipo) return 1;
+    const t = tipo.toLowerCase();
+    if (t.includes('recolector')) return 1;
+    if (t.includes('armador')) return 2;
+    if (t.includes('area') || t.includes('área')) return 3;
+    if (t.includes('comercializador')) return 4;
+    if (t.includes('abastecimiento')) return 5;
+    if (t.includes('produccion') || t.includes('producción')) return 6;
+    if (t.includes('destino')) return 7;
+    return 1;
+  };
+
   useEffect(() => {
     if (open && row) {
-      buildFlowFromRow(row);
+      const tipo = getNumericTipo(row.tipoReporte || tipoReporte);
+      api.get(`/reportes/trazabilidad/${tipo}/${declaracionId}`)
+        .then(res => {
+          buildFlowFromData(res.data, row);
+        })
+        .catch(err => {
+          console.error("Error fetching trazabilidad", err);
+          // Fallback al menos
+          setNodes([]);
+          setEdges([]);
+        });
     } else {
       setNodes([]);
       setEdges([]);
@@ -61,24 +84,80 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, row]);
 
-  const buildFlowFromRow = (r) => {
+  const buildFlowFromData = (data, r) => {
     const flowNodes = [];
     const flowEdges = [];
-    let yPos = 50;
+    
+    if (!data || !data.nodos) return;
 
-    const createNode = (id, title, actor, date, color, folioData) => {
+    // Build Adjacency and In-Degree
+    const adj = {};
+    const inDegree = {};
+    data.nodos.forEach(n => { 
+      adj[n.idUnico] = []; 
+      inDegree[n.idUnico] = 0; 
+    });
+    
+    if (data.enlaces) {
+      data.enlaces.forEach(e => {
+        if (adj[e.source]) adj[e.source].push(e.target);
+        if (inDegree[e.target] !== undefined) inDegree[e.target]++;
+      });
+    }
+
+    // Determine root nodes (in-degree 0)
+    let queue = Object.keys(inDegree).filter(k => inDegree[k] === 0);
+    if (queue.length === 0 && data.nodos.length > 0) queue.push(data.nodos[0].idUnico);
+
+    // Calculate depths (longest path)
+    const depths = {};
+    queue.forEach(k => { depths[k] = 0; });
+    while (queue.length > 0) {
+      let curr = queue.shift();
+      (adj[curr] || []).forEach(child => {
+        if (depths[child] === undefined) {
+           depths[child] = depths[curr] + 1;
+           queue.push(child);
+        } else if (depths[curr] + 1 > depths[child]) {
+           depths[child] = depths[curr] + 1;
+           queue.push(child);
+        }
+      });
+    }
+
+    // Calculate counts per level for X positioning
+    const levelCounts = {};
+    data.nodos.forEach(n => {
+       const d = depths[n.idUnico] || 0;
+       levelCounts[d] = (levelCounts[d] || 0) + 1;
+    });
+
+    const levelCurrent = {};
+
+    data.nodos.forEach(n => {
+      const d = depths[n.idUnico] || 0;
+      levelCurrent[d] = (levelCurrent[d] || 0) + 1;
+      
+      const totalInLevel = levelCounts[d];
+      // Center nodes in the level
+      const xOffset = totalInLevel > 1 ? (levelCurrent[d] - 1 - (totalInLevel - 1) / 2) * 250 : 0;
+      const xPos = 250 + xOffset;
+      const yPos = 50 + d * 220;
+      
+      const color = getColorCode(n.tipoNodo);
+
       flowNodes.push({
-        id: id,
-        position: { x: 250, y: yPos },
+        id: n.idUnico,
+        position: { x: xPos, y: yPos },
         data: { 
           label: (
             <div style={{ padding: '10px', textAlign: 'center' }}>
-              <strong style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>{title}</strong>
-              {folioData && <span style={{ fontSize: '11px', color: '#1976d2', display: 'block', marginBottom: '2px', fontWeight: 'bold' }}>Folio: {folioData}</span>}
-              <span style={{ fontSize: '12px', color: '#555', display: 'block', marginBottom: '4px' }}>{actor}</span>
-              {date && <span style={{ fontSize: '10px', color: '#888', display: 'block', marginTop: '4px' }}>{new Date(date).toLocaleDateString()}</span>}
+              <strong style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>{n.tipoNodo}</strong>
+              {n.folio && <span style={{ fontSize: '11px', color: '#1976d2', display: 'block', marginBottom: '2px', fontWeight: 'bold' }}>Folio: {n.folio}</span>}
+              <span style={{ fontSize: '12px', color: '#555', display: 'block', marginBottom: '4px' }}>{n.nombreActor}</span>
+              {n.fecha && <span style={{ fontSize: '10px', color: '#888', display: 'block', marginTop: '4px' }}>{new Date(n.fecha).toLocaleDateString()}</span>}
               <button 
-                onClick={(e) => { e.stopPropagation(); handleOpenDetail(r); }}
+                onClick={(e) => { e.stopPropagation(); handleOpenDetail(n); }}
                 style={{
                   marginTop: '8px',
                   background: '#1976d2',
@@ -103,44 +182,19 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
         }
       });
-      yPos += 220;
-    };
+    });
 
-    const createEdge = (sourceId, targetId) => {
-      flowEdges.push({
-        id: `edge-${sourceId}-${targetId}`,
-        source: sourceId,
-        target: targetId,
-        animated: true,
-        style: { stroke: '#1976d2', strokeWidth: 2 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#1976d2' }
+    if (data.enlaces) {
+      data.enlaces.forEach(e => {
+        flowEdges.push({
+          id: `edge-${e.source}-${e.target}`,
+          source: e.source,
+          target: e.target,
+          animated: true,
+          style: { stroke: '#1976d2', strokeWidth: 2 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#1976d2' }
+        });
       });
-    };
-
-    // 1. Emisor
-    createNode('n1', r.tipoReporte, `${r.emisorNombre} (${r.emisorRut})`, r.fecha, '#1976d2', r.folio);
-
-    // 2. Receptor
-    let receptorType = "Receptor";
-    if (r.tipoReporte === 'Recolector' || r.tipoReporte === 'Armador') receptorType = "Comercializador";
-    else if (r.tipoReporte === 'Comercializador') receptorType = "Planta Abastecimiento";
-    
-    createNode('n2', receptorType, `${r.receptorNombre} (${r.receptorRut})`, null, '#ed6c02', null);
-    createEdge('n1', 'n2');
-
-    let lastNodeId = 'n2';
-
-    // 3. Planta Abastecimiento Extendida
-    if (r.plantaAbastecimiento && r.plantaAbastecimiento !== '-') {
-      createNode('n3', 'Planta Abastecimiento', r.plantaAbastecimiento, r.fechaComercializador, '#2e7d32', r.folioRelacionado);
-      createEdge(lastNodeId, 'n3');
-      lastNodeId = 'n3';
-    }
-
-    // 4. Planta Producción Extendida
-    if (r.plantaProduccion && r.plantaProduccion !== '-') {
-      createNode('n4', 'Planta Producción', r.plantaProduccion, r.fechaPlantaAbastecimiento, '#2e7d32', null);
-      createEdge(lastNodeId, 'n4');
     }
 
     setNodes(flowNodes);
@@ -230,11 +284,9 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
               <Typography variant="body1"><strong>Folio:</strong> {detailData.folio}</Typography>
               <Typography variant="body1"><strong>Fecha:</strong> {detailData.fecha ? new Date(detailData.fecha).toLocaleDateString() : '-'}</Typography>
               <Typography variant="body1"><strong>Cantidad:</strong> {detailData.cantidad} kg</Typography>
-              <Typography variant="body1"><strong>Especie:</strong> {detailData.especie}</Typography>
-              <Typography variant="body1"><strong>Composición:</strong> {detailData.composicion || '-'}</Typography>
-              <Typography variant="body1"><strong>Estado Humedad:</strong> {detailData.estadoHumedad || '-'}</Typography>
-              <Typography variant="body1"><strong>Emisor:</strong> {detailData.emisorNombre} ({detailData.emisorRut})</Typography>
-              <Typography variant="body1"><strong>Receptor:</strong> {detailData.receptorNombre} ({detailData.receptorRut})</Typography>
+              <Typography variant="body1"><strong>Tipo de Nodo:</strong> {detailData.tipoNodo}</Typography>
+              <Typography variant="body1"><strong>Actor:</strong> {detailData.nombreActor} ({detailData.rutActor})</Typography>
+              <Typography variant="body1"><strong>Evento:</strong> {detailData.descripcionEvento}</Typography>
             </Box>
           )}
         </DialogContent>
