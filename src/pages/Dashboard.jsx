@@ -61,7 +61,7 @@ export default function Dashboard() {
               value={(resumen.declaracionesTotales || 0).toLocaleString('es-CL')}
               color="#0ea5e9"
               icon={BarChartIcon}
-              subtitle="Recolector, armador y área"
+              subtitle="Toda la cadena de suministro"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
