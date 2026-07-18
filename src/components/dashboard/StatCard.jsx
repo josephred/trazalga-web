@@ -1,9 +1,7 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Stack } from '@mui/material';
 
-const StatCard = ({ title, value, icon: Icon, trend, color }) => {
-    const isPositive = trend > 0;
-    const isNegative = trend < 0;
+const StatCard = ({ title, value, icon: Icon, trend, color, subtitle }) => {
 
     // Obtener colores y flechas de tendencia para el diseño de píldora
     const getTrendBadge = (val) => {
@@ -81,7 +79,7 @@ const StatCard = ({ title, value, icon: Icon, trend, color }) => {
                             {value}
                         </Typography>
                         
-                        {trend !== undefined && (
+                        {trend !== undefined && trend !== null && (
                             <Box
                                 sx={{
                                     display: 'inline-flex',
@@ -102,6 +100,20 @@ const StatCard = ({ title, value, icon: Icon, trend, color }) => {
                                 <span>{badge.symbol}</span>
                                 <span>{badge.prefix}{trend}% vs mes anterior</span>
                             </Box>
+                        )}
+
+                        {(trend === undefined || trend === null) && subtitle && (
+                            <Typography
+                                sx={{
+                                    mt: 1.25,
+                                    color: '#94a3b8',
+                                    fontFamily: 'Inter',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 500
+                                }}
+                            >
+                                {subtitle}
+                            </Typography>
                         )}
                     </Box>
                     {Icon && (

@@ -13,6 +13,7 @@ import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
 import VolumenPorEspecie from '../components/dashboard/VolumenPorEspecie';
 import TiempoValidacionWidget from '../components/dashboard/TiempoValidacionWidget';
 import VariacionPesoWidget from '../components/dashboard/VariacionPesoWidget';
+import CasosAbiertosWidget from '../components/dashboard/CasosAbiertosWidget';
 import { useOutletContext } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getResumenGlobal } from '../services/reportesService';
@@ -22,7 +23,11 @@ export default function Dashboard() {
   const { dateRange } = useOutletContext() || { dateRange: null };
   const [resumen, setResumen] = useState({
     declaracionesTotales: 0,
-    volumenTotal: 0
+    volumenTotal: 0,
+    alertasActivas: 0,
+    casosAbiertos: 0,
+    inconsistenciasPct: 0,
+    actoresFiscalizados: 0
   });
 
   useEffect(() => {
@@ -51,34 +56,58 @@ export default function Dashboard() {
         {/* Malla de Indicadores Clave (KPIs) */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={4} lg={2}>
-            <StatCard 
-              title="Declaraciones totales" 
-              value={resumen.declaracionesTotales.toLocaleString('es-CL')} 
-              trend={0} 
-              color="#0ea5e9" 
-              icon={BarChartIcon} 
+            <StatCard
+              title="Declaraciones totales"
+              value={resumen.declaracionesTotales.toLocaleString('es-CL')}
+              color="#0ea5e9"
+              icon={BarChartIcon}
+              subtitle="Recolector, armador y área"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
-            <StatCard 
-              title="Volumen total (kg)" 
-              value={resumen.volumenTotal.toLocaleString('es-CL', { maximumFractionDigits: 0 })} 
-              trend={0} 
-              color="#10b981" 
-              icon={InventoryIcon} 
+            <StatCard
+              title="Volumen total (kg)"
+              value={resumen.volumenTotal.toLocaleString('es-CL', { maximumFractionDigits: 0 })}
+              color="#10b981"
+              icon={InventoryIcon}
+              subtitle="Desembarque declarado"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
-            <StatCard title="Alertas activas" value="384" trend={23} color="#f59e0b" icon={BarChartIcon} />
+            <StatCard
+              title="Alertas activas"
+              value={resumen.alertasActivas.toLocaleString('es-CL')}
+              color="#f59e0b"
+              icon={WarningIcon}
+              subtitle="En veda + peso fuera de umbral"
+            />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
-            <StatCard title="Casos abiertos" value="67" trend={-8} color="#8b5cf6" icon={InventoryIcon} />
+            <StatCard
+              title="Casos abiertos"
+              value={resumen.casosAbiertos.toLocaleString('es-CL')}
+              color="#8b5cf6"
+              icon={InventoryIcon}
+              subtitle="En negociación o rechazadas"
+            />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
-            <StatCard title="% Inconsistencias" value="12,6%" trend={1.8} color="#ef4444" icon={BarChartIcon} />
+            <StatCard
+              title="% Inconsistencias"
+              value={`${resumen.inconsistenciasPct.toLocaleString('es-CL', { maximumFractionDigits: 1 })}%`}
+              color="#ef4444"
+              icon={BarChartIcon}
+              subtitle="En veda o rechazadas"
+            />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
-            <StatCard title="Actores fiscalizados" value="215" color="#0ea5e9" icon={GroupIcon} />
+            <StatCard
+              title="Actores fiscalizados"
+              value={resumen.actoresFiscalizados.toLocaleString('es-CL')}
+              color="#0ea5e9"
+              icon={GroupIcon}
+              subtitle="Con declaraciones en el período"
+            />
           </Grid>
 
           {/* Gráfico Principal de Desembarques y Declaraciones */}
@@ -105,6 +134,10 @@ export default function Dashboard() {
 
           <Grid item xs={12} md={6}>
             <VariacionPesoWidget dateRange={dateRange} />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <CasosAbiertosWidget dateRange={dateRange} />
           </Grid>
         </Grid>
       </Container>
