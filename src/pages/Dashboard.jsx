@@ -110,6 +110,44 @@ export default function Dashboard() {
             />
           </Grid>
 
+          {/* Sub-indicadores por perfil */}
+          <Grid item xs={12} sm={6} md={3} lg={3}>
+            <StatCard
+              title="Decl. Recolector"
+              value={(resumen.totalRecolector || 0).toLocaleString('es-CL')}
+              color="#3b82f6"
+              icon={InventoryIcon}
+              subtitle="Total de documentos"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3}>
+            <StatCard
+              title="Decl. Armador"
+              value={(resumen.totalArmador || 0).toLocaleString('es-CL')}
+              color="#3b82f6"
+              icon={InventoryIcon}
+              subtitle="Total de documentos"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3}>
+            <StatCard
+              title="Decl. Área de Manejo"
+              value={(resumen.totalArea || 0).toLocaleString('es-CL')}
+              color="#3b82f6"
+              icon={InventoryIcon}
+              subtitle="Total de documentos"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3}>
+            <StatCard
+              title="Decl. Comercializador"
+              value={(resumen.totalComercializador || 0).toLocaleString('es-CL')}
+              color="#8b5cf6"
+              icon={InventoryIcon}
+              subtitle="Total de documentos"
+            />
+          </Grid>
+
           {/* Gráfico Principal de Desembarques y Declaraciones */}
           <Grid item xs={12}>
             <IndicadorRecolector dateRange={dateRange} />
