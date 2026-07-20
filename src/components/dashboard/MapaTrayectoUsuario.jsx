@@ -123,29 +123,29 @@ export default function MapaTrayectoUsuario() {
       elevation={0}
       sx={{
         borderRadius: 4,
-        border: '1px solid #e2e8f0',
-        bgcolor: '#ffffff',
+        border: 1, borderColor: 'divider',
+        bgcolor: 'background.paper',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
       }}
     >
       <Box
         sx={{
           p: 3,
-          borderBottom: '1px solid #f1f5f9',
+          borderBottom: 1, borderColor: 'divider',
           display: 'flex',
           alignItems: 'center',
           gap: 1.5,
-          bgcolor: '#fbfbfb',
+          bgcolor: 'background.default',
         }}
       >
-        <MapIcon sx={{ color: '#0ea5e9' }} />
-        <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+        <MapIcon sx={{ color: 'secondary.main' }} />
+        <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
           Trayectoria de Usuario (Mapa)
         </Typography>
       </Box>
 
       <CardContent sx={{ p: 3 }}>
-        <Typography variant="body2" sx={{ color: '#64748b', mb: 3, fontFamily: 'Inter', lineHeight: 1.6 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3, fontFamily: 'Inter', lineHeight: 1.6 }}>
           Filtra por usuario y rango de fechas para visualizar su historial de ubicaciones en el mapa interactivo.
         </Typography>
 
@@ -221,9 +221,9 @@ export default function MapaTrayectoUsuario() {
               sx={{
                 height: '56px',
                 borderRadius: 3,
-                bgcolor: '#0a192f',
+                bgcolor: 'primary.main',
                 '&:hover': {
-                  bgcolor: '#172a45',
+                  bgcolor: 'primary.light',
                 },
                 boxShadow: 'none',
                 fontFamily: 'Outfit',
@@ -258,7 +258,7 @@ export default function MapaTrayectoUsuario() {
             width: '100%', 
             borderRadius: 4, 
             overflow: 'hidden', 
-            border: '1px solid #e2e8f0',
+            border: 1, borderColor: 'divider',
             boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)',
             position: 'relative'
           }}
@@ -273,24 +273,24 @@ export default function MapaTrayectoUsuario() {
                 zIndex: 1000,
                 bgcolor: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(8px)',
-                border: '1px solid #e2e8f0',
+                border: 1, borderColor: 'divider',
                 borderRadius: 3,
                 p: 2,
                 boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
                 maxWidth: 240,
               }}
             >
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 1, mb: 1, fontFamily: 'Outfit' }}>
-                <DirectionsRunIcon fontSize="small" sx={{ color: '#0ea5e9' }} />
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1, mb: 1, fontFamily: 'Outfit' }}>
+                <DirectionsRunIcon fontSize="small" sx={{ color: 'secondary.main' }} />
                 Resumen de Trayecto
               </Typography>
-              <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.8rem', mb: 0.5, fontFamily: 'Inter' }}>
+              <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.8rem', mb: 0.5, fontFamily: 'Inter' }}>
                 <strong>Puntos:</strong> {trayecto.length} registrados
               </Typography>
-              <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.8rem', mb: 0.5, fontFamily: 'Inter' }}>
+              <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.8rem', mb: 0.5, fontFamily: 'Inter' }}>
                 <strong>Inicio:</strong> {new Date(trayecto[0].fechaRegistro).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ({new Date(trayecto[0].fechaRegistro).toLocaleDateString([], {day: '2-digit', month: '2-digit'})})
               </Typography>
-              <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.8rem', fontFamily: 'Inter' }}>
+              <Typography variant="body2" sx={{ color: 'text.primary', fontSize: '0.8rem', fontFamily: 'Inter' }}>
                 <strong>Término:</strong> {new Date(trayecto[trayecto.length - 1].fechaRegistro).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ({new Date(trayecto[trayecto.length - 1].fechaRegistro).toLocaleDateString([], {day: '2-digit', month: '2-digit'})})
               </Typography>
             </Box>
@@ -327,7 +327,7 @@ export default function MapaTrayectoUsuario() {
                   <Marker position={[trayecto[trayecto.length - 1].latitud, trayecto[trayecto.length - 1].longitud]}>
                     <Popup>
                       <Box sx={{ p: 0.5, fontFamily: 'Inter' }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#dc2626' }}>Último Punto Registrado</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'error.dark' }}>Último Punto Registrado</Typography>
                         <Typography variant="caption" display="block">Fecha: {new Date(trayecto[trayecto.length - 1].fechaRegistro).toLocaleString()}</Typography>
                         <Typography variant="caption" display="block">Precisión GPS: {trayecto[trayecto.length - 1].precisionGps ? `${Math.round(trayecto[trayecto.length - 1].precisionGps)}m` : 'N/A'}</Typography>
                       </Box>

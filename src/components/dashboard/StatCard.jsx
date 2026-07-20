@@ -8,7 +8,7 @@ const StatCard = ({ title, value, icon: Icon, trend, color, subtitle }) => {
         if (val > 0) {
             return {
                 bg: '#e6fbf1',
-                text: '#10b981',
+                text: 'success.main',
                 border: '#a7f3d0',
                 symbol: '↑',
                 prefix: '+'
@@ -17,16 +17,16 @@ const StatCard = ({ title, value, icon: Icon, trend, color, subtitle }) => {
         if (val < 0) {
             return {
                 bg: '#fef2f2',
-                text: '#ef4444',
+                text: 'error.main',
                 border: '#fecaca',
                 symbol: '↓',
                 prefix: ''
             };
         }
         return {
-            bg: '#f1f5f9',
-            text: '#64748b',
-            border: '#e2e8f0',
+            bg: 'divider',
+            text: 'text.secondary',
+            border: 'divider',
             symbol: '→',
             prefix: ''
         };
@@ -40,13 +40,13 @@ const StatCard = ({ title, value, icon: Icon, trend, color, subtitle }) => {
             sx={{ 
                 height: '100%', 
                 borderRadius: 4, 
-                border: '1px solid #e2e8f0',
+                border: 1, borderColor: 'divider',
                 boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                     transform: 'translateY(-4px)',
                     boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
-                    borderColor: '#cbd5e1',
+                    borderColor: 'divider',
                 }
             }}
         >
@@ -56,7 +56,7 @@ const StatCard = ({ title, value, icon: Icon, trend, color, subtitle }) => {
                         <Typography 
                             variant="subtitle2" 
                             sx={{ 
-                                color: '#64748b', 
+                                color: 'text.secondary', 
                                 fontWeight: 600, 
                                 fontFamily: 'Inter',
                                 textTransform: 'uppercase',
@@ -72,7 +72,7 @@ const StatCard = ({ title, value, icon: Icon, trend, color, subtitle }) => {
                             sx={{ 
                                 fontWeight: 800, 
                                 fontFamily: 'Outfit', 
-                                color: '#0f172a',
+                                color: 'text.primary',
                                 lineHeight: 1.1
                             }}
                         >
@@ -106,7 +106,7 @@ const StatCard = ({ title, value, icon: Icon, trend, color, subtitle }) => {
                             <Typography
                                 sx={{
                                     mt: 1.25,
-                                    color: '#94a3b8',
+                                    color: 'text.disabled',
                                     fontFamily: 'Inter',
                                     fontSize: '0.7rem',
                                     fontWeight: 500

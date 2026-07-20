@@ -128,8 +128,8 @@ const ReportFilter = ({ onGenerate }) => {
             elevation={0}
             sx={{
                 borderRadius: 4,
-                border: '1px solid #e2e8f0',
-                bgcolor: '#ffffff',
+                border: 1, borderColor: 'divider',
+                bgcolor: 'background.paper',
                 boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
                 width: '100%',
                 overflow: 'visible',
@@ -145,13 +145,13 @@ const ReportFilter = ({ onGenerate }) => {
                         mb: 2,
                     }}
                 >
-                    <FilterIcon sx={{ color: '#0ea5e9' }} />
-                    <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a', m: 0 }}>
+                    <FilterIcon sx={{ color: 'secondary.main' }} />
+                    <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', m: 0 }}>
                         Filtros de Reporte
                     </Typography>
                 </Box>
 
-                <Divider sx={{ mb: 3, borderColor: '#f1f5f9' }} />
+                <Divider sx={{ mb: 3, borderColor: 'divider' }} />
 
                 {/* Inputs nativos ocultos para disparar el calendario */}
                 <input
@@ -185,7 +185,7 @@ const ReportFilter = ({ onGenerate }) => {
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton size="small" onClick={(e) => { e.stopPropagation(); openPicker(inputInicioRef); }}>
-                                                <CalendarIcon fontSize="small" sx={{ color: '#64748b' }} />
+                                                <CalendarIcon fontSize="small" sx={{ color: 'text.secondary' }} />
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -214,7 +214,7 @@ const ReportFilter = ({ onGenerate }) => {
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton size="small" onClick={(e) => { e.stopPropagation(); openPicker(inputFinRef); }}>
-                                                <CalendarIcon fontSize="small" sx={{ color: '#64748b' }} />
+                                                <CalendarIcon fontSize="small" sx={{ color: 'text.secondary' }} />
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -260,12 +260,12 @@ const ReportFilter = ({ onGenerate }) => {
                                                 height: 20,
                                                 fontSize: '0.65rem',
                                                 fontWeight: 800,
-                                                backgroundColor: '#0ea5e9',
+                                                backgroundColor: 'secondary.main',
                                                 color: 'white',
                                                 fontFamily: 'Outfit',
                                             }}
                                         />
-                                        <span style={{ fontSize: '0.9rem', color: '#0f172a' }}>{type.label}</span>
+                                        <span style={{ fontSize: '0.9rem', color: 'text.primary' }}>{type.label}</span>
                                     </Stack>
                                 </MenuItem>
                             ))}
@@ -316,9 +316,9 @@ const ReportFilter = ({ onGenerate }) => {
                                 textTransform: 'none',
                                 fontWeight: 700,
                                 fontFamily: 'Outfit',
-                                bgcolor: '#0a192f',
+                                bgcolor: 'primary.main',
                                 '&:hover': {
-                                    bgcolor: '#172a45',
+                                    bgcolor: 'primary.light',
                                 },
                                 boxShadow: 'none',
                                 transition: 'all 0.2s ease',

@@ -14,7 +14,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import api from '../../api/axiosConfig';
 
-const COLOR_CURVA = '#0ea5e9';
+const COLOR_CURVA = 'secondary.main';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -24,19 +24,19 @@ const CustomTooltip = ({ active, payload, label }) => {
         sx={{
           bgcolor: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(8px)',
-          border: '1px solid #e2e8f0',
+          border: 1, borderColor: 'divider',
           borderRadius: 3,
           p: 1.5,
           boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)',
         }}
       >
-        <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, fontFamily: 'Outfit', color: '#0f172a' }}>
+        <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, fontFamily: 'Outfit', color: 'text.primary' }}>
           {label}
         </Typography>
         <Typography variant="caption" sx={{ display: 'block', color: '#0369a1', fontFamily: 'Inter', fontWeight: 600 }}>
           Acumulado: {p.acumulado.toLocaleString('es-CL')} kg
         </Typography>
-        <Typography variant="caption" sx={{ display: 'block', color: '#64748b', fontFamily: 'Inter' }}>
+        <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontFamily: 'Inter' }}>
           Del día: {p.volumenDiario.toLocaleString('es-CL')} kg
         </Typography>
       </Box>
@@ -80,7 +80,7 @@ export default function CurvaSnakeWidget({ dateRange }) {
 
   if (loading) {
     return (
-      <Card elevation={0} sx={{ height: '100%', borderRadius: 4, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+      <Card elevation={0} sx={{ height: '100%', borderRadius: 4, border: 1, borderColor: 'divider', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
         <CircularProgress />
       </Card>
     );
@@ -101,18 +101,18 @@ export default function CurvaSnakeWidget({ dateRange }) {
       sx={{
         height: '100%',
         borderRadius: 4,
-        border: '1px solid #e2e8f0',
+        border: 1, borderColor: 'divider',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
           boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
-          borderColor: '#cbd5e1',
+          borderColor: 'divider',
         }
       }}
     >
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
             Curva de Explotación Acumulada (AMERB)
           </Typography>
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
@@ -146,7 +146,7 @@ export default function CurvaSnakeWidget({ dateRange }) {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
-          <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', lineHeight: 1.6 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', lineHeight: 1.6 }}>
             Volumen extraído acumulado en el tiempo (tendencia de explotación).
           </Typography>
           {limiteKg != null ? (
@@ -162,13 +162,13 @@ export default function CurvaSnakeWidget({ dateRange }) {
               }}
             />
           ) : especieId ? (
-            <Chip size="small" label="Sin cuota configurada para esta especie" sx={{ fontFamily: 'Inter', fontSize: '0.72rem', bgcolor: '#f1f5f9', color: '#64748b' }} />
+            <Chip size="small" label="Sin cuota configurada para esta especie" sx={{ fontFamily: 'Inter', fontSize: '0.72rem', bgcolor: 'divider', color: 'text.secondary' }} />
           ) : (
-            <Chip size="small" label="Selecciona una especie para ver su cuota" sx={{ fontFamily: 'Inter', fontSize: '0.72rem', bgcolor: '#f1f5f9', color: '#64748b' }} />
+            <Chip size="small" label="Selecciona una especie para ver su cuota" sx={{ fontFamily: 'Inter', fontSize: '0.72rem', bgcolor: 'divider', color: 'text.secondary' }} />
           )}
         </Box>
 
-        <Divider sx={{ mb: 2, borderColor: '#f1f5f9' }} />
+        <Divider sx={{ mb: 2, borderColor: 'divider' }} />
 
         {error ? (
           <Typography color="error" variant="body2" sx={{ textAlign: 'center', py: 4, fontFamily: 'Inter' }}>
@@ -176,7 +176,7 @@ export default function CurvaSnakeWidget({ dateRange }) {
           </Typography>
         ) : serie.length === 0 ? (
           <Box sx={{ py: 6, textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
               No hay declaraciones de área de manejo para el filtro seleccionado.
             </Typography>
           </Box>
@@ -190,17 +190,17 @@ export default function CurvaSnakeWidget({ dateRange }) {
                     <stop offset="95%" stopColor={COLOR_CURVA} stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" stroke='divider' />
                 <XAxis
                   dataKey="fecha"
-                  tick={{ fill: '#64748b', fontSize: 11, fontFamily: 'Inter' }}
-                  axisLine={{ stroke: '#e2e8f0' }}
+                  tick={{ fill: 'text.secondary', fontSize: 11, fontFamily: 'Inter' }}
+                  axisLine={{ stroke: 'divider' }}
                   tickLine={false}
                 />
                 <YAxis
                   domain={yMax ? [0, yMax] : [0, 'auto']}
-                  tick={{ fill: '#64748b', fontSize: 11, fontFamily: 'Inter' }}
-                  axisLine={{ stroke: '#e2e8f0' }}
+                  tick={{ fill: 'text.secondary', fontSize: 11, fontFamily: 'Inter' }}
+                  axisLine={{ stroke: 'divider' }}
                   tickLine={false}
                   tickFormatter={(v) => v.toLocaleString('es-CL')}
                 />
@@ -208,13 +208,13 @@ export default function CurvaSnakeWidget({ dateRange }) {
                 {limiteKg != null && (
                   <ReferenceLine
                     y={limiteKg}
-                    stroke={excedido ? '#ef4444' : '#f59e0b'}
+                    stroke={excedido ? 'error.main' : 'warning.main'}
                     strokeDasharray="6 4"
                     strokeWidth={2}
                     label={{
                       value: `Cuota ${limiteKg.toLocaleString('es-CL')} kg`,
                       position: 'insideTopRight',
-                      fill: excedido ? '#ef4444' : '#b45309',
+                      fill: excedido ? 'error.main' : '#b45309',
                       fontSize: 11,
                       fontFamily: 'Inter',
                       fontWeight: 700

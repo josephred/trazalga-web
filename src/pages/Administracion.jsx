@@ -62,7 +62,7 @@ const IOSSwitch = styled((props) => (
       transform: 'translateX(16px)',
       color: '#fff',
       '& + .MuiSwitch-track': {
-        backgroundColor: '#10b981',
+        backgroundColor: 'success.main',
         opacity: 1,
         border: 0,
       },
@@ -76,14 +76,14 @@ const IOSSwitch = styled((props) => (
   },
   '& .MuiSwitch-track': {
     borderRadius: 26 / 2,
-    backgroundColor: '#cbd5e1',
+    backgroundColor: 'divider',
     opacity: 1,
   },
 }));
 
 // Premium Styled Slider with gradient highlight
 const ModernSlider = styled(Slider)(() => ({
-  color: '#0ea5e9',
+  color: 'secondary.main',
   height: 6,
   '& .MuiSlider-track': {
     border: 'none',
@@ -100,20 +100,20 @@ const ModernSlider = styled(Slider)(() => ({
   },
   '& .MuiSlider-rail': {
     opacity: 0.28,
-    backgroundColor: '#cbd5e1',
+    backgroundColor: 'divider',
   },
 }));
 
 const getAlertColor = (tipoAlerta) => {
   switch (tipoAlerta) {
     case 'LIMITE_CUOTA':
-      return '#f59e0b';
+      return 'warning.main';
     case 'DESVIO_RUTA':
-      return '#ef4444';
+      return 'error.main';
     case 'APLICACION_INACTIVA':
-      return '#64748b';
+      return 'text.secondary';
     default:
-      return '#0ea5e9';
+      return 'secondary.main';
   }
 };
 
@@ -138,7 +138,7 @@ const SYNC_TASKS = [
     label: 'Regiones, Comunas y Caletas',
     descripcion: 'Jerarquía geográfica completa.',
     path: '/sync/sernapesca/regiones',
-    color: '#0ea5e9',
+    color: 'secondary.main',
     icon: <PublicIcon />,
   },
   {
@@ -154,7 +154,7 @@ const SYNC_TASKS = [
     label: 'Especies',
     descripcion: 'Especies autorizadas para recolección.',
     path: '/sync/sernapesca/especies',
-    color: '#10b981',
+    color: 'success.main',
     icon: <PhishingIcon />,
   },
   {
@@ -178,7 +178,7 @@ const SYNC_TASKS = [
     label: 'Buzos',
     descripcion: 'Sincronizar registro de buzos.',
     path: '/sync/sernapesca/buzos',
-    color: '#f59e0b',
+    color: 'warning.main',
     icon: <PoolIcon />,
   },
   {
@@ -459,7 +459,7 @@ export default function Administracion() {
 
           <Box sx={{ zIndex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <AdminPanelSettingsIcon sx={{ fontSize: 36, color: '#0ea5e9' }} />
+              <AdminPanelSettingsIcon sx={{ fontSize: 36, color: 'secondary.main' }} />
               <Typography variant="h5" sx={{ fontWeight: 800, fontFamily: 'Outfit', m: 0 }}>
                 Administración del Sistema
               </Typography>
@@ -487,7 +487,7 @@ export default function Administracion() {
               <Typography variant="caption" sx={{ display: 'block', opacity: 0.6, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Servicio GPS
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 800, color: trackingActivo ? '#10b981' : '#ef4444', mt: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: trackingActivo ? 'success.main' : 'error.main', mt: 0.5 }}>
                 {trackingActivo ? 'ACTIVO' : 'INACTIVO'}
               </Typography>
             </Box>
@@ -508,7 +508,7 @@ export default function Administracion() {
               <Typography variant="caption" sx={{ display: 'block', opacity: 0.6, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Intervalo
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 800, color: '#0ea5e9', mt: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', mt: 0.5 }}>
                 {trackingInterval} min
               </Typography>
             </Box>
@@ -529,7 +529,7 @@ export default function Administracion() {
               <Typography variant="caption" sx={{ display: 'block', opacity: 0.6, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Alertas
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 800, color: '#f59e0b', mt: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: 'warning.main', mt: 0.5 }}>
                 {configuraciones.filter(c => c.activo).length} / {configuraciones.length}
               </Typography>
             </Box>
@@ -559,21 +559,21 @@ export default function Administracion() {
           onChange={(e, val) => setActiveTab(val)}
           sx={{
             mb: 4,
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: 1, borderColor: 'divider',
             '& .MuiTabs-indicator': {
               height: 3,
               borderRadius: '3px 3px 0 0',
-              backgroundColor: '#0ea5e9',
+              backgroundColor: 'secondary.main',
             },
             '& .MuiTab-root': {
               textTransform: 'none',
               fontWeight: 600,
               fontSize: '1rem',
               fontFamily: 'Outfit',
-              color: '#64748b',
+              color: 'text.secondary',
               pb: 1.5,
               '&.Mui-selected': {
-                color: '#0ea5e9',
+                color: 'secondary.main',
               },
             },
           }}
@@ -594,16 +594,16 @@ export default function Administracion() {
                   elevation={0}
                   sx={{
                     borderRadius: 4,
-                    border: '1px solid #e2e8f0',
+                    border: 1, borderColor: 'divider',
                     position: 'relative',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
                     height: '100%',
-                    bgcolor: '#ffffff',
+                    bgcolor: 'background.paper',
                     boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
                     '&:hover': {
-                      borderColor: '#cbd5e1',
+                      borderColor: 'divider',
                       boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
                       transform: 'translateY(-2px)',
                     },
@@ -618,7 +618,7 @@ export default function Administracion() {
                       top: 0,
                       bottom: 0,
                       width: 5,
-                      bgcolor: config.activo ? getAlertColor(config.tipoAlerta) : '#cbd5e1',
+                      bgcolor: config.activo ? getAlertColor(config.tipoAlerta) : 'divider',
                       transition: 'background-color 0.3s ease',
                     }}
                   />
@@ -629,8 +629,8 @@ export default function Administracion() {
                         sx={{
                           p: 1.5,
                           borderRadius: 3,
-                          bgcolor: config.activo ? `${getAlertColor(config.tipoAlerta)}15` : '#f1f5f9',
-                          color: config.activo ? getAlertColor(config.tipoAlerta) : '#94a3b8',
+                          bgcolor: config.activo ? `${getAlertColor(config.tipoAlerta)}15` : 'divider',
+                          color: config.activo ? getAlertColor(config.tipoAlerta) : 'text.disabled',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -640,17 +640,17 @@ export default function Administracion() {
                         {getAlertIcon(config.tipoAlerta)}
                       </Box>
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'Outfit', color: '#0f172a' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'Outfit', color: 'text.primary' }}>
                           {config.titulo}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'Inter' }}>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
                           Tipo: {config.tipoAlerta}
                         </Typography>
                       </Box>
                     </Box>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, mt: 3 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: config.activo ? '#0f172a' : '#64748b', fontFamily: 'Inter' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: config.activo ? 'text.primary' : 'text.secondary', fontFamily: 'Inter' }}>
                         Estado de la alerta:
                       </Typography>
                       <FormControlLabel
@@ -668,7 +668,7 @@ export default function Administracion() {
                             fontSize: '0.875rem',
                             fontWeight: 700,
                             mr: 1.5,
-                            color: config.activo ? '#10b981' : '#64748b',
+                            color: config.activo ? 'success.main' : 'text.secondary',
                             fontFamily: 'Inter',
                           }
                         }}
@@ -676,12 +676,12 @@ export default function Administracion() {
                     </Box>
 
                     {config.tipoAlerta === 'LIMITE_CUOTA' && (
-                      <Box sx={{ mt: 3, mb: 1, p: 2.5, borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                      <Box sx={{ mt: 3, mb: 1, p: 2.5, borderRadius: 3, bgcolor: 'background.default', border: 1, borderColor: 'divider' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body2" sx={{ color: '#475569', fontWeight: 600, fontFamily: 'Inter' }}>
+                          <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, fontFamily: 'Inter' }}>
                             Umbral de disparo:
                           </Typography>
-                          <Typography variant="body2" sx={{ color: config.activo ? '#0ea5e9' : '#94a3b8', fontWeight: 800, fontFamily: 'Inter' }}>
+                          <Typography variant="body2" sx={{ color: config.activo ? 'secondary.main' : 'text.disabled', fontWeight: 800, fontFamily: 'Inter' }}>
                             {config.umbral || 80}% de la cuota
                           </Typography>
                         </Box>
@@ -699,16 +699,16 @@ export default function Administracion() {
                     )}
                   </CardContent>
 
-                  <Box sx={{ p: 2.5, pt: 0, display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #f1f5f9', bgcolor: '#fbfbfb' }}>
+                  <Box sx={{ p: 2.5, pt: 0, display: 'flex', justifyContent: 'flex-end', borderTop: 1, borderColor: 'divider', bgcolor: 'background.default' }}>
                     <Button
                       variant="contained"
                       size="small"
                       startIcon={<SaveIcon />}
                       onClick={() => handleSave(config)}
                       sx={{
-                        bgcolor: '#0a192f',
+                        bgcolor: 'primary.main',
                         '&:hover': {
-                          bgcolor: '#172a45',
+                          bgcolor: 'primary.light',
                         },
                         boxShadow: 'none',
                         borderRadius: 2.5,
@@ -741,8 +741,8 @@ export default function Administracion() {
                 elevation={0}
                 sx={{
                   borderRadius: 4,
-                  border: '1px solid #e2e8f0',
-                  bgcolor: '#ffffff',
+                  border: 1, borderColor: 'divider',
+                  bgcolor: 'background.paper',
                   boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
                   height: '100%',
                   display: 'flex',
@@ -752,15 +752,15 @@ export default function Administracion() {
                 <Box
                   sx={{
                     p: 3,
-                    borderBottom: '1px solid #f1f5f9',
+                    borderBottom: 1, borderColor: 'divider',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1.5,
-                    bgcolor: '#fbfbfb',
+                    bgcolor: 'background.default',
                   }}
                 >
-                  <GpsFixedIcon sx={{ color: '#0ea5e9' }} />
-                  <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+                  <GpsFixedIcon sx={{ color: 'secondary.main' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
                     Parámetros de Rastreo
                   </Typography>
                 </Box>
@@ -772,7 +772,7 @@ export default function Administracion() {
                 ) : (
                   <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1 }}>
                     <Box>
-                      <Typography variant="body2" sx={{ color: '#64748b', mb: 3, fontFamily: 'Inter', lineHeight: 1.6 }}>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3, fontFamily: 'Inter', lineHeight: 1.6 }}>
                         Habilita o deshabilita la emisión periódica de coordenadas de la aplicación móvil de recolección y ajusta el intervalo de envío a la base de datos.
                       </Typography>
 
@@ -781,8 +781,8 @@ export default function Administracion() {
                           p: 2.5,
                           borderRadius: 3,
                           border: '1px solid',
-                          borderColor: trackingActivo ? '#bbf7d0' : '#e2e8f0',
-                          bgcolor: trackingActivo ? '#f0fdf4' : '#f8fafc',
+                          borderColor: trackingActivo ? '#bbf7d0' : 'divider',
+                          bgcolor: trackingActivo ? '#f0fdf4' : 'background.default',
                           mb: 3,
                           display: 'flex',
                           alignItems: 'center',
@@ -791,10 +791,10 @@ export default function Administracion() {
                         }}
                       >
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 700, color: trackingActivo ? '#166534' : '#475569', fontFamily: 'Inter' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: trackingActivo ? '#166534' : 'text.primary', fontFamily: 'Inter' }}>
                             {trackingActivo ? "Rastreo Habilitado" : "Rastreo Inhabilitado"}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'Inter' }}>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
                             Estado global en teléfonos
                           </Typography>
                         </Box>
@@ -804,16 +804,16 @@ export default function Administracion() {
                         />
                       </Box>
 
-                      <Box sx={{ p: 2.5, borderRadius: 3, border: '1px solid #e2e8f0', bgcolor: '#f8fafc', mb: 3 }}>
+                      <Box sx={{ p: 2.5, borderRadius: 3, border: 1, borderColor: 'divider', bgcolor: 'background.default', mb: 3 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body2" sx={{ color: '#475569', fontWeight: 600, fontFamily: 'Inter' }}>
+                          <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, fontFamily: 'Inter' }}>
                             Intervalo de actualización:
                           </Typography>
-                          <Typography variant="body2" sx={{ color: trackingActivo ? '#0ea5e9' : '#94a3b8', fontWeight: 800, fontFamily: 'Inter' }}>
+                          <Typography variant="body2" sx={{ color: trackingActivo ? 'secondary.main' : 'text.disabled', fontWeight: 800, fontFamily: 'Inter' }}>
                             cada {trackingInterval} minutos
                           </Typography>
                         </Box>
-                        <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 2, fontFamily: 'Inter', fontSize: '0.75rem' }}>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2, fontFamily: 'Inter', fontSize: '0.75rem' }}>
                           Menor frecuencia ahorra batería en el móvil del recolector.
                         </Typography>
                         <ModernSlider
@@ -842,7 +842,7 @@ export default function Administracion() {
                       startIcon={<SaveIcon />}
                       onClick={handleSaveTracking}
                       sx={{
-                        bgcolor: '#0ea5e9',
+                        bgcolor: 'secondary.main',
                         '&:hover': {
                           bgcolor: '#0284c7',
                         },
@@ -875,8 +875,8 @@ export default function Administracion() {
               elevation={0}
               sx={{
                 borderRadius: 4,
-                border: '1px solid #e2e8f0',
-                bgcolor: '#ffffff',
+                border: 1, borderColor: 'divider',
+                bgcolor: 'background.paper',
                 p: { xs: 2.5, md: 3 },
                 mb: 4,
                 display: 'flex',
@@ -887,10 +887,10 @@ export default function Administracion() {
               }}
             >
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a', mb: 0.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', mb: 0.5 }}>
                   Poblamiento desde el API de Sernapesca
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', maxWidth: 640, lineHeight: 1.6 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', maxWidth: 640, lineHeight: 1.6 }}>
                   Sincroniza las tablas maestras (regiones, comunas, caletas, especies, embarcaciones, buzos y AMERB)
                   consumiendo el servicio público de Sernapesca. Las cargas son idempotentes: puedes repetirlas sin
                   duplicar registros.
@@ -920,8 +920,8 @@ export default function Administracion() {
                   disabled={!!syncLoading}
                   onClick={() => runSync({ key: 'ALL', label: 'Todas las tablas', path: '/sync/sernapesca/all' })}
                   sx={{
-                    bgcolor: '#0a192f',
-                    '&:hover': { bgcolor: '#172a45' },
+                    bgcolor: 'primary.main',
+                    '&:hover': { bgcolor: 'primary.light' },
                     boxShadow: 'none',
                     borderRadius: 2.5,
                     px: 3,
@@ -946,14 +946,14 @@ export default function Administracion() {
                       elevation={0}
                       sx={{
                         borderRadius: 4,
-                        border: '1px solid #e2e8f0',
-                        bgcolor: '#ffffff',
+                        border: 1, borderColor: 'divider',
+                        bgcolor: 'background.paper',
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': {
-                          borderColor: '#cbd5e1',
+                          borderColor: 'divider',
                           boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04)',
                           transform: 'translateY(-2px)',
                         },
@@ -972,11 +972,11 @@ export default function Administracion() {
                           >
                             {task.icon}
                           </Box>
-                          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.05rem', fontFamily: 'Outfit', color: '#0f172a' }}>
+                          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.05rem', fontFamily: 'Outfit', color: 'text.primary' }}>
                             {task.label}
                           </Typography>
                         </Box>
-                        <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter' }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
                           {task.descripcion}
                         </Typography>
                       </CardContent>
@@ -993,8 +993,8 @@ export default function Administracion() {
                             fontFamily: 'Outfit',
                             textTransform: 'none',
                             fontWeight: 600,
-                            borderColor: '#e2e8f0',
-                            color: '#0f172a',
+                            borderColor: 'divider',
+                            color: 'text.primary',
                             '&:hover': { borderColor: task.color, color: task.color, bgcolor: `${task.color}08` },
                           }}
                         >
@@ -1009,9 +1009,9 @@ export default function Administracion() {
 
             {/* Resumen de resultados */}
             {Object.keys(syncResults).length > 0 && (
-              <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#ffffff', mt: 4, overflow: 'hidden' }}>
-                <Box sx={{ p: 2.5, borderBottom: '1px solid #f1f5f9', bgcolor: '#fbfbfb' }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+              <Card elevation={0} sx={{ borderRadius: 4, border: 1, borderColor: 'divider', bgcolor: 'background.paper', mt: 4, overflow: 'hidden' }}>
+                <Box sx={{ p: 2.5, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.default' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
                     Resumen de la última carga
                   </Typography>
                 </Box>
@@ -1027,16 +1027,16 @@ export default function Administracion() {
                         gap: 1.5,
                         py: 1.75,
                         px: 2.5,
-                        borderBottom: '1px solid #f1f5f9',
+                        borderBottom: 1, borderColor: 'divider',
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         {r.ok ? (
-                          <CheckCircleIcon sx={{ color: '#10b981', fontSize: 22 }} />
+                          <CheckCircleIcon sx={{ color: 'success.main', fontSize: 22 }} />
                         ) : (
-                          <ErrorOutlineIcon sx={{ color: '#ef4444', fontSize: 22 }} />
+                          <ErrorOutlineIcon sx={{ color: 'error.main', fontSize: 22 }} />
                         )}
-                        <Typography sx={{ fontWeight: 700, fontFamily: 'Inter', color: '#0f172a', textTransform: 'capitalize' }}>
+                        <Typography sx={{ fontWeight: 700, fontFamily: 'Inter', color: 'text.primary', textTransform: 'capitalize' }}>
                           {r.entidad.replace(/_/g, ' ')}
                         </Typography>
                       </Box>
@@ -1045,10 +1045,10 @@ export default function Administracion() {
                           <Chip size="small" variant="outlined" label={`Obtenidos: ${r.obtenidos}`} />
                           <Chip size="small" color="success" label={`Insertados: ${r.insertados}`} />
                           {r.actualizados > 0 && <Chip size="small" color="info" label={`Actualizados: ${r.actualizados}`} />}
-                          <Chip size="small" sx={{ bgcolor: '#f1f5f9', color: '#64748b' }} label={`Omitidos: ${r.omitidos}`} />
+                          <Chip size="small" sx={{ bgcolor: 'divider', color: 'text.secondary' }} label={`Omitidos: ${r.omitidos}`} />
                         </Box>
                       ) : (
-                        <Typography variant="caption" sx={{ color: '#ef4444', fontFamily: 'Inter' }}>
+                        <Typography variant="caption" sx={{ color: 'error.main', fontFamily: 'Inter' }}>
                           {r.mensaje || 'No disponible'}
                         </Typography>
                       )}

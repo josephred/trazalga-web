@@ -95,7 +95,7 @@ export default function VariacionPesoWidget({ dateRange }) {
         sx={{
           height: '100%',
           borderRadius: 4,
-          border: '1px solid #e2e8f0',
+          border: 1, borderColor: 'divider',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -116,10 +116,10 @@ export default function VariacionPesoWidget({ dateRange }) {
         flexDirection: 'column',
         borderRadius: 4,
         border: '1px solid',
-        borderColor: hasAlertas ? '#fca5a5' : '#e2e8f0',
+        borderColor: hasAlertas ? 'error.light' : 'divider',
         background: hasAlertas
-          ? 'linear-gradient(180deg, #fff5f5 0%, #ffffff 100%)'
-          : '#ffffff',
+          ? (theme) => theme.palette.mode === 'dark' ? 'linear-gradient(180deg, #450a0a 0%, #1e293b 100%)' : 'linear-gradient(180deg, #fff5f5 0%, #ffffff 100%)'
+          : 'background.paper',
         boxShadow: hasAlertas
           ? '0 10px 15px -3px rgba(239, 68, 68, 0.04)'
           : '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
@@ -130,7 +130,7 @@ export default function VariacionPesoWidget({ dateRange }) {
           boxShadow: hasAlertas
             ? '0 12px 25px -3px rgba(239, 68, 68, 0.08)'
             : '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
-          borderColor: hasAlertas ? '#ef4444' : '#cbd5e1',
+          borderColor: hasAlertas ? 'error.main' : 'divider',
         }
       }}
     >
@@ -142,24 +142,24 @@ export default function VariacionPesoWidget({ dateRange }) {
             top: 0,
             bottom: 0,
             width: 5,
-            bgcolor: '#ef4444'
+            bgcolor: 'error.main'
           }}
         />
       )}
 
       <CardContent sx={{ p: 3, pl: hasAlertas ? 4 : 3, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-          <ScaleIcon sx={{ mr: 1, color: hasAlertas ? '#ef4444' : '#8b5cf6' }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+          <ScaleIcon sx={{ mr: 1, color: hasAlertas ? 'error.main' : '#8b5cf6' }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
             Variación de Peso
           </Typography>
         </Box>
 
-        <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
           Diferencia entre lo declarado en origen y lo recepcionado en destino, por pesaje y por conciliación de documentos. Umbral de alerta: ±{metrics.umbralPct}% (Posible Adulteración).
         </Typography>
 
-        <Divider sx={{ mb: 2.5, borderColor: hasAlertas ? '#fee2e2' : '#f1f5f9' }} />
+        <Divider sx={{ mb: 2.5, borderColor: hasAlertas ? 'error.light' : 'divider' }} />
 
         {error ? (
           <Typography color="error" variant="body2" sx={{ textAlign: 'center', mt: 2, fontFamily: 'Inter' }}>
@@ -169,20 +169,20 @@ export default function VariacionPesoWidget({ dateRange }) {
           <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', my: 2, flexWrap: 'wrap', gap: 2 }}>
               <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: '#0f172a' }}>
+                <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
                   {((metrics && metrics.totalConciliaciones) || 0).toLocaleString('es-CL')}
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b', fontFamily: 'Inter' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', fontFamily: 'Inter' }}>
                   Conciliaciones
                 </Typography>
               </Box>
               <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: '#0f172a' }}>
+                <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
                   {metrics.promedioVariacionPct !== null && metrics.promedioVariacionPct !== undefined
                     ? `${((metrics && metrics.promedioVariacionPct) || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}%`
                     : '—'}
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b', fontFamily: 'Inter' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', fontFamily: 'Inter' }}>
                   Variación promedio
                 </Typography>
               </Box>
@@ -192,12 +192,12 @@ export default function VariacionPesoWidget({ dateRange }) {
                   sx={{
                     fontWeight: 800,
                     fontFamily: 'Outfit',
-                    color: hasAlertas ? '#ef4444' : '#0f172a'
+                    color: hasAlertas ? 'error.main' : 'text.primary'
                   }}
                 >
                   {((metrics && metrics.fueraUmbral) || 0).toLocaleString('es-CL')}
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: hasAlertas ? '#b91c1c' : '#64748b', fontFamily: 'Inter' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: hasAlertas ? '#b91c1c' : 'text.secondary', fontFamily: 'Inter' }}>
                   Fuera de umbral
                 </Typography>
               </Box>
@@ -208,8 +208,8 @@ export default function VariacionPesoWidget({ dateRange }) {
                 variant="contained"
                 onClick={handleOpenDetalle}
                 sx={{
-                  bgcolor: hasAlertas ? '#ef4444' : '#0a192f',
-                  '&:hover': { bgcolor: hasAlertas ? '#dc2626' : '#172a45' },
+                  bgcolor: hasAlertas ? 'error.main' : 'primary.main',
+                  '&:hover': { bgcolor: hasAlertas ? 'error.dark' : 'primary.light' },
                   borderRadius: 2.5,
                   textTransform: 'none',
                   fontFamily: 'Outfit',
@@ -237,19 +237,19 @@ export default function VariacionPesoWidget({ dateRange }) {
             }
           }}
         >
-          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a', bgcolor: '#fbfbfb', borderBottom: '1px solid #f1f5f9', p: 3 }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', p: 3 }}>
             Detalle de Variaciones de Peso
-            <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', mt: 0.5 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', mt: 0.5 }}>
               Ordenado por mayor variación absoluta. Máximo 100 registros.
             </Typography>
           </DialogTitle>
-          <DialogContent dividers sx={{ p: 0, borderColor: '#f1f5f9' }}>
+          <DialogContent dividers sx={{ p: 0, borderColor: 'divider' }}>
             {loadingDetalle ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                 <CircularProgress />
               </Box>
             ) : detalle.length === 0 ? (
-              <Typography sx={{ p: 4, color: '#64748b', fontFamily: 'Inter', textAlign: 'center' }}>
+              <Typography sx={{ p: 4, color: 'text.secondary', fontFamily: 'Inter', textAlign: 'center' }}>
                 No hay conciliaciones de peso registradas para este periodo.
               </Typography>
             ) : (
@@ -257,13 +257,13 @@ export default function VariacionPesoWidget({ dateRange }) {
                 <Table size="medium" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Fecha</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Eslabón</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Actor</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Especie</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }} align="right">Origen (kg)</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }} align="right">Destino (kg)</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }} align="right">Δ%</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Fecha</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Eslabón</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Actor</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Especie</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Origen (kg)</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Destino (kg)</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Δ%</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -273,7 +273,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                         <TableRow
                           key={idx}
                           sx={{
-                            '&:hover': { bgcolor: '#f8fafc' },
+                            '&:hover': { bgcolor: 'background.default' },
                             transition: 'background-color 0.2s ease'
                           }}
                         >
@@ -306,7 +306,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                               py: 1.5,
                               fontFamily: 'Outfit',
                               fontWeight: 700,
-                              color: fueraUmbral ? '#ef4444' : '#0f172a'
+                              color: fueraUmbral ? 'error.main' : 'text.primary'
                             }}
                             align="right"
                           >
@@ -320,14 +320,14 @@ export default function VariacionPesoWidget({ dateRange }) {
               </TableContainer>
             )}
           </DialogContent>
-          <DialogActions sx={{ p: 2.5, bgcolor: '#fbfbfb', borderTop: '1px solid #f1f5f9' }}>
+          <DialogActions sx={{ p: 2.5, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
             <Button
               onClick={() => setOpenModal(false)}
               sx={{
                 fontFamily: 'Outfit',
                 fontWeight: 600,
                 textTransform: 'none',
-                color: '#64748b'
+                color: 'text.secondary'
               }}
             >
               Cerrar

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { 
   Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, 
   ListItemButton, ListItemIcon, ListItemText, Avatar, Button, IconButton,
@@ -16,9 +16,13 @@ import {
   FilterList as FilterListIcon,
   CalendarToday as CalendarTodayIcon,
   Logout as LogoutIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  LightMode as LightModeIcon,
+  DarkMode as DarkModeIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
+import { ColorModeContext } from '../../theme/ThemeContext';
 import sernapescaLogo from '../../assets/sernapesca.png';
 import { onMessageListener } from '../../firebase';
 
@@ -38,6 +42,8 @@ const menuItems = [
 export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
+  const colorMode = useContext(ColorModeContext);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -126,7 +132,7 @@ export default function MainLayout() {
   const { title, subtitle } = getCurrentPageTitle();
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f8fafc' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
         
         {/* ═══════════ SIDEBAR (MENÚ LATERAL) ═══════════ */}
         <Drawer
@@ -137,11 +143,12 @@ export default function MainLayout() {
             '& .MuiDrawer-paper': {
               width: drawerWidth,
               boxSizing: 'border-box',
-              background: 'linear-gradient(180deg, #050d1a 0%, #0a192f 50%, #020c1b 100%)',
+              bgcolor: theme.palette.mode === 'light' ? 'primary.main' : 'background.paper',
               color: '#fff',
               display: 'flex',
               flexDirection: 'column',
-              borderRight: '1px solid rgba(255, 255, 255, 0.04)',
+              borderRight: '1px solid',
+              borderColor: 'divider',
             },
           }}
         >
@@ -170,20 +177,20 @@ export default function MainLayout() {
                       px: 3,
                       bgcolor: isActive ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
                       borderLeft: isActive ? '4px solid #0ea5e9' : '4px solid transparent',
-                      color: isActive ? '#fff' : '#94a3b8',
+                      color: isActive ? '#fff' : 'text.disabled',
                       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         bgcolor: 'rgba(255, 255, 255, 0.04)',
                         color: '#fff',
                         pl: 3.5, // Micro-animación de deslizamiento
                         '& .MuiListItemIcon-root': {
-                          color: '#0ea5e9',
+                          color: 'secondary.main',
                         }
                       }
                     }}
                   >
                     <ListItemIcon sx={{ 
-                      color: isActive ? '#0ea5e9' : '#64748b', 
+                      color: isActive ? 'secondary.main' : 'text.secondary', 
                       minWidth: 36,
                       transition: 'color 0.2s ease',
                     }}>
@@ -214,7 +221,7 @@ export default function MainLayout() {
                 sx={{
                   py: 1.5,
                   px: 3,
-                  color: location.pathname === '/ayuda' ? '#fff' : '#64748b',
+                  color: location.pathname === '/ayuda' ? '#fff' : 'text.secondary',
                   bgcolor: location.pathname === '/ayuda' ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
                   borderLeft: location.pathname === '/ayuda' ? '4px solid #0ea5e9' : '4px solid transparent',
                   '&:hover': {
@@ -222,12 +229,12 @@ export default function MainLayout() {
                     color: '#fff',
                     pl: 3.5,
                     '& .MuiListItemIcon-root': {
-                      color: '#0ea5e9',
+                      color: 'secondary.main',
                     }
                   }
                 }}
               >
-                <ListItemIcon sx={{ color: location.pathname === '/ayuda' ? '#0ea5e9' : '#64748b', minWidth: 36 }}>
+                <ListItemIcon sx={{ color: location.pathname === '/ayuda' ? 'secondary.main' : 'text.secondary', minWidth: 36 }}>
                   <HelpIcon />
                 </ListItemIcon>
                 <ListItemText 
@@ -255,9 +262,10 @@ export default function MainLayout() {
             color="transparent" 
             elevation={0} 
             sx={{ 
-              borderBottom: '1px solid #f1f5f9', 
-              bgcolor: 'rgba(255, 255, 255, 0.85)',
-              backdropFilter: 'blur(12px)',
+              borderBottom: 1,
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              backgroundImage: 'none',
             }}
           >
             <Toolbar sx={{ px: 3, py: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -265,23 +273,23 @@ export default function MainLayout() {
               {/* Sección Izquierda: Marca y Región */}
               <Box sx={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 900, color: '#0a192f', fontFamily: 'Outfit', lineHeight: 1.1, letterSpacing: '0.5px' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 900, color: 'text.primary', fontFamily: 'Outfit', lineHeight: 1.1, letterSpacing: '0.5px' }}>
                     TRAZALGA
                   </Typography>
-                  <Typography sx={{ fontSize: '0.625rem', color: '#64748b', fontFamily: 'Inter', lineHeight: 1.2, mt: 0.25 }}>
+                  <Typography sx={{ fontSize: '0.625rem', color: 'text.secondary', fontFamily: 'Inter', lineHeight: 1.2, mt: 0.25 }}>
                     Portal de Control de Trazabilidad<br/>de Algas Pardas
                   </Typography>
-                  <Typography sx={{ fontSize: '0.625rem', color: '#0ea5e9', fontWeight: 700, fontFamily: 'Inter', mt: 0.5 }}>
+                  <Typography sx={{ fontSize: '0.625rem', color: 'secondary.main', fontWeight: 700, fontFamily: 'Inter', mt: 0.5 }}>
                     IV Región de Coquimbo
                   </Typography>
                 </Box>
 
                 {/* Título de Página y Subtítulo */}
-                <Box sx={{ borderLeft: '1px solid #e2e8f0', pl: 4 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontFamily: 'Outfit', lineHeight: 1.2 }}>
+                <Box sx={{ borderLeft: 1, borderColor: 'divider', pl: 4 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', fontFamily: 'Outfit', lineHeight: 1.2 }}>
                     {title}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.725rem', color: '#64748b', fontFamily: 'Inter' }}>
+                  <Typography sx={{ fontSize: '0.725rem', color: 'text.secondary', fontFamily: 'Inter' }}>
                     {subtitle}
                   </Typography>
                 </Box>
@@ -295,17 +303,18 @@ export default function MainLayout() {
                   <Box sx={{ 
                     display: 'flex', 
                     alignItems: 'center', 
-                    bgcolor: '#f8fafc', 
-                    border: '1px solid #e2e8f0', 
+                    bgcolor: 'background.default', 
+                    border: '1px solid',
+                    borderColor: 'divider', 
                     borderRadius: '24px', 
                     px: 2, 
                     py: 0.5,
                     transition: 'border-color 0.2s',
                     '&:focus-within': {
-                      borderColor: '#cbd5e1'
+                      borderColor: 'primary.main'
                     }
                   }}>
-                    <CalendarTodayIcon sx={{ color: '#64748b', mr: 1, fontSize: '0.9rem' }} />
+                    <CalendarTodayIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '0.9rem' }} />
                     <input 
                       type="date" 
                       value={dateRange.startDate} 
@@ -313,14 +322,15 @@ export default function MainLayout() {
                       style={{ 
                         border: 'none', 
                         outline: 'none', 
-                        color: '#334155', 
+                        color: theme.palette.text.primary, 
                         fontSize: '0.8rem', 
                         backgroundColor: 'transparent',
                         fontFamily: 'Inter',
                         fontWeight: 600,
+                        colorScheme: theme.palette.mode
                       }} 
                     />
-                    <Typography sx={{ color: '#94a3b8', mx: 1, fontSize: '0.8rem' }}> - </Typography>
+                    <Typography sx={{ color: 'text.secondary', mx: 1, fontSize: '0.8rem' }}> - </Typography>
                     <input 
                       type="date" 
                       value={dateRange.endDate} 
@@ -328,11 +338,12 @@ export default function MainLayout() {
                       style={{ 
                         border: 'none', 
                         outline: 'none', 
-                        color: '#334155', 
+                        color: theme.palette.text.primary, 
                         fontSize: '0.8rem', 
                         backgroundColor: 'transparent',
                         fontFamily: 'Inter',
                         fontWeight: 600,
+                        colorScheme: theme.palette.mode
                       }} 
                     />
                   </Box>
@@ -342,8 +353,8 @@ export default function MainLayout() {
                     startIcon={<FilterListIcon />}
                     sx={{ 
                       textTransform: 'none', 
-                      bgcolor: '#0a192f', 
-                      '&:hover': { bgcolor: '#172a45' },
+                      bgcolor: 'primary.main', 
+                      '&:hover': { bgcolor: 'primary.light' },
                       borderRadius: '24px',
                       px: 2.5,
                       py: 0.75,
@@ -356,9 +367,14 @@ export default function MainLayout() {
                   </Button>
                 </Box>
 
+                {/* Theme Toggle Button */}
+                <IconButton color="inherit" onClick={colorMode.toggleColorMode} sx={{ color: 'text.secondary' }}>
+                  {theme.palette.mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+                </IconButton>
+
                 {/* Campana de Notificaciones */}
-                <IconButton color="inherit" onClick={handleNotifClick} sx={{ color: '#64748b' }}>
-                  <Badge badgeContent={notifications.length} color="error" slotProps={{ badge: { sx: { bgcolor: '#ef4444' } } }}>
+                <IconButton color="inherit" onClick={handleNotifClick} sx={{ color: 'text.secondary' }}>
+                  <Badge badgeContent={notifications.length} color="error">
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
@@ -372,11 +388,11 @@ export default function MainLayout() {
                   slotProps={{
                     paper: {
                       elevation: 3,
-                      sx: { width: 300, maxHeight: 400, mt: 1.5, borderRadius: 3, border: '1px solid #e2e8f0' }
+                      sx: { width: 300, maxHeight: 400, mt: 1.5, borderRadius: 3, border: 1, borderColor: 'divider' }
                     }
                   }}
                 >
-                  <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #f1f5f9' }}>
+                  <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Notificaciones</Typography>
                   </Box>
                   {notifications.length === 0 ? (
@@ -386,12 +402,12 @@ export default function MainLayout() {
                       <MenuItem key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 1.5 }}>
                         <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>{notif.title}</Typography>
                         <Typography variant="caption" color="text.secondary" noWrap sx={{ width: '100%', fontFamily: 'Inter' }}>{notif.body}</Typography>
-                        <Typography variant="caption" sx={{ color: '#94a3b8', alignSelf: 'flex-end', fontSize: '0.65rem', mt: 0.5 }}>{notif.time}</Typography>
+                        <Typography variant="caption" sx={{ color: 'text.disabled', alignSelf: 'flex-end', fontSize: '0.65rem', mt: 0.5 }}>{notif.time}</Typography>
                       </MenuItem>
                     ))
                   )}
                   {notifications.length > 0 && (
-                    <Box sx={{ p: 1, textAlign: 'center', borderTop: '1px solid #f1f5f9' }}>
+                    <Box sx={{ p: 1, textAlign: 'center', borderTop: 1, borderColor: 'divider' }}>
                       <Button size="small" onClick={() => setNotifications([])} sx={{ textTransform: 'none', fontFamily: 'Outfit' }}>Limpiar todas</Button>
                     </Box>
                   )}
@@ -404,27 +420,28 @@ export default function MainLayout() {
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: 1.5, 
-                    borderLeft: '1px solid #f1f5f9', 
+                    borderLeft: 1,
+                    borderColor: 'divider', 
                     pl: 3,
                     cursor: 'pointer',
                     '&:hover': {
                       '& .MuiAvatar-root': {
-                        borderColor: '#0ea5e9',
+                        borderColor: 'primary.main',
                       }
                     }
                   }}
                 >
                   <Box sx={{ textAlign: 'right' }}>
-                    <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a', fontFamily: 'Outfit' }}>
+                    <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary', fontFamily: 'Outfit' }}>
                       Analista Regional
                     </Typography>
-                    <Typography sx={{ fontSize: '0.65rem', color: '#64748b', fontFamily: 'Inter' }}>
+                    <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary', fontFamily: 'Inter' }}>
                       IV Región
                     </Typography>
                   </Box>
                   <Avatar 
                     sx={{ 
-                      bgcolor: '#0a192f', 
+                      bgcolor: 'primary.main', 
                       width: 36, 
                       height: 36, 
                       transition: 'all 0.3s',
@@ -447,7 +464,7 @@ export default function MainLayout() {
                         overflow: 'visible',
                         mt: 1.5,
                         borderRadius: 3,
-                        border: '1px solid #e2e8f0',
+                        border: 1, borderColor: 'divider',
                         '& .MuiAvatar-root': {
                           width: 32,
                           height: 32,
@@ -465,8 +482,9 @@ export default function MainLayout() {
                           bgcolor: 'background.paper',
                           transform: 'translateY(-50%) rotate(45deg)',
                           zIndex: 0,
-                          borderLeft: '1px solid #e2e8f0',
-                          borderTop: '1px solid #e2e8f0',
+                          borderLeft: 1, 
+                          borderTop: 1, 
+                          borderColor: 'divider',
                         },
                       },
                     }
@@ -478,10 +496,10 @@ export default function MainLayout() {
                     </ListItemIcon>
                     Mi Perfil
                   </MenuItem>
-                  <Divider sx={{ borderColor: '#f1f5f9' }} />
-                  <MenuItem onClick={handleLogout} sx={{ color: '#ef4444', fontFamily: 'Inter', fontSize: '0.875rem' }}>
+                  <Divider sx={{ borderColor: 'divider' }} />
+                  <MenuItem onClick={handleLogout} sx={{ color: 'error.main', fontFamily: 'Inter', fontSize: '0.875rem' }}>
                     <ListItemIcon>
-                      <LogoutIcon fontSize="small" sx={{ color: '#ef4444' }} />
+                      <LogoutIcon fontSize="small" sx={{ color: 'error.main' }} />
                     </ListItemIcon>
                     Cerrar sesión
                   </MenuItem>
@@ -492,7 +510,7 @@ export default function MainLayout() {
           </AppBar>
 
           {/* ═══════════ CONTENIDO DE PÁGINAS (Outlet) ═══════════ */}
-          <Box sx={{ flexGrow: 1, overflow: 'auto', p: 3, bgcolor: '#f8fafc' }}>
+          <Box sx={{ flexGrow: 1, overflow: 'auto', p: 3, bgcolor: 'background.default' }}>
             <Outlet context={{ dateRange }} />
           </Box>
 

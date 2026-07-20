@@ -89,7 +89,7 @@ export default function Reportes() {
 
           <Box sx={{ zIndex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <AssessmentIcon sx={{ fontSize: 36, color: '#0ea5e9' }} />
+              <AssessmentIcon sx={{ fontSize: 36, color: 'secondary.main' }} />
               <Typography variant="h5" sx={{ fontWeight: 800, fontFamily: 'Outfit', m: 0 }}>
                 Módulo de Reportes y Trazabilidad
               </Typography>
@@ -117,7 +117,7 @@ export default function Reportes() {
               <Typography variant="caption" sx={{ display: 'block', opacity: 0.6, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Declaraciones
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 800, color: '#10b981', mt: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: 'success.main', mt: 0.5 }}>
                 {reportData.length.toLocaleString('es-CL')} docs
               </Typography>
             </Box>
@@ -138,7 +138,7 @@ export default function Reportes() {
               <Typography variant="caption" sx={{ display: 'block', opacity: 0.6, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 Cantidad Total
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 800, color: '#0ea5e9', mt: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', mt: 0.5 }}>
                 {totalVolume.toLocaleString('es-CL')} kg
               </Typography>
             </Box>

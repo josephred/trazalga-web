@@ -60,7 +60,7 @@ export default function Dashboard() {
         
         {/* Encabezado del Dashboard */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="body1" sx={{ color: '#64748b', fontFamily: 'Inter', fontSize: '0.95rem' }}>
+          <Typography variant="body1" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontSize: '0.95rem' }}>
             Indicadores ejecutivos y resumen general de transacciones registradas en el sistema.
           </Typography>
         </Box>
@@ -71,7 +71,7 @@ export default function Dashboard() {
             <StatCard
               title="Declaraciones totales"
               value={(resumen.declaracionesTotales || 0).toLocaleString('es-CL')}
-              color="#0ea5e9"
+              color='secondary.main'
               icon={BarChartIcon}
               subtitle="Toda la cadena de suministro"
             />
@@ -80,7 +80,7 @@ export default function Dashboard() {
             <StatCard
               title="Volumen total (kg)"
               value={(resumen.volumenTotal || 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
-              color="#10b981"
+              color='success.main'
               icon={InventoryIcon}
               subtitle="Desembarque declarado"
             />
@@ -89,7 +89,7 @@ export default function Dashboard() {
             <StatCard
               title="Alertas activas"
               value={(resumen.alertasActivas || 0).toLocaleString('es-CL')}
-              color="#f59e0b"
+              color='warning.main'
               icon={WarningIcon}
               subtitle="En veda + peso fuera de umbral"
             />
@@ -107,7 +107,7 @@ export default function Dashboard() {
             <StatCard
               title="% Inconsistencias"
               value={`${(resumen.inconsistenciasPct || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}%`}
-              color="#ef4444"
+              color='error.main'
               icon={BarChartIcon}
               subtitle="En veda o rechazadas"
             />
@@ -116,7 +116,7 @@ export default function Dashboard() {
             <StatCard
               title="Actores fiscalizados"
               value={(resumen.actoresFiscalizados || 0).toLocaleString('es-CL')}
-              color="#0ea5e9"
+              color='secondary.main'
               icon={GroupIcon}
               subtitle="Con declaraciones en el período"
             />

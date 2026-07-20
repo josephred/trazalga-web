@@ -11,22 +11,22 @@ const CustomTooltip = ({ active, payload, label }) => {
         sx={{
           bgcolor: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(8px)',
-          border: '1px solid #e2e8f0',
+          border: 1, borderColor: 'divider',
           borderRadius: 3,
           p: 1.5,
           boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)',
         }}
       >
-        <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, fontFamily: 'Outfit', color: '#0f172a' }}>
+        <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, fontFamily: 'Outfit', color: 'text.primary' }}>
           Fecha: {label}
         </Typography>
         {payload.map((item, idx) => (
           <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.fill }} />
-            <Typography variant="caption" sx={{ color: '#475569', fontFamily: 'Inter', fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: 'text.primary', fontFamily: 'Inter', fontWeight: 600 }}>
               {item.name}:
             </Typography>
-            <Typography variant="caption" sx={{ color: '#0f172a', fontFamily: 'Outfit', fontWeight: 800, ml: 'auto' }}>
+            <Typography variant="caption" sx={{ color: 'text.primary', fontFamily: 'Outfit', fontWeight: 800, ml: 'auto' }}>
               {item.value.toLocaleString('es-CL')}
             </Typography>
           </Box>
@@ -98,18 +98,18 @@ export default function IndicadorRecolector({ dateRange }) {
       sx={{ 
         mb: 4, 
         borderRadius: 4, 
-        border: '1px solid #e2e8f0',
+        border: 1, borderColor: 'divider',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
           boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
-          borderColor: '#cbd5e1',
+          borderColor: 'divider',
         }
       }}
     >
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
             Evolución de Declaraciones y Desembarques
           </Typography>
           <FormControl size="small" sx={{ minWidth: 160 }}>
@@ -129,7 +129,7 @@ export default function IndicadorRecolector({ dateRange }) {
             </Select>
           </FormControl>
         </Box>
-        <Typography variant="body2" sx={{ color: '#64748b', mb: 4, fontFamily: 'Inter', lineHeight: 1.6 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, fontFamily: 'Inter', lineHeight: 1.6 }}>
           Evolución diaria del Nº de Declaraciones y Total de Desembarques (Kg) (Incluye Recolectores, Armadores y Áreas de Manejo).
         </Typography>
 
@@ -139,25 +139,25 @@ export default function IndicadorRecolector({ dateRange }) {
               data={data}
               margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="3 3" stroke='divider' />
               <XAxis 
                 dataKey="name" 
-                tick={{ fill: '#64748b', fontSize: 11, fontFamily: 'Inter' }}
-                axisLine={{ stroke: '#e2e8f0' }}
+                tick={{ fill: 'text.secondary', fontSize: 11, fontFamily: 'Inter' }}
+                axisLine={{ stroke: 'divider' }}
                 tickLine={false}
               />
               <YAxis 
                 yAxisId="left" 
                 orientation="left" 
-                tick={{ fill: '#0ea5e9', fontSize: 11, fontFamily: 'Inter' }}
-                axisLine={{ stroke: '#e2e8f0' }}
+                tick={{ fill: 'secondary.main', fontSize: 11, fontFamily: 'Inter' }}
+                axisLine={{ stroke: 'divider' }}
                 tickLine={false}
               />
               <YAxis 
                 yAxisId="right" 
                 orientation="right" 
-                tick={{ fill: '#10b981', fontSize: 11, fontFamily: 'Inter' }}
-                axisLine={{ stroke: '#e2e8f0' }}
+                tick={{ fill: 'success.main', fontSize: 11, fontFamily: 'Inter' }}
+                axisLine={{ stroke: 'divider' }}
                 tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(241, 245, 249, 0.4)' }} />
@@ -167,10 +167,10 @@ export default function IndicadorRecolector({ dateRange }) {
                 iconSize={8}
               />
               {(chartView === 'ambos' || chartView === 'declaraciones') && (
-                <Bar yAxisId="left" dataKey="declaraciones" name="Nº Declaraciones" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={28} />
+                <Bar yAxisId="left" dataKey="declaraciones" name="Nº Declaraciones" fill='secondary.main' radius={[4, 4, 0, 0]} barSize={28} />
               )}
               {(chartView === 'ambos' || chartView === 'desembarques') && (
-                <Bar yAxisId="right" dataKey="desembarque" name="Total Desembarque (Kg)" fill="#10b981" radius={[4, 4, 0, 0]} barSize={28} />
+                <Bar yAxisId="right" dataKey="desembarque" name="Total Desembarque (Kg)" fill='success.main' radius={[4, 4, 0, 0]} barSize={28} />
               )}
             </BarChart>
           </ResponsiveContainer>

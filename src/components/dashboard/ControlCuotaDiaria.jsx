@@ -46,9 +46,9 @@ export default function ControlCuotaDiaria({ dateRange }) {
 
   // Colores y fondos explícitos y refinados para las barras de progreso
   const getProgressColors = (porcentaje) => {
-    if (porcentaje >= 100) return { bar: '#ef4444', bg: '#fef2f2', label: '#b91c1c' }; // Rojo
-    if (porcentaje >= 80) return { bar: '#f59e0b', bg: '#fffbeb', label: '#b45309' }; // Naranja/Amber
-    return { bar: '#10b981', bg: '#f0fdf4', label: '#047857' }; // Verde
+    if (porcentaje >= 100) return { bar: 'error.main', bg: '#fef2f2', label: '#b91c1c' }; // Rojo
+    if (porcentaje >= 80) return { bar: 'warning.main', bg: '#fffbeb', label: '#b45309' }; // Naranja/Amber
+    return { bar: 'success.main', bg: '#f0fdf4', label: '#047857' }; // Verde
   };
 
   if (loading) {
@@ -58,7 +58,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
         sx={{ 
           height: '100%', 
           borderRadius: 4, 
-          border: '1px solid #e2e8f0',
+          border: 1, borderColor: 'divider',
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center', 
@@ -77,11 +77,11 @@ export default function ControlCuotaDiaria({ dateRange }) {
         sx={{ 
           height: '100%', 
           borderRadius: 4, 
-          border: '1px solid #e2e8f0',
+          border: 1, borderColor: 'divider',
         }}
       >
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a', mb: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', mb: 2 }}>
             Control Cuota Diaria
           </Typography>
           <Typography color="error" sx={{ fontFamily: 'Inter', fontSize: '0.9rem' }}>{error}</Typography>
@@ -96,18 +96,18 @@ export default function ControlCuotaDiaria({ dateRange }) {
       sx={{ 
         height: '100%',
         borderRadius: 4, 
-        border: '1px solid #e2e8f0',
+        border: 1, borderColor: 'divider',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
           boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
-          borderColor: '#cbd5e1',
+          borderColor: 'divider',
         }
       }}
     >
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
             Control de Cuotas
           </Typography>
           <Box sx={{ display: 'flex', gap: 1.5 }}>
@@ -145,11 +145,11 @@ export default function ControlCuotaDiaria({ dateRange }) {
             </FormControl>
           </Box>
         </Box>
-        <Divider sx={{ mb: 3, borderColor: '#f1f5f9' }} />
+        <Divider sx={{ mb: 3, borderColor: 'divider' }} />
         
         {cuotas.length === 0 ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
               No hay cuotas activas configuradas para este perfil/periodo.
             </Typography>
           </Box>
@@ -162,7 +162,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
               <Box key={index} sx={{ mb: 3, '&:last-child': { mb: 1 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'baseline' }}>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
                       {cuota.especieNombre}
                     </Typography>
                     {cuota.alcance && cuota.alcance !== 'Global' && (
@@ -170,9 +170,9 @@ export default function ControlCuotaDiaria({ dateRange }) {
                         variant="caption"
                         sx={{
                           fontFamily: 'Inter',
-                          color: '#64748b',
-                          bgcolor: '#f1f5f9',
-                          border: '1px solid #e2e8f0',
+                          color: 'text.secondary',
+                          bgcolor: 'divider',
+                          border: 1, borderColor: 'divider',
                           borderRadius: 2,
                           px: 1,
                           py: 0.1,
@@ -187,7 +187,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
                       </Typography>
                     )}
                   </Box>
-                  <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.825rem', color: '#64748b' }}>
+                  <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.825rem', color: 'text.secondary' }}>
                     {cuota.volumenExtraido?.toLocaleString('es-CL')} / {cuota.limiteCuota?.toLocaleString('es-CL')} kg{' '}
                     <span style={{ fontWeight: 700, color: colors.label }}>
                       ({cuota.porcentajeUso}%)
@@ -200,7 +200,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
                   sx={{ 
                     height: 8, 
                     borderRadius: 4, 
-                    bgcolor: '#e2e8f0',
+                    bgcolor: 'divider',
                     '& .MuiLinearProgress-bar': {
                       borderRadius: 4,
                       bgcolor: colors.bar,

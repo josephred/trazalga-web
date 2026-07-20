@@ -15,7 +15,7 @@ import api from '../../api/axiosConfig';
 
 const MAX_ESPECIES = 8;
 const COLOR_BARRA = '#059669';
-const COLOR_OTRAS = '#94a3b8';
+const COLOR_OTRAS = 'text.disabled';
 
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -25,19 +25,19 @@ const CustomTooltip = ({ active, payload }) => {
         sx={{
           bgcolor: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(8px)',
-          border: '1px solid #e2e8f0',
+          border: 1, borderColor: 'divider',
           borderRadius: 3,
           p: 1.5,
           boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02)',
         }}
       >
-        <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, fontFamily: 'Outfit', color: '#0f172a' }}>
+        <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, fontFamily: 'Outfit', color: 'text.primary' }}>
           {d.especie}
         </Typography>
-        <Typography variant="caption" sx={{ display: 'block', color: '#475569', fontFamily: 'Inter' }}>
+        <Typography variant="caption" sx={{ display: 'block', color: 'text.primary', fontFamily: 'Inter' }}>
           Volumen: <strong>{d.volumenKg.toLocaleString('es-CL', { maximumFractionDigits: 0 })} kg</strong> ({d.porcentaje}%)
         </Typography>
-        <Typography variant="caption" sx={{ display: 'block', color: '#475569', fontFamily: 'Inter' }}>
+        <Typography variant="caption" sx={{ display: 'block', color: 'text.primary', fontFamily: 'Inter' }}>
           Declaraciones: <strong>{d.declaraciones.toLocaleString('es-CL')}</strong>
         </Typography>
       </Box>
@@ -103,7 +103,7 @@ export default function VolumenPorEspecie({ dateRange }) {
         sx={{
           height: '100%',
           borderRadius: 4,
-          border: '1px solid #e2e8f0',
+          border: 1, borderColor: 'divider',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -123,18 +123,18 @@ export default function VolumenPorEspecie({ dateRange }) {
       sx={{
         height: '100%',
         borderRadius: 4,
-        border: '1px solid #e2e8f0',
+        border: 1, borderColor: 'divider',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
           boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
-          borderColor: '#cbd5e1',
+          borderColor: 'divider',
         }
       }}
     >
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
             Volumen Extraído por Especie
           </Typography>
           <FormControl size="small" sx={{ minWidth: 130 }}>
@@ -155,10 +155,10 @@ export default function VolumenPorEspecie({ dateRange }) {
             </Select>
           </FormControl>
         </Box>
-        <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
           Cantidad declarada (kg) por recurso en el periodo seleccionado.
         </Typography>
-        <Divider sx={{ mb: 2, borderColor: '#f1f5f9' }} />
+        <Divider sx={{ mb: 2, borderColor: 'divider' }} />
 
         {error ? (
           <Typography color="error" variant="body2" sx={{ textAlign: 'center', py: 4, fontFamily: 'Inter' }}>
@@ -166,7 +166,7 @@ export default function VolumenPorEspecie({ dateRange }) {
           </Typography>
         ) : data.length === 0 ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
               No hay declaraciones registradas para este periodo/perfil.
             </Typography>
           </Box>
@@ -178,11 +178,11 @@ export default function VolumenPorEspecie({ dateRange }) {
                 layout="vertical"
                 margin={{ top: 5, right: 70, left: 10, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke='divider' horizontal={false} />
                 <XAxis
                   type="number"
-                  tick={{ fill: '#64748b', fontSize: 11, fontFamily: 'Inter' }}
-                  axisLine={{ stroke: '#e2e8f0' }}
+                  tick={{ fill: 'text.secondary', fontSize: 11, fontFamily: 'Inter' }}
+                  axisLine={{ stroke: 'divider' }}
                   tickLine={false}
                   tickFormatter={(v) => v.toLocaleString('es-CL')}
                 />
@@ -190,8 +190,8 @@ export default function VolumenPorEspecie({ dateRange }) {
                   type="category"
                   dataKey="especie"
                   width={130}
-                  tick={{ fill: '#475569', fontSize: 11, fontFamily: 'Inter' }}
-                  axisLine={{ stroke: '#e2e8f0' }}
+                  tick={{ fill: 'text.primary', fontSize: 11, fontFamily: 'Inter' }}
+                  axisLine={{ stroke: 'divider' }}
                   tickLine={false}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(241, 245, 249, 0.4)' }} />
@@ -203,7 +203,7 @@ export default function VolumenPorEspecie({ dateRange }) {
                     dataKey="volumenKg"
                     position="right"
                     formatter={(v) => `${v.toLocaleString('es-CL', { maximumFractionDigits: 0 })} kg`}
-                    style={{ fill: '#475569', fontSize: 11, fontFamily: 'Inter', fontWeight: 600 }}
+                    style={{ fill: 'text.primary', fontSize: 11, fontFamily: 'Inter', fontWeight: 600 }}
                   />
                 </Bar>
               </BarChart>

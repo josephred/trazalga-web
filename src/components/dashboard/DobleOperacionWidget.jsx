@@ -64,7 +64,7 @@ export default function DobleOperacionWidget({ dateRange }) {
         sx={{ 
           height: '100%', 
           borderRadius: 4, 
-          border: '1px solid #e2e8f0',
+          border: 1, borderColor: 'divider',
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center', 
@@ -85,10 +85,10 @@ export default function DobleOperacionWidget({ dateRange }) {
         flexDirection: 'column',
         borderRadius: 4, 
         border: '1px solid',
-        borderColor: hasInfractions ? '#fca5a5' : '#e2e8f0',
+        borderColor: hasInfractions ? 'error.light' : 'divider',
         background: hasInfractions 
-          ? 'linear-gradient(180deg, #fff5f5 0%, #ffffff 100%)' 
-          : '#ffffff',
+          ? (theme) => theme.palette.mode === 'dark' ? 'linear-gradient(180deg, #450a0a 0%, #1e293b 100%)' : 'linear-gradient(180deg, #fff5f5 0%, #ffffff 100%)' 
+          : 'background.paper',
         boxShadow: hasInfractions 
           ? '0 10px 15px -3px rgba(239, 68, 68, 0.04)' 
           : '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
@@ -99,7 +99,7 @@ export default function DobleOperacionWidget({ dateRange }) {
           boxShadow: hasInfractions
             ? '0 12px 25px -3px rgba(239, 68, 68, 0.08)'
             : '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
-          borderColor: hasInfractions ? '#ef4444' : '#cbd5e1',
+          borderColor: hasInfractions ? 'error.main' : 'divider',
         }
       }}
     >
@@ -112,24 +112,24 @@ export default function DobleOperacionWidget({ dateRange }) {
             top: 0,
             bottom: 0,
             width: 5,
-            bgcolor: '#ef4444'
+            bgcolor: 'error.main'
           }}
         />
       )}
 
       <CardContent sx={{ p: 3, pl: hasInfractions ? 4 : 3, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-          <WarningAmberIcon sx={{ mr: 1, color: hasInfractions ? '#ef4444' : '#f59e0b' }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+          <WarningAmberIcon sx={{ mr: 1, color: hasInfractions ? 'error.main' : 'warning.main' }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
             Doble Operación (ALA / AMERB)
           </Typography>
         </Box>
         
-        <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
           Posibles duplicidades: mismo actor, especie y día declarados en Área de Libre Acceso y en Área de Manejo con volúmenes similares (revisión del fiscalizador).
         </Typography>
         
-        <Divider sx={{ mb: 2.5, borderColor: hasInfractions ? '#fee2e2' : '#f1f5f9' }} />
+        <Divider sx={{ mb: 2.5, borderColor: hasInfractions ? 'error.light' : 'divider' }} />
 
         {error ? (
           <Typography color="error" variant="body2" sx={{ textAlign: 'center', mt: 2, fontFamily: 'Inter' }}>
@@ -144,12 +144,12 @@ export default function DobleOperacionWidget({ dateRange }) {
                   sx={{ 
                     fontWeight: 800, 
                     fontFamily: 'Outfit', 
-                    color: hasInfractions ? '#ef4444' : '#0f172a' 
+                    color: hasInfractions ? 'error.main' : 'text.primary' 
                   }}
                 >
                   {metrics.totalCoincidencias}
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b', fontFamily: 'Inter' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', fontFamily: 'Inter' }}>
                   Coincidencias sospechosas
                 </Typography>
               </Box>
@@ -161,13 +161,13 @@ export default function DobleOperacionWidget({ dateRange }) {
                 onClick={handleOpenDetalle}
                 disabled={metrics.totalCoincidencias === 0}
                 sx={{ 
-                  bgcolor: hasInfractions ? '#ef4444' : '#0a192f',
+                  bgcolor: hasInfractions ? 'error.main' : 'primary.main',
                   '&:hover': {
-                    bgcolor: hasInfractions ? '#dc2626' : '#172a45',
+                    bgcolor: hasInfractions ? 'error.dark' : 'primary.light',
                   },
                   '&.Mui-disabled': {
-                    bgcolor: '#e2e8f0',
-                    color: '#94a3b8'
+                    bgcolor: 'divider',
+                    color: 'text.disabled'
                   },
                   borderRadius: 2.5,
                   textTransform: 'none',
@@ -196,12 +196,12 @@ export default function DobleOperacionWidget({ dateRange }) {
             }
           }}
         >
-          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a', bgcolor: '#fbfbfb', borderBottom: '1px solid #f1f5f9', p: 3 }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', p: 3 }}>
             Detalle de Coincidencias Sospechosas
           </DialogTitle>
-          <DialogContent dividers sx={{ p: 0, borderColor: '#f1f5f9' }}>
+          <DialogContent dividers sx={{ p: 0, borderColor: 'divider' }}>
             {detalle.length === 0 ? (
-              <Typography sx={{ p: 4, color: '#64748b', fontFamily: 'Inter', textAlign: 'center' }}>
+              <Typography sx={{ p: 4, color: 'text.secondary', fontFamily: 'Inter', textAlign: 'center' }}>
                 No se detectaron posibles dobles operaciones para este periodo.
               </Typography>
             ) : (
@@ -209,13 +209,13 @@ export default function DobleOperacionWidget({ dateRange }) {
                 <Table size="medium" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Fecha</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Actor</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Especie</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Origen ALA</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }} align="right">Kg ALA</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }} align="right">Kg AMERB</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }} align="right">Δ%</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Fecha</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Actor</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Especie</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Origen ALA</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Kg ALA</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Kg AMERB</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Δ%</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -223,14 +223,14 @@ export default function DobleOperacionWidget({ dateRange }) {
                       <TableRow 
                         key={`${row.tipoAla}-${row.alaId}-${row.areaId}`}
                         sx={{ 
-                          '&:hover': { bgcolor: '#f8fafc' }, 
+                          '&:hover': { bgcolor: 'background.default' }, 
                           transition: 'background-color 0.2s ease' 
                         }}
                       >
                         <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{new Date(row.fecha).toLocaleDateString('es-CL')}</TableCell>
                         <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>
                           {row.actor}
-                          <Typography variant="caption" display="block" sx={{ color: '#94a3b8' }}>
+                          <Typography variant="caption" display="block" sx={{ color: 'text.disabled' }}>
                             {row.rut}
                           </Typography>
                         </TableCell>
@@ -241,11 +241,11 @@ export default function DobleOperacionWidget({ dateRange }) {
                         </TableCell>
                         <TableCell sx={{ py: 1.5, fontFamily: 'Outfit', fontWeight: 600 }} align="right">
                           {((row && row.kgAmerb) || 0).toLocaleString('es-CL')}
-                          <Typography variant="caption" display="block" sx={{ color: '#94a3b8', fontFamily: 'Inter', fontWeight: 400 }}>
+                          <Typography variant="caption" display="block" sx={{ color: 'text.disabled', fontFamily: 'Inter', fontWeight: 400 }}>
                             {row.amerb}
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ py: 1.5, fontFamily: 'Outfit', fontWeight: 700, color: '#ef4444' }} align="right">
+                        <TableCell sx={{ py: 1.5, fontFamily: 'Outfit', fontWeight: 700, color: 'error.main' }} align="right">
                           {row.variacionPct > 0 ? `+${row.variacionPct}` : row.variacionPct}%
                         </TableCell>
                       </TableRow>
@@ -255,14 +255,14 @@ export default function DobleOperacionWidget({ dateRange }) {
               </TableContainer>
             )}
           </DialogContent>
-          <DialogActions sx={{ p: 2.5, bgcolor: '#fbfbfb', borderTop: '1px solid #f1f5f9' }}>
+          <DialogActions sx={{ p: 2.5, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
             <Button 
               onClick={() => setOpenModal(false)}
               sx={{ 
                 fontFamily: 'Outfit',
                 fontWeight: 600,
                 textTransform: 'none',
-                color: '#64748b'
+                color: 'text.secondary'
               }}
             >
               Cerrar

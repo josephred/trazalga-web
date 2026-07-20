@@ -61,7 +61,7 @@ export default function CasosAbiertosWidget({ dateRange }) {
         sx={{ 
           height: '100%', 
           borderRadius: 4, 
-          border: '1px solid #e2e8f0',
+          border: 1, borderColor: 'divider',
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center', 
@@ -82,10 +82,10 @@ export default function CasosAbiertosWidget({ dateRange }) {
         flexDirection: 'column',
         borderRadius: 4, 
         border: '1px solid',
-        borderColor: hasCasos ? '#d8b4fe' : '#e2e8f0', // purple border if cases exist
+        borderColor: hasCasos ? '#d8b4fe' : 'divider', // purple border if cases exist
         background: hasCasos 
-          ? 'linear-gradient(180deg, #faf5ff 0%, #ffffff 100%)' 
-          : '#ffffff',
+          ? (theme) => theme.palette.mode === 'dark' ? 'linear-gradient(180deg, #3b0764 0%, #1e293b 100%)' : 'linear-gradient(180deg, #faf5ff 0%, #ffffff 100%)'
+          : 'background.paper',
         boxShadow: hasCasos 
           ? '0 10px 15px -3px rgba(168, 85, 247, 0.04)' 
           : '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
@@ -96,7 +96,7 @@ export default function CasosAbiertosWidget({ dateRange }) {
           boxShadow: hasCasos
             ? '0 12px 25px -3px rgba(168, 85, 247, 0.08)'
             : '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
-          borderColor: hasCasos ? '#a855f7' : '#cbd5e1',
+          borderColor: hasCasos ? '#a855f7' : 'divider',
         }
       }}
     >
@@ -115,17 +115,17 @@ export default function CasosAbiertosWidget({ dateRange }) {
 
       <CardContent sx={{ p: 3, pl: hasCasos ? 4 : 3, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-          <ReportProblemIcon sx={{ mr: 1, color: hasCasos ? '#a855f7' : '#94a3b8' }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+          <ReportProblemIcon sx={{ mr: 1, color: hasCasos ? '#a855f7' : 'text.disabled' }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
             Casos de Rechazo / Negociación
           </Typography>
         </Box>
         
-        <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
           Declaraciones rechazadas o en proceso de negociación, junto con sus motivos y actores involucrados.
         </Typography>
         
-        <Divider sx={{ mb: 2.5, borderColor: hasCasos ? '#f3e8ff' : '#f1f5f9' }} />
+        <Divider sx={{ mb: 2.5, borderColor: hasCasos ? '#f3e8ff' : 'divider' }} />
 
         {error ? (
           <Typography color="error" variant="body2" sx={{ textAlign: 'center', mt: 2, fontFamily: 'Inter' }}>
@@ -137,7 +137,7 @@ export default function CasosAbiertosWidget({ dateRange }) {
             {hasCasos ? (
               <Box sx={{ mb: 2 }}>
                 {casosAbiertos.slice(0, 3).map((caso, index) => (
-                  <Box key={caso.id + '-' + index} sx={{ mb: 1.5, p: 1.5, bgcolor: '#ffffff', borderRadius: 2, border: '1px solid #f1f5f9' }}>
+                  <Box key={caso.id + '-' + index} sx={{ mb: 1.5, p: 1.5, bgcolor: 'background.paper', borderRadius: 2, border: 1, borderColor: 'divider' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                       <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b', fontFamily: 'Inter' }}>
                         Folio: {caso.folio}
@@ -149,15 +149,15 @@ export default function CasosAbiertosWidget({ dateRange }) {
                           height: 20, 
                           fontSize: '0.7rem', 
                           fontWeight: 700,
-                          bgcolor: caso.estado === 'RECHAZADA' ? '#fee2e2' : '#fef3c7',
-                          color: caso.estado === 'RECHAZADA' ? '#ef4444' : '#d97706'
+                          bgcolor: caso.estado === 'RECHAZADA' ? 'error.light' : '#fef3c7',
+                          color: caso.estado === 'RECHAZADA' ? 'error.main' : '#d97706'
                         }} 
                       />
                     </Box>
-                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 0.5 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
                       De: {caso.declarante} &rarr; Para: {caso.destinatario}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: '#475569', fontStyle: 'italic' }}>
+                    <Typography variant="caption" sx={{ color: 'text.primary', fontStyle: 'italic' }}>
                       "{caso.motivo}"
                     </Typography>
                   </Box>
@@ -170,7 +170,7 @@ export default function CasosAbiertosWidget({ dateRange }) {
               </Box>
             ) : (
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', my: 3 }}>
-                <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', fontStyle: 'italic' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontStyle: 'italic' }}>
                   No hay casos abiertos registrados en este periodo.
                 </Typography>
               </Box>
@@ -182,9 +182,9 @@ export default function CasosAbiertosWidget({ dateRange }) {
                 onClick={() => setOpenModal(true)}
                 disabled={!hasCasos}
                 sx={{ 
-                  bgcolor: hasCasos ? '#a855f7' : '#0a192f',
+                  bgcolor: hasCasos ? '#a855f7' : 'primary.main',
                   '&:hover': {
-                    bgcolor: hasCasos ? '#9333ea' : '#172a45',
+                    bgcolor: hasCasos ? '#9333ea' : 'primary.light',
                   },
                   borderRadius: 2.5,
                   textTransform: 'none',
@@ -194,8 +194,8 @@ export default function CasosAbiertosWidget({ dateRange }) {
                   py: 1,
                   boxShadow: 'none',
                   '&.Mui-disabled': {
-                    bgcolor: '#f1f5f9',
-                    color: '#94a3b8'
+                    bgcolor: 'divider',
+                    color: 'text.disabled'
                   }
                 }}
               >
@@ -217,20 +217,20 @@ export default function CasosAbiertosWidget({ dateRange }) {
             }
           }}
         >
-          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a', bgcolor: '#fbfbfb', borderBottom: '1px solid #f1f5f9', p: 3 }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', p: 3 }}>
             Detalle de Casos (Rechazos y Negociaciones)
           </DialogTitle>
-          <DialogContent dividers sx={{ p: 0, borderColor: '#f1f5f9' }}>
+          <DialogContent dividers sx={{ p: 0, borderColor: 'divider' }}>
             <TableContainer sx={{ maxHeight: 400 }}>
               <Table size="medium" stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Folio</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Estado</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Declarante</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Destinatario</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Motivo / Último Mensaje</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Fecha Mensaje</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Folio</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Estado</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Declarante</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Destinatario</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Motivo / Último Mensaje</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Fecha Mensaje</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -238,7 +238,7 @@ export default function CasosAbiertosWidget({ dateRange }) {
                     <TableRow 
                       key={row.id + '-' + idx}
                       sx={{ 
-                        '&:hover': { bgcolor: '#f8fafc' }, 
+                        '&:hover': { bgcolor: 'background.default' }, 
                         transition: 'background-color 0.2s ease' 
                       }}
                     >
@@ -250,8 +250,8 @@ export default function CasosAbiertosWidget({ dateRange }) {
                           sx={{ 
                             fontSize: '0.7rem', 
                             fontWeight: 700,
-                            bgcolor: row.estado === 'RECHAZADA' ? '#fee2e2' : '#fef3c7',
-                            color: row.estado === 'RECHAZADA' ? '#ef4444' : '#d97706'
+                            bgcolor: row.estado === 'RECHAZADA' ? 'error.light' : '#fef3c7',
+                            color: row.estado === 'RECHAZADA' ? 'error.main' : '#d97706'
                           }} 
                         />
                       </TableCell>
@@ -269,14 +269,14 @@ export default function CasosAbiertosWidget({ dateRange }) {
               </Table>
             </TableContainer>
           </DialogContent>
-          <DialogActions sx={{ p: 2.5, bgcolor: '#fbfbfb', borderTop: '1px solid #f1f5f9' }}>
+          <DialogActions sx={{ p: 2.5, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
             <Button 
               onClick={() => setOpenModal(false)}
               sx={{ 
                 fontFamily: 'Outfit',
                 fontWeight: 600,
                 textTransform: 'none',
-                color: '#64748b'
+                color: 'text.secondary'
               }}
             >
               Cerrar

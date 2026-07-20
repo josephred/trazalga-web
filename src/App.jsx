@@ -1,7 +1,6 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import globalTheme from './theme';
+import { ThemeContextProvider } from './theme/ThemeContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Consultas from './pages/Consultas';
@@ -31,7 +30,7 @@ const PrivateRoute = ({ children }) => {
 
 function App() {
   return (
-    <ThemeProvider theme={globalTheme}>
+    <ThemeContextProvider>
       <Router>
         <Routes>
           {/* Ruta pública */}
@@ -61,7 +60,7 @@ function App() {
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
       </Router>
-    </ThemeProvider>
+    </ThemeContextProvider>
   );
 }
 

@@ -97,7 +97,7 @@ export default function TiempoValidacionWidget({ dateRange }) {
         sx={{
           height: '100%',
           borderRadius: 4,
-          border: '1px solid #e2e8f0',
+          border: 1, borderColor: 'divider',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -117,28 +117,28 @@ export default function TiempoValidacionWidget({ dateRange }) {
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 4,
-        border: '1px solid #e2e8f0',
+        border: 1, borderColor: 'divider',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
           boxShadow: '0 12px 20px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02)',
-          borderColor: '#cbd5e1',
+          borderColor: 'divider',
         }
       }}
     >
       <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-          <ScheduleIcon sx={{ mr: 1, color: '#0ea5e9' }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+          <ScheduleIcon sx={{ mr: 1, color: 'secondary.main' }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
             Tiempo Extracción → Validación
           </Typography>
         </Box>
 
-        <Typography variant="body2" sx={{ color: '#64748b', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
           Horas entre la declaración de origen y su recepción por un comercializador (Riesgo Operacional).
         </Typography>
 
-        <Divider sx={{ mb: 2.5, borderColor: '#f1f5f9' }} />
+        <Divider sx={{ mb: 2.5, borderColor: 'divider' }} />
 
         {error ? (
           <Typography color="error" variant="body2" sx={{ textAlign: 'center', mt: 2, fontFamily: 'Inter' }}>
@@ -148,18 +148,18 @@ export default function TiempoValidacionWidget({ dateRange }) {
           <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', my: 2, flexWrap: 'wrap', gap: 2 }}>
               <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: '#0f172a' }}>
+                <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
                   {formatHoras(metrics.promedioHoras)}
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b', fontFamily: 'Inter' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', fontFamily: 'Inter' }}>
                   Promedio validación
                 </Typography>
               </Box>
               <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: '#0f172a' }}>
+                <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
                   {((metrics && metrics.validadas) || 0).toLocaleString('es-CL')}
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748b', fontFamily: 'Inter' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', fontFamily: 'Inter' }}>
                   Validadas
                 </Typography>
               </Box>
@@ -169,12 +169,12 @@ export default function TiempoValidacionWidget({ dateRange }) {
                   sx={{
                     fontWeight: 800,
                     fontFamily: 'Outfit',
-                    color: hasRiesgo ? '#f59e0b' : '#0f172a'
+                    color: hasRiesgo ? 'warning.main' : 'text.primary'
                   }}
                 >
                   {((metrics && metrics.pendientesMas48h) || 0).toLocaleString('es-CL')}
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: hasRiesgo ? '#b45309' : '#64748b', fontFamily: 'Inter' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: hasRiesgo ? '#b45309' : 'text.secondary', fontFamily: 'Inter' }}>
                   Pendientes &gt;48h
                 </Typography>
               </Box>
@@ -185,8 +185,8 @@ export default function TiempoValidacionWidget({ dateRange }) {
                 variant="contained"
                 onClick={handleOpenDetalle}
                 sx={{
-                  bgcolor: '#0a192f',
-                  '&:hover': { bgcolor: '#172a45' },
+                  bgcolor: 'primary.main',
+                  '&:hover': { bgcolor: 'primary.light' },
                   borderRadius: 2.5,
                   textTransform: 'none',
                   fontFamily: 'Outfit',
@@ -214,19 +214,19 @@ export default function TiempoValidacionWidget({ dateRange }) {
             }
           }}
         >
-          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a', bgcolor: '#fbfbfb', borderBottom: '1px solid #f1f5f9', p: 3 }}>
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', p: 3 }}>
             Detalle Tiempo Extracción → Validación
-            <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', mt: 0.5 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', mt: 0.5 }}>
               Las 50 validaciones más lentas y los 50 pendientes más antiguos (los pendientes se miden hasta ahora).
             </Typography>
           </DialogTitle>
-          <DialogContent dividers sx={{ p: 0, borderColor: '#f1f5f9' }}>
+          <DialogContent dividers sx={{ p: 0, borderColor: 'divider' }}>
             {loadingDetalle ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                 <CircularProgress />
               </Box>
             ) : detalle.length === 0 ? (
-              <Typography sx={{ p: 4, color: '#64748b', fontFamily: 'Inter', textAlign: 'center' }}>
+              <Typography sx={{ p: 4, color: 'text.secondary', fontFamily: 'Inter', textAlign: 'center' }}>
                 No hay declaraciones registradas para este periodo.
               </Typography>
             ) : (
@@ -234,12 +234,12 @@ export default function TiempoValidacionWidget({ dateRange }) {
                 <Table size="medium" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Declarada</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Perfil</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Actor</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Especie</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }}>Estado</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#475569', bgcolor: '#f8fafc', fontFamily: 'Outfit', borderBottom: '2px solid #e2e8f0' }} align="right">Tiempo</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Declarada</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Perfil</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Actor</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Especie</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Estado</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Tiempo</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -247,7 +247,7 @@ export default function TiempoValidacionWidget({ dateRange }) {
                       <TableRow
                         key={`${row.perfil}-${row.id}`}
                         sx={{
-                          '&:hover': { bgcolor: '#f8fafc' },
+                          '&:hover': { bgcolor: 'background.default' },
                           transition: 'background-color 0.2s ease'
                         }}
                       >
@@ -272,7 +272,7 @@ export default function TiempoValidacionWidget({ dateRange }) {
                             }}
                           />
                         </TableCell>
-                        <TableCell sx={{ py: 1.5, fontFamily: 'Outfit', fontWeight: 700, color: row.estado === 'VALIDADA' ? '#0f172a' : '#b45309' }} align="right">
+                        <TableCell sx={{ py: 1.5, fontFamily: 'Outfit', fontWeight: 700, color: row.estado === 'VALIDADA' ? 'text.primary' : '#b45309' }} align="right">
                           {formatHoras(row.horas)}
                         </TableCell>
                       </TableRow>
@@ -282,14 +282,14 @@ export default function TiempoValidacionWidget({ dateRange }) {
               </TableContainer>
             )}
           </DialogContent>
-          <DialogActions sx={{ p: 2.5, bgcolor: '#fbfbfb', borderTop: '1px solid #f1f5f9' }}>
+          <DialogActions sx={{ p: 2.5, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
             <Button
               onClick={() => setOpenModal(false)}
               sx={{
                 fontFamily: 'Outfit',
                 fontWeight: 600,
                 textTransform: 'none',
-                color: '#64748b'
+                color: 'text.secondary'
               }}
             >
               Cerrar
