@@ -177,7 +177,7 @@ export default function MainLayout() {
                       px: 3,
                       bgcolor: isActive ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
                       borderLeft: isActive ? '4px solid #0ea5e9' : '4px solid transparent',
-                      color: isActive ? '#fff' : 'text.disabled',
+                      color: isActive ? '#fff' : 'rgba(255, 255, 255, 0.6)',
                       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         bgcolor: 'rgba(255, 255, 255, 0.04)',
@@ -190,7 +190,7 @@ export default function MainLayout() {
                     }}
                   >
                     <ListItemIcon sx={{ 
-                      color: isActive ? 'secondary.main' : 'text.secondary', 
+                      color: isActive ? 'secondary.main' : 'rgba(255, 255, 255, 0.6)', 
                       minWidth: 36,
                       transition: 'color 0.2s ease',
                     }}>
@@ -221,7 +221,7 @@ export default function MainLayout() {
                 sx={{
                   py: 1.5,
                   px: 3,
-                  color: location.pathname === '/ayuda' ? '#fff' : 'text.secondary',
+                  color: location.pathname === '/ayuda' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
                   bgcolor: location.pathname === '/ayuda' ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
                   borderLeft: location.pathname === '/ayuda' ? '4px solid #0ea5e9' : '4px solid transparent',
                   '&:hover': {
@@ -234,7 +234,7 @@ export default function MainLayout() {
                   }
                 }}
               >
-                <ListItemIcon sx={{ color: location.pathname === '/ayuda' ? 'secondary.main' : 'text.secondary', minWidth: 36 }}>
+                <ListItemIcon sx={{ color: location.pathname === '/ayuda' ? 'secondary.main' : 'rgba(255, 255, 255, 0.6)', minWidth: 36 }}>
                   <HelpIcon />
                 </ListItemIcon>
                 <ListItemText 

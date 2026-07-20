@@ -47,9 +47,9 @@ import api from '../../api/axiosConfig';
  */
 
 const ESTADOS = {
-  VIGENTE: { label: 'Vigente', color: '#ef4444', icon: <BlockIcon sx={{ fontSize: 16 }} /> },
-  PROGRAMADA: { label: 'Programada', color: '#f59e0b', icon: <ScheduleIcon sx={{ fontSize: 16 }} /> },
-  EXPIRADA: { label: 'Expirada', color: '#64748b', icon: <EventAvailableIcon sx={{ fontSize: 16 }} /> },
+  VIGENTE: { label: 'Vigente', color: 'error.main', icon: <BlockIcon sx={{ fontSize: 16 }} /> },
+  PROGRAMADA: { label: 'Programada', color: 'warning.main', icon: <ScheduleIcon sx={{ fontSize: 16 }} /> },
+  EXPIRADA: { label: 'Expirada', color: 'text.secondary', icon: <EventAvailableIcon sx={{ fontSize: 16 }} /> },
 };
 
 /** Normaliza "yyyy-MM-dd" (o ISO) a Date local a medianoche, sin corrimiento de zona horaria. */
@@ -275,8 +275,8 @@ export default function VedasEspecieMaestro() {
         elevation={0}
         sx={{
           borderRadius: 4,
-          border: '1px solid #e2e8f0',
-          bgcolor: '#ffffff',
+          border: 1, borderColor: 'divider',
+          bgcolor: 'background.paper',
           p: { xs: 2.5, md: 3 },
           mb: 3,
           display: 'flex',
@@ -288,12 +288,12 @@ export default function VedasEspecieMaestro() {
       >
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-            <BlockIcon sx={{ color: '#ef4444' }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+            <BlockIcon sx={{ color: 'error.main' }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
               Vedas de Especies
             </Typography>
           </Box>
-          <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', maxWidth: 680, lineHeight: 1.6 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', maxWidth: 680, lineHeight: 1.6 }}>
             Configura los periodos de prohibición de extracción por especie, a nivel nacional o por región,
             con su resolución oficial. Las declaraciones dentro del periodo de veda generan alertas
             y aparecen en el reporte de extracción en veda.
@@ -324,8 +324,8 @@ export default function VedasEspecieMaestro() {
             startIcon={<AddIcon />}
             onClick={abrirNueva}
             sx={{
-              bgcolor: '#0a192f',
-              '&:hover': { bgcolor: '#172a45' },
+              bgcolor: 'primary.main',
+              '&:hover': { bgcolor: 'primary.light' },
               boxShadow: 'none',
               borderRadius: 2.5,
               px: 3,
@@ -347,15 +347,15 @@ export default function VedasEspecieMaestro() {
           onChange={(e, v) => v && setFiltroEstado(v)}
           size="small"
           sx={{
-            bgcolor: '#fff',
+            bgcolor: 'background.paper',
             '& .MuiToggleButton-root': {
               textTransform: 'none',
               fontFamily: 'Inter',
               fontWeight: 600,
               px: 2,
-              border: '1px solid #e2e8f0',
-              color: '#64748b',
-              '&.Mui-selected': { bgcolor: '#0a192f', color: '#fff', '&:hover': { bgcolor: '#172a45' } },
+              border: 1, borderColor: 'divider',
+              color: 'text.secondary',
+              '&.Mui-selected': { bgcolor: 'primary.main', color: '#fff', '&:hover': { bgcolor: 'primary.light' } },
             },
           }}
         >
@@ -372,13 +372,13 @@ export default function VedasEspecieMaestro() {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ fontSize: 20, color: '#94a3b8' }} />
+                <SearchIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
               </InputAdornment>
             ),
           }}
-          sx={{ minWidth: 300, bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
+          sx={{ minWidth: 300, bgcolor: 'background.paper', '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
         />
-        <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', ml: 'auto' }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', ml: 'auto' }}>
           {vedasFiltradas.length} veda(s)
         </Typography>
       </Box>
@@ -387,15 +387,15 @@ export default function VedasEspecieMaestro() {
       <TableContainer
         component={Card}
         elevation={0}
-        sx={{ borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#ffffff' }}
+        sx={{ borderRadius: 4, border: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
       >
         <Table size="medium">
           <TableHead>
-            <TableRow sx={{ bgcolor: '#f8fafc' }}>
+            <TableRow sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default' }}>
               {['Estado', 'Especie', 'Región', 'Inicio', 'Término', 'Duración', 'Resolución', ''].map((h) => (
                 <TableCell
                   key={h}
-                  sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#475569', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: 0.4 }}
+                  sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: 0.4 }}
                 >
                   {h}
                 </TableCell>
@@ -405,7 +405,7 @@ export default function VedasEspecieMaestro() {
           <TableBody>
             {vedasFiltradas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} sx={{ textAlign: 'center', py: 6, color: '#94a3b8', fontFamily: 'Inter' }}>
+                <TableCell colSpan={8} sx={{ textAlign: 'center', py: 6, color: 'text.disabled', fontFamily: 'Inter' }}>
                   No hay vedas configuradas{filtroEstado !== 'TODAS' || filtroTexto ? ' con los filtros actuales' : ''}.
                   Crea la primera con «Nueva Veda».
                 </TableCell>
@@ -431,22 +431,22 @@ export default function VedasEspecieMaestro() {
                       }}
                     />
                   </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', fontWeight: 600, color: '#0f172a' }}>
+                  <TableCell sx={{ fontFamily: 'Inter', fontWeight: 600, color: 'text.primary' }}>
                     {v.especie?.nombre || '—'}
                   </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: '#475569' }}>
-                    {v.region?.nombre || <em style={{ color: '#94a3b8' }}>Todas</em>}
+                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
+                    {v.region?.nombre || <em style={{ color: 'text.disabled' }}>Todas</em>}
                   </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: '#475569', whiteSpace: 'nowrap' }}>
+                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary', whiteSpace: 'nowrap' }}>
                     {fmtFecha(v.fechaInicio)}
                   </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: '#475569', whiteSpace: 'nowrap' }}>
+                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary', whiteSpace: 'nowrap' }}>
                     {fmtFecha(v.fechaFin)}
                   </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: '#475569' }}>
+                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
                     {dias != null ? `${dias} día(s)` : '—'}
                   </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: '#475569' }}>
+                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
                     {v.resolucion ? (
                       <Tooltip title={v.observacion || ''}>
                         <Chip
@@ -554,7 +554,7 @@ export default function VedasEspecieMaestro() {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setDialogOpen(false)} disabled={saving} sx={{ fontFamily: 'Outfit', color: '#64748b' }}>
+          <Button onClick={() => setDialogOpen(false)} disabled={saving} sx={{ fontFamily: 'Outfit', color: 'text.secondary' }}>
             Cancelar
           </Button>
           <Button
@@ -562,7 +562,7 @@ export default function VedasEspecieMaestro() {
             onClick={guardar}
             disabled={saving || !!errorFechas}
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
-            sx={{ bgcolor: '#0a192f', '&:hover': { bgcolor: '#172a45' }, boxShadow: 'none', borderRadius: 2.5, px: 3, fontFamily: 'Outfit' }}
+            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.light' }, boxShadow: 'none', borderRadius: 2.5, px: 3, fontFamily: 'Outfit' }}
           >
             {saving ? 'Guardando…' : 'Guardar Veda'}
           </Button>
@@ -574,7 +574,7 @@ export default function VedasEspecieMaestro() {
         <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>Eliminar veda</DialogTitle>
         <DialogContent>
           {porEliminar && (
-            <Typography variant="body2" sx={{ fontFamily: 'Inter', color: '#475569' }}>
+            <Typography variant="body2" sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
               ¿Eliminar la veda de <b>{porEliminar.especie?.nombre}</b> (
               {porEliminar.region?.nombre || 'todas las regiones'}, {fmtFecha(porEliminar.fechaInicio)} —{' '}
               {fmtFecha(porEliminar.fechaFin)})? Esta acción no se puede deshacer y las declaraciones en ese
@@ -583,7 +583,7 @@ export default function VedasEspecieMaestro() {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setPorEliminar(null)} sx={{ fontFamily: 'Outfit', color: '#64748b' }}>
+          <Button onClick={() => setPorEliminar(null)} sx={{ fontFamily: 'Outfit', color: 'text.secondary' }}>
             Cancelar
           </Button>
           <Button variant="contained" color="error" onClick={eliminar} sx={{ boxShadow: 'none', borderRadius: 2.5, fontFamily: 'Outfit' }}>

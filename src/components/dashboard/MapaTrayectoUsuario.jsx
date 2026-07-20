@@ -19,6 +19,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { useTheme } from '@mui/material/styles';
 import { getUsuarios } from '../../services/usuarioService';
 import api from '../../api/axiosConfig';
 
@@ -31,6 +32,7 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function MapaTrayectoUsuario() {
+  const theme = useTheme();
   const [usuarios, setUsuarios] = useState([]);
   const [selectedUsuario, setSelectedUsuario] = useState('');
   
@@ -135,7 +137,7 @@ export default function MapaTrayectoUsuario() {
           display: 'flex',
           alignItems: 'center',
           gap: 1.5,
-          bgcolor: 'background.default',
+          bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default',
         }}
       >
         <MapIcon sx={{ color: 'secondary.main' }} />
@@ -303,8 +305,16 @@ export default function MapaTrayectoUsuario() {
             style={{ height: '100%', width: '100%', zIndex: 1 }}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution={
+                (theme.palette.mode === 'dark') 
+                  ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                  : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              }
+              url={
+                (theme.palette.mode === 'dark')
+                  ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                  : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+              }
             />
             
             {trayecto.length > 0 && (

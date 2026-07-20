@@ -11,10 +11,9 @@ import {
   MenuItem,
   Chip
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import api from '../../api/axiosConfig';
-
-const COLOR_CURVA = 'secondary.main';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -46,6 +45,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function CurvaSnakeWidget({ dateRange }) {
+  const theme = useTheme();
+  const COLOR_CURVA = theme.palette.secondary.main;
   const [data, setData] = useState({ serie: [], amerbsDisponibles: [], especiesDisponibles: [], limiteKg: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -155,10 +156,10 @@ export default function CurvaSnakeWidget({ dateRange }) {
               label={`${porcentaje?.toLocaleString('es-CL', { maximumFractionDigits: 1 })}% de la cuota ${data.cuotaPeriodo || ''} (${limiteKg.toLocaleString('es-CL')} kg)`}
               sx={{
                 fontFamily: 'Inter', fontWeight: 700, fontSize: '0.72rem',
-                bgcolor: excedido ? '#fef2f2' : porcentaje >= 80 ? '#fffbeb' : '#f0fdf4',
-                color: excedido ? '#b91c1c' : porcentaje >= 80 ? '#b45309' : '#047857',
+                bgcolor: excedido ? (theme.palette.mode === 'dark' ? '#450a0a' : '#fef2f2') : porcentaje >= 80 ? (theme.palette.mode === 'dark' ? '#451a03' : '#fffbeb') : (theme.palette.mode === 'dark' ? '#064e3b' : '#f0fdf4'),
+                color: excedido ? (theme.palette.mode === 'dark' ? '#fca5a5' : '#b91c1c') : porcentaje >= 80 ? (theme.palette.mode === 'dark' ? '#fde047' : '#b45309') : (theme.palette.mode === 'dark' ? '#6ee7b7' : '#047857'),
                 border: '1px solid',
-                borderColor: excedido ? '#fecaca' : porcentaje >= 80 ? '#fde68a' : '#bbf7d0'
+                borderColor: excedido ? (theme.palette.mode === 'dark' ? '#991b1b' : '#fecaca') : porcentaje >= 80 ? (theme.palette.mode === 'dark' ? '#a16207' : '#fde68a') : (theme.palette.mode === 'dark' ? '#047857' : '#bbf7d0')
               }}
             />
           ) : especieId ? (
@@ -190,17 +191,17 @@ export default function CurvaSnakeWidget({ dateRange }) {
                     <stop offset="95%" stopColor={COLOR_CURVA} stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke='divider' />
+                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                 <XAxis
                   dataKey="fecha"
-                  tick={{ fill: 'text.secondary', fontSize: 11, fontFamily: 'Inter' }}
-                  axisLine={{ stroke: 'divider' }}
+                  tick={{ fill: theme.palette.text.secondary, fontSize: 11, fontFamily: 'Inter' }}
+                  axisLine={{ stroke: theme.palette.divider }}
                   tickLine={false}
                 />
                 <YAxis
                   domain={yMax ? [0, yMax] : [0, 'auto']}
-                  tick={{ fill: 'text.secondary', fontSize: 11, fontFamily: 'Inter' }}
-                  axisLine={{ stroke: 'divider' }}
+                  tick={{ fill: theme.palette.text.secondary, fontSize: 11, fontFamily: 'Inter' }}
+                  axisLine={{ stroke: theme.palette.divider }}
                   tickLine={false}
                   tickFormatter={(v) => v.toLocaleString('es-CL')}
                 />
@@ -208,13 +209,13 @@ export default function CurvaSnakeWidget({ dateRange }) {
                 {limiteKg != null && (
                   <ReferenceLine
                     y={limiteKg}
-                    stroke={excedido ? 'error.main' : 'warning.main'}
+                    stroke={excedido ? theme.palette.error.main : theme.palette.warning.main}
                     strokeDasharray="6 4"
                     strokeWidth={2}
                     label={{
                       value: `Cuota ${limiteKg.toLocaleString('es-CL')} kg`,
                       position: 'insideTopRight',
-                      fill: excedido ? 'error.main' : '#b45309',
+                      fill: excedido ? theme.palette.error.main : (theme.palette.mode === 'dark' ? theme.palette.warning.light : '#b45309'),
                       fontSize: 11,
                       fontFamily: 'Inter',
                       fontWeight: 700

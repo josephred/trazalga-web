@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, Card, CardContent, CircularProgress, Alert, FormControl, Select, MenuItem } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../../api/axiosConfig';
 
@@ -38,6 +39,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function IndicadorRecolector({ dateRange }) {
+  const theme = useTheme();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -139,38 +141,38 @@ export default function IndicadorRecolector({ dateRange }) {
               data={data}
               margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke='divider' />
+              <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
               <XAxis 
                 dataKey="name" 
-                tick={{ fill: 'text.secondary', fontSize: 11, fontFamily: 'Inter' }}
-                axisLine={{ stroke: 'divider' }}
+                tick={{ fill: theme.palette.text.secondary, fontSize: 11, fontFamily: 'Inter' }}
+                axisLine={{ stroke: theme.palette.divider }}
                 tickLine={false}
               />
               <YAxis 
                 yAxisId="left" 
                 orientation="left" 
-                tick={{ fill: 'secondary.main', fontSize: 11, fontFamily: 'Inter' }}
-                axisLine={{ stroke: 'divider' }}
+                tick={{ fill: theme.palette.secondary.main, fontSize: 11, fontFamily: 'Inter' }}
+                axisLine={{ stroke: theme.palette.divider }}
                 tickLine={false}
               />
               <YAxis 
                 yAxisId="right" 
                 orientation="right" 
-                tick={{ fill: 'success.main', fontSize: 11, fontFamily: 'Inter' }}
-                axisLine={{ stroke: 'divider' }}
+                tick={{ fill: theme.palette.success.main, fontSize: 11, fontFamily: 'Inter' }}
+                axisLine={{ stroke: theme.palette.divider }}
                 tickLine={false}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(241, 245, 249, 0.4)' }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(241, 245, 249, 0.4)' }} />
               <Legend 
                 wrapperStyle={{ fontFamily: 'Outfit', fontSize: '0.85rem', paddingTop: '15px' }}
                 iconType="circle"
                 iconSize={8}
               />
               {(chartView === 'ambos' || chartView === 'declaraciones') && (
-                <Bar yAxisId="left" dataKey="declaraciones" name="Nº Declaraciones" fill='secondary.main' radius={[4, 4, 0, 0]} barSize={28} />
+                <Bar yAxisId="left" dataKey="declaraciones" name="Nº Declaraciones" fill={theme.palette.secondary.main} radius={[4, 4, 0, 0]} barSize={28} />
               )}
               {(chartView === 'ambos' || chartView === 'desembarques') && (
-                <Bar yAxisId="right" dataKey="desembarque" name="Total Desembarque (Kg)" fill='success.main' radius={[4, 4, 0, 0]} barSize={28} />
+                <Bar yAxisId="right" dataKey="desembarque" name="Total Desembarque (Kg)" fill={theme.palette.success.main} radius={[4, 4, 0, 0]} barSize={28} />
               )}
             </BarChart>
           </ResponsiveContainer>

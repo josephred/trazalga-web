@@ -4,7 +4,8 @@ const path = require('path');
 const targetDirs = [
   'c:/github/trazalga/trazalga-web/src/components/dashboard',
   'c:/github/trazalga/trazalga-web/src/components/layout',
-  'c:/github/trazalga/trazalga-web/src/pages'
+  'c:/github/trazalga/trazalga-web/src/pages',
+  'c:/github/trazalga/trazalga-web/src/components/admin'
 ];
 
 function processFile(filePath) {

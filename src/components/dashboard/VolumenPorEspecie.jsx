@@ -10,12 +10,12 @@ import {
   Select,
   MenuItem
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LabelList, Cell, ResponsiveContainer } from 'recharts';
 import api from '../../api/axiosConfig';
 
 const MAX_ESPECIES = 8;
 const COLOR_BARRA = '#059669';
-const COLOR_OTRAS = 'text.disabled';
 
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -47,6 +47,8 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 export default function VolumenPorEspecie({ dateRange }) {
+  const theme = useTheme();
+  const COLOR_OTRAS = theme.palette.text.disabled;
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -178,11 +180,11 @@ export default function VolumenPorEspecie({ dateRange }) {
                 layout="vertical"
                 margin={{ top: 5, right: 70, left: 10, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke='divider' horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} horizontal={false} />
                 <XAxis
                   type="number"
-                  tick={{ fill: 'text.secondary', fontSize: 11, fontFamily: 'Inter' }}
-                  axisLine={{ stroke: 'divider' }}
+                  tick={{ fill: theme.palette.text.secondary, fontSize: 11, fontFamily: 'Inter' }}
+                  axisLine={{ stroke: theme.palette.divider }}
                   tickLine={false}
                   tickFormatter={(v) => v.toLocaleString('es-CL')}
                 />
@@ -190,11 +192,11 @@ export default function VolumenPorEspecie({ dateRange }) {
                   type="category"
                   dataKey="especie"
                   width={130}
-                  tick={{ fill: 'text.primary', fontSize: 11, fontFamily: 'Inter' }}
-                  axisLine={{ stroke: 'divider' }}
+                  tick={{ fill: theme.palette.text.primary, fontSize: 11, fontFamily: 'Inter' }}
+                  axisLine={{ stroke: theme.palette.divider }}
                   tickLine={false}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(241, 245, 249, 0.4)' }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(241, 245, 249, 0.4)' }} />
                 <Bar dataKey="volumenKg" name="Volumen (kg)" barSize={18} radius={[0, 4, 4, 0]}>
                   {data.map((entry, index) => (
                     <Cell key={index} fill={entry.esOtras ? COLOR_OTRAS : COLOR_BARRA} />
@@ -203,7 +205,7 @@ export default function VolumenPorEspecie({ dateRange }) {
                     dataKey="volumenKg"
                     position="right"
                     formatter={(v) => `${v.toLocaleString('es-CL', { maximumFractionDigits: 0 })} kg`}
-                    style={{ fill: 'text.primary', fontSize: 11, fontFamily: 'Inter', fontWeight: 600 }}
+                    style={{ fill: theme.palette.text.primary, fontSize: 11, fontFamily: 'Inter', fontWeight: 600 }}
                   />
                 </Bar>
               </BarChart>

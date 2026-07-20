@@ -52,10 +52,10 @@ import api from '../../api/axiosConfig';
  */
 
 const ALCANCES = {
-  REGION: { label: 'Región', color: '#0ea5e9', icon: <PublicIcon sx={{ fontSize: 18 }} /> },
+  REGION: { label: 'Región', color: 'secondary.main', icon: <PublicIcon sx={{ fontSize: 18 }} /> },
   AREA: { label: 'Área de Manejo', color: '#ec4899', icon: <TerrainIcon sx={{ fontSize: 18 }} /> },
-  USUARIO: { label: 'Usuario', color: '#f59e0b', icon: <PersonIcon sx={{ fontSize: 18 }} /> },
-  GLOBAL: { label: 'Global', color: '#64748b', icon: <LanguageIcon sx={{ fontSize: 18 }} /> },
+  USUARIO: { label: 'Usuario', color: 'warning.main', icon: <PersonIcon sx={{ fontSize: 18 }} /> },
+  GLOBAL: { label: 'Global', color: 'text.secondary', icon: <LanguageIcon sx={{ fontSize: 18 }} /> },
 };
 
 const PERFILES = ['RECOLECTOR', 'ARMADOR', 'AREA'];
@@ -336,8 +336,8 @@ export default function CuotasExtraccionMaestro() {
         elevation={0}
         sx={{
           borderRadius: 4,
-          border: '1px solid #e2e8f0',
-          bgcolor: '#ffffff',
+          border: 1, borderColor: 'divider',
+          bgcolor: 'background.paper',
           p: { xs: 2.5, md: 3 },
           mb: 3,
           display: 'flex',
@@ -349,12 +349,12 @@ export default function CuotasExtraccionMaestro() {
       >
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-            <ScaleIcon sx={{ color: '#0ea5e9' }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#0f172a' }}>
+            <ScaleIcon sx={{ color: 'secondary.main' }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
               Cuotas de Extracción
             </Typography>
           </Box>
-          <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', maxWidth: 680, lineHeight: 1.6 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', maxWidth: 680, lineHeight: 1.6 }}>
             Define límites de extracción por región, área de manejo o usuario, con cantidad máxima por especie.
             La jerarquía se respeta siempre: una cuota de usuario nunca puede superar la del área de manejo,
             y ninguna puede superar la de la región.
@@ -365,8 +365,8 @@ export default function CuotasExtraccionMaestro() {
           startIcon={<AddIcon />}
           onClick={abrirNueva}
           sx={{
-            bgcolor: '#0a192f',
-            '&:hover': { bgcolor: '#172a45' },
+            bgcolor: 'primary.main',
+            '&:hover': { bgcolor: 'primary.light' },
             boxShadow: 'none',
             borderRadius: 2.5,
             px: 3,
@@ -388,15 +388,15 @@ export default function CuotasExtraccionMaestro() {
           onChange={(e, v) => v && setFiltroAlcance(v)}
           size="small"
           sx={{
-            bgcolor: '#fff',
+            bgcolor: 'background.paper',
             '& .MuiToggleButton-root': {
               textTransform: 'none',
               fontFamily: 'Inter',
               fontWeight: 600,
               px: 2,
-              border: '1px solid #e2e8f0',
-              color: '#64748b',
-              '&.Mui-selected': { bgcolor: '#0a192f', color: '#fff', '&:hover': { bgcolor: '#172a45' } },
+              border: 1, borderColor: 'divider',
+              color: 'text.secondary',
+              '&.Mui-selected': { bgcolor: 'primary.main', color: '#fff', '&:hover': { bgcolor: 'primary.light' } },
             },
           }}
         >
@@ -414,13 +414,13 @@ export default function CuotasExtraccionMaestro() {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ fontSize: 20, color: '#94a3b8' }} />
+                <SearchIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
               </InputAdornment>
             ),
           }}
-          sx={{ minWidth: 280, bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
+          sx={{ minWidth: 280, bgcolor: 'background.paper', '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
         />
-        <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'Inter', ml: 'auto' }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', ml: 'auto' }}>
           {cuotasFiltradas.length} cuota(s)
         </Typography>
       </Box>
@@ -429,15 +429,15 @@ export default function CuotasExtraccionMaestro() {
       <TableContainer
         component={Card}
         elevation={0}
-        sx={{ borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#ffffff' }}
+        sx={{ borderRadius: 4, border: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
       >
         <Table size="medium">
           <TableHead>
-            <TableRow sx={{ bgcolor: '#f8fafc' }}>
+            <TableRow sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default' }}>
               {['Alcance', 'Aplica a', 'Región', 'Especie', 'Perfil', 'Periodo', 'Límite', 'Activa', ''].map((h) => (
                 <TableCell
                   key={h}
-                  sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#475569', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: 0.4 }}
+                  sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: 0.4 }}
                 >
                   {h}
                 </TableCell>
@@ -447,7 +447,7 @@ export default function CuotasExtraccionMaestro() {
           <TableBody>
             {cuotasFiltradas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} sx={{ textAlign: 'center', py: 6, color: '#94a3b8', fontFamily: 'Inter' }}>
+                <TableCell colSpan={9} sx={{ textAlign: 'center', py: 6, color: 'text.disabled', fontFamily: 'Inter' }}>
                   No hay cuotas configuradas{filtroAlcance !== 'TODOS' || filtroTexto ? ' con los filtros actuales' : ''}.
                   Crea la primera con «Nueva Cuota».
                 </TableCell>
@@ -472,23 +472,23 @@ export default function CuotasExtraccionMaestro() {
                       }}
                     />
                   </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', fontWeight: 600, color: '#0f172a' }}>
+                  <TableCell sx={{ fontFamily: 'Inter', fontWeight: 600, color: 'text.primary' }}>
                     {describirAlcance(c)}
                     {tipo === 'USUARIO' && c.usuario?.rut ? (
-                      <Typography variant="caption" sx={{ display: 'block', color: '#94a3b8' }}>
+                      <Typography variant="caption" sx={{ display: 'block', color: 'text.disabled' }}>
                         {c.usuario.rut}
                       </Typography>
                     ) : null}
                   </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: '#475569' }}>{nombreRegionDe(c) || '—'}</TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: '#475569' }}>
-                    {c.especie?.nombre || <em style={{ color: '#94a3b8' }}>Todas</em>}
+                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>{nombreRegionDe(c) || '—'}</TableCell>
+                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
+                    {c.especie?.nombre || <em style={{ color: 'text.disabled' }}>Todas</em>}
                   </TableCell>
                   <TableCell>
                     <Chip size="small" variant="outlined" label={c.perfil} sx={{ fontFamily: 'Inter', fontSize: '0.7rem' }} />
                   </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: '#475569' }}>{c.periodo}</TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap' }}>
+                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>{c.periodo}</TableCell>
+                  <TableCell sx={{ fontFamily: 'Inter', fontWeight: 800, color: 'text.primary', whiteSpace: 'nowrap' }}>
                     {fmtKg(c.limiteKg)}
                   </TableCell>
                   <TableCell>
@@ -519,7 +519,7 @@ export default function CuotasExtraccionMaestro() {
           {form.id ? 'Editar Cuota de Extracción' : 'Nueva Cuota de Extracción'}
         </DialogTitle>
         <DialogContent dividers>
-          <Typography variant="caption" sx={{ color: '#64748b', fontFamily: 'Inter', display: 'block', mb: 1 }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', display: 'block', mb: 1 }}>
             Alcance de la cuota
           </Typography>
           <ToggleButtonGroup
@@ -534,7 +534,7 @@ export default function CuotasExtraccionMaestro() {
                 textTransform: 'none',
                 fontFamily: 'Inter',
                 fontWeight: 600,
-                '&.Mui-selected': { bgcolor: '#0a192f', color: '#fff', '&:hover': { bgcolor: '#172a45' } },
+                '&.Mui-selected': { bgcolor: 'primary.main', color: '#fff', '&:hover': { bgcolor: 'primary.light' } },
               },
             }}
           >
@@ -671,7 +671,7 @@ export default function CuotasExtraccionMaestro() {
             )}
 
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ fontFamily: 'Inter', fontWeight: 600, color: '#475569' }}>
+              <Typography variant="body2" sx={{ fontFamily: 'Inter', fontWeight: 600, color: 'text.primary' }}>
                 Cuota activa
               </Typography>
               <Switch checked={form.activo} onChange={(e) => setForm((f) => ({ ...f, activo: e.target.checked }))} />
@@ -685,7 +685,7 @@ export default function CuotasExtraccionMaestro() {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setDialogOpen(false)} disabled={saving} sx={{ fontFamily: 'Outfit', color: '#64748b' }}>
+          <Button onClick={() => setDialogOpen(false)} disabled={saving} sx={{ fontFamily: 'Outfit', color: 'text.secondary' }}>
             Cancelar
           </Button>
           <Button
@@ -693,7 +693,7 @@ export default function CuotasExtraccionMaestro() {
             onClick={guardar}
             disabled={saving}
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
-            sx={{ bgcolor: '#0a192f', '&:hover': { bgcolor: '#172a45' }, boxShadow: 'none', borderRadius: 2.5, px: 3, fontFamily: 'Outfit' }}
+            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.light' }, boxShadow: 'none', borderRadius: 2.5, px: 3, fontFamily: 'Outfit' }}
           >
             {saving ? 'Guardando…' : 'Guardar Cuota'}
           </Button>
@@ -705,7 +705,7 @@ export default function CuotasExtraccionMaestro() {
         <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>Eliminar cuota</DialogTitle>
         <DialogContent>
           {porEliminar && (
-            <Typography variant="body2" sx={{ fontFamily: 'Inter', color: '#475569' }}>
+            <Typography variant="body2" sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
               ¿Eliminar la cuota de <b>{describirAlcance(porEliminar)}</b> (
               {porEliminar.especie?.nombre || 'todas las especies'}, {porEliminar.periodo},{' '}
               {fmtKg(porEliminar.limiteKg)})? Esta acción no se puede deshacer.
@@ -713,7 +713,7 @@ export default function CuotasExtraccionMaestro() {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setPorEliminar(null)} sx={{ fontFamily: 'Outfit', color: '#64748b' }}>
+          <Button onClick={() => setPorEliminar(null)} sx={{ fontFamily: 'Outfit', color: 'text.secondary' }}>
             Cancelar
           </Button>
           <Button variant="contained" color="error" onClick={eliminar} sx={{ boxShadow: 'none', borderRadius: 2.5, fontFamily: 'Outfit' }}>

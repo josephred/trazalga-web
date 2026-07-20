@@ -416,12 +416,14 @@ export default function Administracion() {
         {/* Banner de Cabecera Premium */}
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #0a192f 0%, #172a45 100%)',
+            background: (theme) => theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+              : 'linear-gradient(135deg, #0a192f 0%, #172a45 100%)',
             borderRadius: 4,
             p: { xs: 3, md: 4 },
             mb: 4,
             color: '#fff',
-            boxShadow: '0 10px 30px rgba(10, 25, 47, 0.08)',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
             position: 'relative',
             overflow: 'hidden',
             display: 'flex',
@@ -429,6 +431,7 @@ export default function Administracion() {
             justifyContent: 'space-between',
             alignItems: { xs: 'flex-start', md: 'center' },
             gap: 3,
+            border: (theme) => theme.palette.mode === 'dark' ? '1px solid rgba(255,255,255,0.1)' : 'none',
           }}
         >
           {/* Círculos abstractos de fondo */}
@@ -546,7 +549,7 @@ export default function Administracion() {
               fontFamily: 'Inter',
               fontWeight: 500,
               boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
-              border: `1px solid ${mensaje.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
+              border: (theme) => `1px solid ${mensaje.type === 'success' ? (theme.palette.mode === 'dark' ? theme.palette.success.dark : '#a7f3d0') : (theme.palette.mode === 'dark' ? theme.palette.error.dark : '#fecaca')}`,
             }}
           >
             {mensaje.text}
@@ -676,7 +679,7 @@ export default function Administracion() {
                     </Box>
 
                     {config.tipoAlerta === 'LIMITE_CUOTA' && (
-                      <Box sx={{ mt: 3, mb: 1, p: 2.5, borderRadius: 3, bgcolor: 'background.default', border: 1, borderColor: 'divider' }}>
+                      <Box sx={{ mt: 3, mb: 1, p: 2.5, borderRadius: 3, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default', border: 1, borderColor: 'divider' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                           <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, fontFamily: 'Inter' }}>
                             Umbral de disparo:
@@ -699,7 +702,7 @@ export default function Administracion() {
                     )}
                   </CardContent>
 
-                  <Box sx={{ p: 2.5, pt: 0, display: 'flex', justifyContent: 'flex-end', borderTop: 1, borderColor: 'divider', bgcolor: 'background.default' }}>
+                  <Box sx={{ p: 2.5, pt: 0, display: 'flex', justifyContent: 'flex-end', borderTop: 1, borderColor: 'divider', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default' }}>
                     <Button
                       variant="contained"
                       size="small"
@@ -756,7 +759,7 @@ export default function Administracion() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1.5,
-                    bgcolor: 'background.default',
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default',
                   }}
                 >
                   <GpsFixedIcon sx={{ color: 'secondary.main' }} />
@@ -781,8 +784,12 @@ export default function Administracion() {
                           p: 2.5,
                           borderRadius: 3,
                           border: '1px solid',
-                          borderColor: trackingActivo ? '#bbf7d0' : 'divider',
-                          bgcolor: trackingActivo ? '#f0fdf4' : 'background.default',
+                          borderColor: trackingActivo 
+                            ? (theme) => theme.palette.mode === 'dark' ? 'success.dark' : '#bbf7d0'
+                            : 'divider',
+                          bgcolor: trackingActivo 
+                            ? (theme) => theme.palette.mode === 'dark' ? 'rgba(22, 163, 74, 0.1)' : '#f0fdf4'
+                            : (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'background.default',
                           mb: 3,
                           display: 'flex',
                           alignItems: 'center',
@@ -791,7 +798,7 @@ export default function Administracion() {
                         }}
                       >
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 700, color: trackingActivo ? '#166534' : 'text.primary', fontFamily: 'Inter' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: trackingActivo ? (theme) => theme.palette.mode === 'dark' ? 'success.light' : '#166534' : 'text.primary', fontFamily: 'Inter' }}>
                             {trackingActivo ? "Rastreo Habilitado" : "Rastreo Inhabilitado"}
                           </Typography>
                           <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
@@ -804,7 +811,7 @@ export default function Administracion() {
                         />
                       </Box>
 
-                      <Box sx={{ p: 2.5, borderRadius: 3, border: 1, borderColor: 'divider', bgcolor: 'background.default', mb: 3 }}>
+                      <Box sx={{ p: 2.5, borderRadius: 3, border: 1, borderColor: 'divider', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default', mb: 3 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                           <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, fontFamily: 'Inter' }}>
                             Intervalo de actualización:
@@ -1010,7 +1017,7 @@ export default function Administracion() {
             {/* Resumen de resultados */}
             {Object.keys(syncResults).length > 0 && (
               <Card elevation={0} sx={{ borderRadius: 4, border: 1, borderColor: 'divider', bgcolor: 'background.paper', mt: 4, overflow: 'hidden' }}>
-                <Box sx={{ p: 2.5, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.default' }}>
+                <Box sx={{ p: 2.5, borderBottom: 1, borderColor: 'divider', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default' }}>
                   <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
                     Resumen de la última carga
                   </Typography>
