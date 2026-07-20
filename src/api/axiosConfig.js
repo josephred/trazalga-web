@@ -1,15 +1,43 @@
 // src/api/axiosConfig.js
 import axios from 'axios';
 
-// Usa ruta relativa para que funcione tanto en local (proxy de Vite) como en producción (rewrite de Vercel)
-const BASE_URL = '/v-api';
+// Origen del backend.
+// - Producción (hosting estático como cPanel/zya.me): se define VITE_API_URL con el
+//   origen del backend (ej. https://apps.procesac.com). Las llamadas van DIRECTAS al
+//   backend (que ya envía cabeceras CORS), sin depender de un proxy en el host.
+// - Local (dev) o si VITE_API_URL no está: se usa '/v-api' y el proxy de Vite rutea.
+export const API_ORIGIN = import.meta.env.VITE_API_URL || null;
+
+// URL para las rutas de "core" (cuelgan de la raíz del backend, sin prefijo /api).
+// Reemplaza el prefijo de proxy '/v-core'.
+export const coreUrl = (path) => {
+    const p = path.startsWith('/') ? path : `/${path}`;
+    return API_ORIGIN ? `${API_ORIGIN}${p}` : `/v-core${p}`;
+};
 
 const api = axios.create({
-    baseURL: BASE_URL,
+    baseURL: API_ORIGIN || '/v-api',
     headers: {
         'Content-Type': 'application/json',
     },
 });
+
+// Cuando se llama directo al backend (VITE_API_URL definido), replicamos el ruteo que
+// hacía el proxy: las rutas /sync/* viven en la raíz del backend; el resto cuelga de /api.
+if (API_ORIGIN) {
+    api.interceptors.request.use((config) => {
+        const url = config.url || '';
+        // No tocar URLs absolutas
+        if (!/^https?:\/\//i.test(url)) {
+            if (url.startsWith('/sync')) {
+                // se deja tal cual → {origin}/sync/...
+            } else if (!url.startsWith('/api')) {
+                config.url = `/api${url.startsWith('/') ? '' : '/'}${url}`;
+            }
+        }
+        return config;
+    });
+}
 
 // Interceptor: Antes de cada petición, inyecta el Token si existe
 api.interceptors.request.use(
