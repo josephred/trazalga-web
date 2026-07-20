@@ -4,7 +4,8 @@ import {
   Inventory as InventoryIcon,
   Group as GroupIcon,
   WarningAmber as WarningIcon,
-  CheckCircleOutline as OKIcon
+  CheckCircleOutline as OKIcon,
+  DirectionsBoat as BoatIcon
 } from '@mui/icons-material';
 import StatCard from '../components/dashboard/StatCard';
 import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
@@ -44,6 +45,15 @@ export default function Dashboard() {
 
     fetchResumen();
   }, [dateRange]);
+
+  // Nº viajes del armador = nº de declaraciones de armador (1 declaración = 1 viaje).
+  // Promedio diario para dar la periodicidad "Diario" que pide la planilla.
+  const viajesArmador = resumen.totalArmador || 0;
+  const diasRango = (dateRange && dateRange.startDate && dateRange.endDate)
+    ? Math.max(1, Math.floor(
+        (new Date(dateRange.endDate + 'T00:00:00') - new Date(dateRange.startDate + 'T00:00:00')) / 86400000) + 1)
+    : null;
+  const viajesPorDia = diasRango ? Math.round((viajesArmador / diasRango) * 10) / 10 : null;
 
   return (
     <Container maxWidth={false} sx={{ width: '100%', p: 0, minHeight: '85vh' }}>
@@ -124,11 +134,13 @@ export default function Dashboard() {
           </Grid>
           <Grid item xs={12} sm={6} md={3} lg={3}>
             <StatCard
-              title="Decl. Armador"
-              value={(resumen.totalArmador || 0).toLocaleString('es-CL')}
-              color="#3b82f6"
-              icon={InventoryIcon}
-              subtitle="Total de documentos"
+              title="Nº Viajes (Armador)"
+              value={viajesArmador.toLocaleString('es-CL')}
+              color="#0891b2"
+              icon={BoatIcon}
+              subtitle={viajesPorDia != null
+                ? `1 declaración = 1 viaje · ~${viajesPorDia.toLocaleString('es-CL')}/día`
+                : '1 declaración = 1 viaje'}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3} lg={3}>
