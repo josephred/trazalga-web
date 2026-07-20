@@ -161,6 +161,17 @@ export default function Dashboard() {
               subtitle="Total de documentos"
             />
           </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3}>
+            <StatCard
+              title="Volumen Comprado (Comercializador)"
+              value={`${(resumen.volumenComprado || 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })} kg`}
+              color="#8b5cf6"
+              icon={InventoryIcon}
+              subtitle={diasRango
+                ? `Kg adquiridos · ~${Math.round((resumen.volumenComprado || 0) / diasRango).toLocaleString('es-CL')} kg/día`
+                : 'Kg adquiridos en el período'}
+            />
+          </Grid>
 
           {/* Gráfico Principal de Desembarques y Declaraciones */}
           <Grid item xs={12}>
