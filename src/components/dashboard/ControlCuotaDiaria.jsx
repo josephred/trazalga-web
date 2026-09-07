@@ -187,12 +187,17 @@ export default function ControlCuotaDiaria({ dateRange }) {
                       </Typography>
                     )}
                   </Box>
-                  <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.825rem', color: 'text.secondary' }}>
-                    {cuota.volumenExtraido?.toLocaleString('es-CL')} / {cuota.limiteCuota?.toLocaleString('es-CL')} kg{' '}
-                    <span style={{ fontWeight: 700, color: colors.label }}>
-                      ({cuota.porcentajeUso}%)
-                    </span>
-                  </Typography>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.825rem', color: 'text.secondary' }}>
+                      {cuota.volumenExtraido?.toLocaleString('es-CL')} / {cuota.limiteCuota?.toLocaleString('es-CL')} kg ({cuota.metrica || 'CAPTURA'}){' '}
+                      <span style={{ fontWeight: 700, color: colors.label }}>
+                        ({cuota.porcentajeUso}%)
+                      </span>
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
+                      Saldo disponible: {Math.max(0, (cuota.limiteCuota || 0) - (cuota.volumenExtraido || 0)).toLocaleString('es-CL')} kg
+                    </Typography>
+                  </Box>
                 </Box>
                 <LinearProgress 
                   variant="determinate" 

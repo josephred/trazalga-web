@@ -17,28 +17,29 @@ import {
   TableHead,
   TableRow,
   Card,
-  CardContent
+  CardContent,
+  Tooltip
 } from '@mui/material';
-import ScaleIcon from '@mui/icons-material/Scale';
-import api from '../../api/axiosConfig';
-
-const ESLABON_LABEL = {
-  'ORIGEN-COMERCIALIZADOR': 'Origen a Comercializador',
-  'COMERCIALIZADOR-PLANTA': 'Comercializador a Planta',
-  RECOLECTOR: 'Recolector (pesaje)',
-  ARMADOR: 'Armador (pesaje)',
-  AREA: 'Área Manejo (pesaje)',
-  COMERCIALIZADOR: 'Comercializador (pesaje)'
-};
+import {
+  Scale as ScaleIcon,
+  Warning as WarningIcon,
+  CheckCircle as OkIcon,
+  AccessTime as AccessTimeIcon,
+  Warehouse as WarehouseIcon,
+  WaterDrop as WaterIcon
+} from '@mui/icons-material';
+import { getTrazabilidadLote, getTrazabilidadLoteDetalle } from '../../services/reportesService';
 
 export default function VariacionPesoWidget({ dateRange }) {
   const [metrics, setMetrics] = useState({
-    totalConciliaciones: 0,
-    promedioVariacionPct: null,
-    fueraUmbral: 0,
-    pesajes: 0,
-    documentos: 0,
-    umbralPct: 5
+    totalLotes: 0,
+    totalKgOrigen: 0,
+    totalKgDestino: 0,
+    promedioVariacionPct: 0,
+    lotesEnBodegaVirtual: 0,
+    alertasVariacion: 0,
+    alertasMerma: 0,
+    umbralVariacionPct: 5.0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,19 +48,30 @@ export default function VariacionPesoWidget({ dateRange }) {
   const [detalle, setDetalle] = useState([]);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
 
+  const parseDates = () => {
+    const filters = {};
+    if (dateRange) {
+      if (Array.isArray(dateRange)) {
+        if (dateRange[0]) filters.startDate = typeof dateRange[0].format === 'function' ? dateRange[0].format('YYYY-MM-DD') : dateRange[0];
+        if (dateRange[1]) filters.endDate = typeof dateRange[1].format === 'function' ? dateRange[1].format('YYYY-MM-DD') : dateRange[1];
+      } else {
+        if (dateRange.startDate) filters.startDate = dateRange.startDate;
+        if (dateRange.endDate) filters.endDate = dateRange.endDate;
+      }
+    }
+    return filters;
+  };
+
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
         setLoading(true);
-        let queryParams = '';
-        if (dateRange && dateRange.startDate && dateRange.endDate) {
-          queryParams = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
-        }
-        const response = await api.get(`/reportes/variacion-peso${queryParams}`);
-        setMetrics(response.data);
+        const filters = parseDates();
+        const data = await getTrazabilidadLote(filters);
+        setMetrics(data || {});
         setError(null);
       } catch (err) {
-        console.error('Error fetching variacion de peso:', err);
+        console.error('Error fetching trazabilidad por lote:', err);
         setError(err.message || 'Error desconocido');
       } finally {
         setLoading(false);
@@ -69,20 +81,17 @@ export default function VariacionPesoWidget({ dateRange }) {
     fetchMetrics();
   }, [dateRange]);
 
-  const hasAlertas = metrics.fueraUmbral > 0;
+  const hasAlertas = (metrics?.alertasVariacion || 0) > 0 || (metrics?.alertasMerma || 0) > 0;
 
   const handleOpenDetalle = async () => {
     setOpenModal(true);
     setLoadingDetalle(true);
     try {
-      let queryParams = '';
-      if (dateRange && dateRange.startDate && dateRange.endDate) {
-        queryParams = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
-      }
-      const response = await api.get(`/reportes/variacion-peso-detalle${queryParams}`);
-      setDetalle(response.data);
+      const filters = parseDates();
+      const res = await getTrazabilidadLoteDetalle(filters);
+      setDetalle(res || []);
     } catch (err) {
-      console.error('Error fetching detalle variacion peso:', err);
+      console.error('Error fetching detalle trazabilidad lote:', err);
     } finally {
       setLoadingDetalle(false);
     }
@@ -117,9 +126,7 @@ export default function VariacionPesoWidget({ dateRange }) {
         borderRadius: 4,
         border: '1px solid',
         borderColor: hasAlertas ? 'error.light' : 'divider',
-        background: hasAlertas
-          ? (theme) => theme.palette.mode === 'dark' ? 'linear-gradient(180deg, #450a0a 0%, #1e293b 100%)' : 'linear-gradient(180deg, #fff5f5 0%, #ffffff 100%)'
-          : 'background.paper',
+        bgcolor: 'background.paper',
         boxShadow: hasAlertas
           ? '0 10px 15px -3px rgba(239, 68, 68, 0.04)'
           : '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
@@ -151,12 +158,12 @@ export default function VariacionPesoWidget({ dateRange }) {
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
           <ScaleIcon sx={{ mr: 1, color: hasAlertas ? 'error.main' : '#8b5cf6' }} />
           <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
-            Variación de Peso
+            Variación de Peso y Cadena de Custodia (Indicador 6)
           </Typography>
         </Box>
 
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
-          Diferencia entre lo declarado en origen y lo recepcionado en destino, por pesaje y por conciliación de documentos. Umbral de alerta: ±{metrics.umbralPct}% (Posible Adulteración).
+          Trazabilidad por lote (folio origen) desde la extracción hasta la planta de destino. Umbral general de alerta: ±{metrics.umbralVariacionPct || 5.0}% y consistencia biológica de mermas en tránsito.
         </Typography>
 
         <Divider sx={{ mb: 2.5, borderColor: hasAlertas ? 'error.light' : 'divider' }} />
@@ -170,22 +177,24 @@ export default function VariacionPesoWidget({ dateRange }) {
             <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', my: 2, flexWrap: 'wrap', gap: 2 }}>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
-                  {((metrics && metrics.totalConciliaciones) || 0).toLocaleString('es-CL')}
+                  {((metrics && metrics.totalLotes) || 0).toLocaleString('es-CL')}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', fontFamily: 'Inter' }}>
-                  Conciliaciones
+                  Lotes Trazados
                 </Typography>
               </Box>
+
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
                   {metrics.promedioVariacionPct !== null && metrics.promedioVariacionPct !== undefined
-                    ? `${((metrics && metrics.promedioVariacionPct) || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}%`
+                    ? `${metrics.promedioVariacionPct > 0 ? '+' : ''}${metrics.promedioVariacionPct}%`
                     : '—'}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', fontFamily: 'Inter' }}>
                   Variación promedio
                 </Typography>
               </Box>
+
               <Box sx={{ textAlign: 'center' }}>
                 <Typography
                   variant="h3"
@@ -195,10 +204,10 @@ export default function VariacionPesoWidget({ dateRange }) {
                     color: hasAlertas ? 'error.main' : 'text.primary'
                   }}
                 >
-                  {((metrics && metrics.fueraUmbral) || 0).toLocaleString('es-CL')}
+                  {(metrics.alertasVariacion || 0) + (metrics.alertasMerma || 0)}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: hasAlertas ? '#b91c1c' : 'text.secondary', fontFamily: 'Inter' }}>
-                  Fuera de umbral
+                  Alertas de Cadena
                 </Typography>
               </Box>
             </Box>
@@ -219,7 +228,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                   boxShadow: 'none'
                 }}
               >
-                Ver Detalle de Variaciones
+                Ver Detalle de Trazabilidad de Lotes
               </Button>
             </Box>
           </Box>
@@ -229,7 +238,7 @@ export default function VariacionPesoWidget({ dateRange }) {
         <Dialog
           open={openModal}
           onClose={() => setOpenModal(false)}
-          maxWidth="md"
+          maxWidth="lg"
           fullWidth
           slotProps={{
             paper: {
@@ -238,9 +247,9 @@ export default function VariacionPesoWidget({ dateRange }) {
           }}
         >
           <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', p: 3 }}>
-            Detalle de Variaciones de Peso
+            Trazabilidad por Lote (Folio Origen) y Cadena de Custodia
             <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', mt: 0.5 }}>
-              Ordenado por mayor variación absoluta. Máximo 100 registros.
+              Seguimiento Origen &rarr; Comercializador &rarr; Planta. Incluye estado de humedad, días transcurridos y evaluación de consistencia biológica.
             </Typography>
           </DialogTitle>
           <DialogContent dividers sx={{ p: 0, borderColor: 'divider' }}>
@@ -250,86 +259,81 @@ export default function VariacionPesoWidget({ dateRange }) {
               </Box>
             ) : detalle.length === 0 ? (
               <Typography sx={{ p: 4, color: 'text.secondary', fontFamily: 'Inter', textAlign: 'center' }}>
-                No hay conciliaciones de peso registradas para este periodo.
+                No hay lotes con trazabilidad registrados para este periodo.
               </Typography>
             ) : (
-              <TableContainer sx={{ maxHeight: 400 }}>
-                <Table size="medium" stickyHeader>
+              <TableContainer sx={{ maxHeight: 460 }}>
+                <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Fecha</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Eslabón</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Actor</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Especie</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Origen (kg)</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Destino (kg)</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Δ%</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Folio Origen</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Origen (Actor / Tipo)</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Especie / Humedad</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Origen</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Comercializador</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Planta</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">&Delta; Peso (%)</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Tránsito / Bodega</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Estado / Alertas</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {detalle.map((row, idx) => {
-                      const fueraUmbral = row.variacionPct !== null && Math.abs(row.variacionPct) > metrics.umbralPct;
-                      return (
-                        <TableRow
-                          key={idx}
+                    {detalle.map((row, idx) => (
+                      <TableRow key={idx} hover>
+                        <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8rem', fontWeight: 600 }}>{row.folioOrigen}</TableCell>
+                        <TableCell sx={{ fontSize: '0.82rem' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.82rem' }}>{row.actorOrigen}</Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>{row.eslabonOrigen} {row.embarcacion ? `(${row.embarcacion})` : ''}</Typography>
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.82rem' }}>
+                          <Typography variant="body2" sx={{ fontSize: '0.82rem' }}>{row.especie}</Typography>
+                          <Chip label={row.humedadOrigen} size="small" sx={{ fontSize: '0.68rem', height: 18, mt: 0.3 }} />
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.82rem', fontWeight: 600 }} align="right">{row.kgOrigen?.toLocaleString('es-CL')}</TableCell>
+                        <TableCell sx={{ fontSize: '0.82rem' }} align="right">{row.kgComercializador ? row.kgComercializador.toLocaleString('es-CL') : '—'}</TableCell>
+                        <TableCell sx={{ fontSize: '0.82rem', fontWeight: 700, color: 'secondary.main' }} align="right">{row.kgPlanta ? row.kgPlanta.toLocaleString('es-CL') : '—'}</TableCell>
+                        <TableCell
                           sx={{
-                            '&:hover': { bgcolor: 'background.default' },
-                            transition: 'background-color 0.2s ease'
+                            fontSize: '0.85rem',
+                            fontWeight: 800,
+                            color: row.alertaVariacion ? 'error.main' : 'text.primary'
                           }}
+                          align="right"
                         >
-                          <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{new Date(row.fecha).toLocaleDateString('es-CL')}</TableCell>
-                          <TableCell sx={{ py: 1.5 }}>
-                            <Chip
-                              label={ESLABON_LABEL[row.eslabon] || row.eslabon}
-                              size="small"
-                              sx={{
-                                fontFamily: 'Inter',
-                                fontWeight: 600,
-                                fontSize: '0.72rem',
-                                bgcolor: row.tipoRegistro === 'PESAJE' ? '#eff6ff' : '#f5f3ff',
-                                color: row.tipoRegistro === 'PESAJE' ? '#1d4ed8' : '#6d28d9',
-                                border: '1px solid',
-                                borderColor: row.tipoRegistro === 'PESAJE' ? '#bfdbfe' : '#ddd6fe'
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.actor}</TableCell>
-                          <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.especie}</TableCell>
-                          <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }} align="right">
-                            {((row && row.kgOrigen) || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}
-                          </TableCell>
-                          <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }} align="right">
-                            {((row && row.kgDestino) || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}
-                          </TableCell>
-                          <TableCell
-                            sx={{
-                              py: 1.5,
-                              fontFamily: 'Outfit',
-                              fontWeight: 700,
-                              color: fueraUmbral ? 'error.main' : 'text.primary'
-                            }}
-                            align="right"
-                          >
-                            {row && row.variacionPct > 0 ? '+' : ''}{((row && row.variacionPct) || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}%
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                          {row.deltaPct > 0 ? `+${row.deltaPct}%` : `${row.deltaPct}%`}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.78rem' }} align="center">
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.3 }}>
+                            <Typography variant="caption" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>{row.diasTranscurridos} d viaje</Typography>
+                            {row.diasEnBodega > 0 && (
+                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>{row.diasEnBodega} d bodega</Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'center' }}>
+                            {row.alertaMerma && (
+                              <Tooltip title={row.motivoMerma || 'Merma inconsistente'}>
+                                <Chip label="Merma Anómala" size="small" color="error" sx={{ fontSize: '0.65rem', height: 18, fontWeight: 700 }} />
+                              </Tooltip>
+                            )}
+                            {row.alertaVariacion && (
+                              <Chip label="Fuera Umbral" size="small" color="warning" sx={{ fontSize: '0.65rem', height: 18, fontWeight: 700 }} />
+                            )}
+                            {!row.alertaMerma && !row.alertaVariacion && (
+                              <Chip label="OK" size="small" color="success" sx={{ fontSize: '0.65rem', height: 18, fontWeight: 700 }} />
+                            )}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </TableContainer>
             )}
           </DialogContent>
-          <DialogActions sx={{ p: 2.5, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
-            <Button
-              onClick={() => setOpenModal(false)}
-              sx={{
-                fontFamily: 'Outfit',
-                fontWeight: 600,
-                textTransform: 'none',
-                color: 'text.secondary'
-              }}
-            >
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setOpenModal(false)} sx={{ fontFamily: 'Inter' }}>
               Cerrar
             </Button>
           </DialogActions>

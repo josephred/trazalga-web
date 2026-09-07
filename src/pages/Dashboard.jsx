@@ -9,12 +9,15 @@ import {
 } from '@mui/icons-material';
 import StatCard from '../components/dashboard/StatCard';
 import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
+import DesembarqueFisicoWidget from '../components/dashboard/DesembarqueFisicoWidget';
+import CapturaCorregidaWidget from '../components/dashboard/CapturaCorregidaWidget';
 import ControlCuotaDiaria from '../components/dashboard/ControlCuotaDiaria';
+import LimiteExtraccionDiarioWidget from '../components/dashboard/LimiteExtraccionDiarioWidget';
 import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
-import DobleOperacionWidget from '../components/dashboard/DobleOperacionWidget';
-import VolumenPorEspecie from '../components/dashboard/VolumenPorEspecie';
-import TiempoValidacionWidget from '../components/dashboard/TiempoValidacionWidget';
 import VariacionPesoWidget from '../components/dashboard/VariacionPesoWidget';
+import RetencionBodegaWidget from '../components/dashboard/RetencionBodegaWidget';
+import DobleOperacionWidget from '../components/dashboard/DobleOperacionWidget';
+import TiempoValidacionWidget from '../components/dashboard/TiempoValidacionWidget';
 import CasosAbiertosWidget from '../components/dashboard/CasosAbiertosWidget';
 import CurvaSnakeWidget from '../components/dashboard/CurvaSnakeWidget';
 import { useOutletContext } from 'react-router-dom';
@@ -178,25 +181,40 @@ export default function Dashboard() {
             <IndicadorRecolector dateRange={dateRange} />
           </Grid>
 
-          {/* Volumen extraído por especie y Control de Cuotas */}
+          {/* Indicador 1: Desembarque Físico (reemplaza VolumenPorEspecie) */}
+          <Grid item xs={12}>
+            <DesembarqueFisicoWidget dateRange={dateRange} />
+          </Grid>
+
+          {/* Indicador 2: Captura Corregida e Indicador 3: Control de Cuotas */}
           <Grid item xs={12} md={6}>
-            <VolumenPorEspecie dateRange={dateRange} />
+            <CapturaCorregidaWidget dateRange={dateRange} />
           </Grid>
 
           <Grid item xs={12} md={6}>
             <ControlCuotaDiaria dateRange={dateRange} />
           </Grid>
 
+          {/* Indicador 4: Límite Diario (LED) e Indicador 5: Control de Vedas */}
+          <Grid item xs={12} md={6}>
+            <LimiteExtraccionDiarioWidget dateRange={dateRange} />
+          </Grid>
+
           <Grid item xs={12} md={6}>
             <ExtraccionVedaWidget dateRange={dateRange} />
           </Grid>
 
+          {/* Indicador 6: Trazabilidad de Peso y Retención en Bodega Virtual */}
           <Grid item xs={12} md={6}>
-            <TiempoValidacionWidget dateRange={dateRange} />
+            <VariacionPesoWidget dateRange={dateRange} />
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <VariacionPesoWidget dateRange={dateRange} />
+            <RetencionBodegaWidget />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TiempoValidacionWidget dateRange={dateRange} />
           </Grid>
 
           <Grid item xs={12} md={6}>

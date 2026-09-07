@@ -241,6 +241,7 @@ export default function ExtraccionVedaWidget({ dateRange }) {
                       <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Perfil</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Actor</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Especie</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Método</TableCell>
                       <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Volumen (Kg)</TableCell>
                     </TableRow>
                   </TableHead>
@@ -257,6 +258,7 @@ export default function ExtraccionVedaWidget({ dateRange }) {
                         <TableCell sx={{ py: 1.5, fontFamily: 'Inter', fontWeight: 600 }}>{row.perfil}</TableCell>
                         <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.actor}</TableCell>
                         <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.especie}</TableCell>
+                        <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.metodo || row.extraccionTipo || 'General'}</TableCell>
                         <TableCell sx={{ py: 1.5, fontFamily: 'Outfit', fontWeight: 700, color: 'error.main' }} align="right">
                           {((row && row.kg) || 0).toLocaleString('es-CL')}
                         </TableCell>
