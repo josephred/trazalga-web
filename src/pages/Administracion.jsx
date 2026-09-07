@@ -43,9 +43,14 @@ import api from '../api/axiosConfig';
 import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
 import CuotasExtraccionMaestro from '../components/admin/CuotasExtraccionMaestro';
 import VedasEspecieMaestro from '../components/admin/VedasEspecieMaestro';
+import FactoresConversionMaestro from '../components/admin/FactoresConversionMaestro';
+import LimiteExtraccionDiarioMaestro from '../components/admin/LimiteExtraccionDiarioMaestro';
+import ParametrosGeneralesMaestro from '../components/admin/ParametrosGeneralesMaestro';
 import FactoryIcon from '@mui/icons-material/Factory';
 import ScaleIcon from '@mui/icons-material/Scale';
 import BlockIcon from '@mui/icons-material/Block';
+import ScienceIcon from '@mui/icons-material/Science';
+import Divider from '@mui/material/Divider';
 
 // Styled Switch matching IOS visual cues
 const IOSSwitch = styled((props) => (
@@ -560,6 +565,8 @@ export default function Administracion() {
         <Tabs
           value={activeTab}
           onChange={(e, val) => setActiveTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
           sx={{
             mb: 4,
             borderBottom: 1, borderColor: 'divider',
@@ -571,7 +578,7 @@ export default function Administracion() {
             '& .MuiTab-root': {
               textTransform: 'none',
               fontWeight: 600,
-              fontSize: '1rem',
+              fontSize: '0.95rem',
               fontFamily: 'Outfit',
               color: 'text.secondary',
               pb: 1.5,
@@ -581,17 +588,20 @@ export default function Administracion() {
             },
           }}
         >
-          <Tab icon={<TuneIcon sx={{ mr: 1 }} />} iconPosition="start" label="Configuración de Alertas" />
+          <Tab icon={<TuneIcon sx={{ mr: 1 }} />} iconPosition="start" label="Configuración General y Alertas" />
+          <Tab icon={<ScienceIcon sx={{ mr: 1 }} />} iconPosition="start" label="Factores de Conversión" />
           <Tab icon={<ScaleIcon sx={{ mr: 1 }} />} iconPosition="start" label="Cuotas de Extracción" />
+          <Tab icon={<SpeedIcon sx={{ mr: 1 }} />} iconPosition="start" label="Límites Diarios (LED)" />
           <Tab icon={<BlockIcon sx={{ mr: 1 }} />} iconPosition="start" label="Vedas de Especies" />
           <Tab icon={<MapIcon sx={{ mr: 1 }} />} iconPosition="start" label="Consola de Trazabilidad y GPS" />
           <Tab icon={<CloudSyncIcon sx={{ mr: 1 }} />} iconPosition="start" label="Carga de Datos Maestros" />
         </Tabs>
 
-        {/* Renderizado de Pestaña 1: Configuración de Alertas */}
+        {/* Renderizado de Pestaña 0: Configuración de Alertas & Parámetros Operativos */}
         {activeTab === 0 && (
-          <Grid container spacing={3}>
-            {configuraciones.map((config) => (
+          <Box>
+            <Grid container spacing={3}>
+              {configuraciones.map((config) => (
               <Grid item xs={12} md={6} key={config.id}>
                 <Card
                   elevation={0}
@@ -725,18 +735,37 @@ export default function Administracion() {
                   </Box>
                 </Card>
               </Grid>
-            ))}
-          </Grid>
+              ))}
+            </Grid>
+
+            <Divider sx={{ my: 4 }} />
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: 700, mb: 0.5 }}>
+                Parámetros Globales del Sistema (100% Parametrizables)
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+                Todos los factores, límites de extracción, mermas biológicas y políticas de fiscalización son administrados en caliente desde aquí.
+              </Typography>
+              <ParametrosGeneralesMaestro />
+            </Box>
+          </Box>
         )}
 
+        {/* Renderizado de Pestaña 1: Mantenedor de Factores de Conversión Biológica */}
+        {activeTab === 1 && <FactoresConversionMaestro />}
+
         {/* Renderizado de Pestaña 2: Mantenedor de Cuotas de Extracción */}
-        {activeTab === 1 && <CuotasExtraccionMaestro />}
+        {activeTab === 2 && <CuotasExtraccionMaestro />}
 
-        {/* Renderizado de Pestaña 3: Mantenedor de Vedas de Especies */}
-        {activeTab === 2 && <VedasEspecieMaestro />}
+        {/* Renderizado de Pestaña 3: Mantenedor de Límites Diarios (LED) */}
+        {activeTab === 3 && <LimiteExtraccionDiarioMaestro />}
 
-        {/* Renderizado de Pestaña 4: Consola de Trazabilidad y GPS */}
-        {activeTab === 3 && (
+        {/* Renderizado de Pestaña 4: Mantenedor de Vedas de Especies */}
+        {activeTab === 4 && <VedasEspecieMaestro />}
+
+        {/* Renderizado de Pestaña 5: Consola de Trazabilidad y GPS */}
+        {activeTab === 5 && (
           <Grid container spacing={4}>
             {/* Columna Izquierda: Configuración del GPS Móvil */}
             <Grid item xs={12} lg={4}>
@@ -874,8 +903,8 @@ export default function Administracion() {
           </Grid>
         )}
 
-        {/* Renderizado de Pestaña 5: Carga de Datos Maestros (Sernapesca) */}
-        {activeTab === 4 && (
+        {/* Renderizado de Pestaña 6: Carga de Datos Maestros (Sernapesca) */}
+        {activeTab === 6 && (
           <Box>
             {/* Cabecera con acción global */}
             <Card

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Card,
+  CardContent,
   Typography,
   Button,
   Chip,
@@ -24,6 +25,12 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   InputAdornment,
+  Switch,
+  FormControlLabel,
+  RadioGroup,
+  Radio,
+  FormControl,
+  FormLabel,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -34,25 +41,17 @@ import {
   EventAvailable as EventAvailableIcon,
   Search as SearchIcon,
   Gavel as GavelIcon,
+  CalendarMonth as CalendarIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 
-/*
- * Mantenedor de Vedas de Especies.
- *
- * Una veda prohíbe la extracción de una especie durante un rango de fechas,
- * en una región específica o en todas (región vacía). El estado se calcula
- * contra la fecha actual: VIGENTE (en curso), PROGRAMADA (aún no comienza)
- * o EXPIRADA (ya terminó). El backend valida especie y coherencia del rango.
- */
+const NOMBRES_MESES = [
+  'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+  'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+];
 
-const ESTADOS = {
-  VIGENTE: { label: 'Vigente', color: 'error.main', icon: <BlockIcon sx={{ fontSize: 16 }} /> },
-  PROGRAMADA: { label: 'Programada', color: 'warning.main', icon: <ScheduleIcon sx={{ fontSize: 16 }} /> },
-  EXPIRADA: { label: 'Expirada', color: 'text.secondary', icon: <EventAvailableIcon sx={{ fontSize: 16 }} /> },
-};
-
-/** Normaliza "yyyy-MM-dd" (o ISO) a Date local a medianoche, sin corrimiento de zona horaria. */
 const aFechaLocal = (v) => {
   if (!v) return null;
   const s = String(v).slice(0, 10);
@@ -68,6 +67,14 @@ const hoyLocal = () => {
 
 const estadoDe = (v) => {
   const hoy = hoyLocal();
+  const mesActual = hoy.getMonth() + 1;
+
+  if (Boolean(v.recurrenciaAnual)) {
+    if (!v.mesesVeda) return 'EXPIRADA';
+    const meses = v.mesesVeda.split(',').map((m) => parseInt(m.trim())).filter(Boolean);
+    return meses.includes(mesActual) ? 'VIGENTE' : 'PROGRAMADA';
+  }
+
   const ini = aFechaLocal(v.fechaInicio);
   const fin = aFechaLocal(v.fechaFin);
   if (!ini || !fin) return 'EXPIRADA';
@@ -83,29 +90,26 @@ const fmtFecha = (v) => {
     : '—';
 };
 
-const duracionDias = (v) => {
-  const ini = aFechaLocal(v.fechaInicio);
-  const fin = aFechaLocal(v.fechaFin);
-  if (!ini || !fin) return null;
-  return Math.round((fin - ini) / 86400000) + 1;
-};
-
-/** Date → "yyyy-MM-dd" para inputs type=date. */
 const aInputDate = (v) => (v ? String(v).slice(0, 10) : '');
 
 const FORM_VACIO = {
   id: null,
   especie: null,
   region: null,
+  extraccionTipo: null,
+  tipoPeriodo: 'RECURRENTE', // 'RECURRENTE' o 'FECHAS'
+  recurrenciaAnual: true,
+  mesesVeda: '1,2,4,5,6,7,8,10,11', // Caso huiro negro: 9 meses vedado, habilitado en Mar(3), Sep(9), Dic(12)
   fechaInicio: '',
   fechaFin: '',
   resolucion: '',
   observacion: '',
+  activo: true,
 };
 
 export default function VedasEspecieMaestro() {
   const [vedas, setVedas] = useState([]);
-  const [maestros, setMaestros] = useState({ especies: [], regiones: [] });
+  const [maestros, setMaestros] = useState({ especies: [], regiones: [], extraccionTipos: [] });
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState(null);
 
@@ -118,8 +122,6 @@ export default function VedasEspecieMaestro() {
   const [form, setForm] = useState(FORM_VACIO);
   const [formError, setFormError] = useState(null);
   const [saving, setSaving] = useState(false);
-
-  // Confirmación de borrado
   const [porEliminar, setPorEliminar] = useState(null);
 
   useEffect(() => {
@@ -130,64 +132,74 @@ export default function VedasEspecieMaestro() {
     try {
       setLoading(true);
       const [vedasRes, maestrosRes] = await Promise.all([
-        api.get('/vedas'),
-        api.get('/vedas/maestros'),
+        api.get('/api/vedas'),
+        api.get('/api/vedas/maestros'),
       ]);
-      setVedas(vedasRes.data || []);
-      setMaestros(maestrosRes.data || { especies: [], regiones: [] });
+      setVedas(Array.isArray(vedasRes.data) ? vedasRes.data : []);
+      setMaestros(maestrosRes.data || { especies: [], regiones: [], extraccionTipos: [] });
     } catch (error) {
-      console.error('Error cargando vedas', error);
-      setMensaje({ type: 'error', text: 'Error al cargar las vedas de especies. Verifica el backend.' });
+      console.error('Error cargando vedas:', error);
+      setMensaje({ type: 'error', text: 'Error al cargar las vedas de especies.' });
     } finally {
       setLoading(false);
     }
   };
 
-  const vedasFiltradas = useMemo(() => {
-    const txt = filtroTexto.trim().toLowerCase();
-    return [...vedas]
-      .sort((a, b) => (aFechaLocal(b.fechaInicio) ?? 0) - (aFechaLocal(a.fechaInicio) ?? 0))
-      .filter((v) => {
-        if (filtroEstado !== 'TODAS' && estadoDe(v) !== filtroEstado) return false;
-        if (!txt) return true;
-        const blob = [v.especie?.nombre, v.region?.nombre, v.resolucion, v.observacion]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return blob.includes(txt);
-      });
-  }, [vedas, filtroEstado, filtroTexto]);
+  const mesesArray = useMemo(() => {
+    if (!form.mesesVeda) return [];
+    return form.mesesVeda
+      .split(',')
+      .map((m) => parseInt(m.trim()))
+      .filter((m) => !isNaN(m) && m >= 1 && m <= 12);
+  }, [form.mesesVeda]);
 
-  const resumen = useMemo(() => {
-    const conteo = { VIGENTE: 0, PROGRAMADA: 0, EXPIRADA: 0 };
-    vedas.forEach((v) => (conteo[estadoDe(v)] += 1));
-    return conteo;
-  }, [vedas]);
+  const toggleMes = (mesNum) => {
+    let nuevos;
+    if (mesesArray.includes(mesNum)) {
+      nuevos = mesesArray.filter((m) => m !== mesNum);
+    } else {
+      nuevos = [...mesesArray, mesNum].sort((a, b) => a - b);
+    }
+    setForm((p) => ({ ...p, mesesVeda: nuevos.join(',') }));
+  };
 
-  const errorFechas = useMemo(() => {
-    if (!form.fechaInicio || !form.fechaFin) return null;
-    return form.fechaInicio > form.fechaFin
-      ? 'La fecha de inicio no puede ser posterior a la fecha de término.'
-      : null;
-  }, [form.fechaInicio, form.fechaFin]);
+  const seleccionarTodosLosMeses = () => {
+    setForm((p) => ({ ...p, mesesVeda: '1,2,3,4,5,6,7,8,9,10,11,12' }));
+  };
 
-  /* ------------------------------- Acciones ------------------------------- */
+  const limpiarMeses = () => {
+    setForm((p) => ({ ...p, mesesVeda: '' }));
+  };
 
   const abrirNueva = () => {
-    setForm(FORM_VACIO);
+    setForm({
+      ...FORM_VACIO,
+      especie: maestros.especies?.[0] || null,
+      region: null,
+      extraccionTipo: null,
+      tipoPeriodo: 'RECURRENTE',
+      recurrenciaAnual: true,
+      mesesVeda: '1,2,4,5,6,7,8,10,11',
+    });
     setFormError(null);
     setDialogOpen(true);
   };
 
   const abrirEdicion = (v) => {
+    const esRecurrente = Boolean(v.recurrenciaAnual);
     setForm({
       id: v.id,
-      especie: v.especie ? { id: v.especie.id, nombre: v.especie.nombre } : null,
-      region: v.region ? { id: v.region.id, nombre: v.region.nombre } : null,
+      especie: maestros.especies?.find((e) => e.id === v.especie?.id) || v.especie || null,
+      region: maestros.regiones?.find((r) => r.id === v.region?.id) || v.region || null,
+      extraccionTipo: maestros.extraccionTipos?.find((et) => et.id === v.extraccionTipo?.id) || v.extraccionTipo || null,
+      tipoPeriodo: esRecurrente ? 'RECURRENTE' : 'FECHAS',
+      recurrenciaAnual: esRecurrente,
+      mesesVeda: v.mesesVeda || '',
       fechaInicio: aInputDate(v.fechaInicio),
       fechaFin: aInputDate(v.fechaFin),
       resolucion: v.resolucion || '',
       observacion: v.observacion || '',
+      activo: v.activo ?? true,
     });
     setFormError(null);
     setDialogOpen(true);
@@ -195,34 +207,48 @@ export default function VedasEspecieMaestro() {
 
   const guardar = async () => {
     setFormError(null);
-    if (!form.especie) {
-      setFormError('Selecciona la especie afectada por la veda.');
+    if (!form.especie?.id) {
+      setFormError('Debe seleccionar la especie afectada por la veda.');
       return;
     }
-    if (!form.fechaInicio || !form.fechaFin) {
-      setFormError('Indica la fecha de inicio y la fecha de término de la veda.');
-      return;
-    }
-    if (errorFechas) {
-      setFormError(errorFechas);
-      return;
+
+    const esRecurrente = form.tipoPeriodo === 'RECURRENTE';
+
+    if (esRecurrente) {
+      if (!form.mesesVeda || !form.mesesVeda.trim()) {
+        setFormError('Debe seleccionar al menos un mes en veda para la recurrencia anual.');
+        return;
+      }
+    } else {
+      if (!form.fechaInicio || !form.fechaFin) {
+        setFormError('Indique la fecha de inicio y de término de la veda.');
+        return;
+      }
+      if (form.fechaInicio > form.fechaFin) {
+        setFormError('La fecha de inicio de la veda no puede ser posterior a la fecha de término.');
+        return;
+      }
     }
 
     const payload = {
       especie: { id: form.especie.id },
       region: form.region ? { id: form.region.id } : null,
-      fechaInicio: form.fechaInicio,
-      fechaFin: form.fechaFin,
-      resolucion: form.resolucion.trim() || null,
-      observacion: form.observacion.trim() || null,
+      extraccionTipo: form.extraccionTipo ? { id: form.extraccionTipo.id } : null,
+      recurrenciaAnual: esRecurrente,
+      mesesVeda: esRecurrente ? form.mesesVeda : null,
+      fechaInicio: !esRecurrente && form.fechaInicio ? `${form.fechaInicio}T00:00:00.000Z` : null,
+      fechaFin: !esRecurrente && form.fechaFin ? `${form.fechaFin}T23:59:59.000Z` : null,
+      resolucion: form.resolucion?.trim() || null,
+      observacion: form.observacion?.trim() || null,
+      activo: Boolean(form.activo),
     };
 
     try {
       setSaving(true);
       if (form.id) {
-        await api.put(`/vedas/${form.id}`, payload);
+        await api.put(`/api/vedas/${form.id}`, payload);
       } else {
-        await api.post('/vedas', payload);
+        await api.post('/api/vedas', payload);
       }
       setDialogOpen(false);
       setMensaje({ type: 'success', text: `Veda ${form.id ? 'actualizada' : 'creada'} correctamente.` });
@@ -231,7 +257,8 @@ export default function VedasEspecieMaestro() {
     } catch (error) {
       const msg =
         error.response?.data?.message ||
-        'No se pudo guardar la veda. Verifica los datos y la conexión con el backend.';
+        error.response?.data?.error ||
+        'No se pudo guardar la veda. Verifica los datos.';
       setFormError(msg);
     } finally {
       setSaving(false);
@@ -241,7 +268,7 @@ export default function VedasEspecieMaestro() {
   const eliminar = async () => {
     if (!porEliminar) return;
     try {
-      await api.delete(`/vedas/${porEliminar.id}`);
+      await api.delete(`/api/vedas/${porEliminar.id}`);
       setPorEliminar(null);
       setMensaje({ type: 'success', text: 'Veda eliminada correctamente.' });
       setTimeout(() => setMensaje(null), 4000);
@@ -252,341 +279,524 @@ export default function VedasEspecieMaestro() {
     }
   };
 
-  /* ------------------------------- Render ------------------------------- */
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 10 }}>
-        <CircularProgress size={40} />
-      </Box>
-    );
-  }
+  const vedasFiltradas = useMemo(() => {
+    const txt = filtroTexto.trim().toLowerCase();
+    return vedas.filter((v) => {
+      if (filtroEstado !== 'TODAS' && estadoDe(v) !== filtroEstado) return false;
+      if (!txt) return true;
+      const blob = [
+        v.especie?.nombre,
+        v.region?.nombre,
+        v.extraccionTipo?.nombre,
+        v.resolucion,
+        v.observacion,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return blob.includes(txt);
+    });
+  }, [vedas, filtroEstado, filtroTexto]);
 
   return (
     <Box>
+      {/* Banner explicativo del Indicador 5 */}
+      <Card
+        elevation={0}
+        sx={{
+          mb: 3,
+          borderRadius: 3,
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(234, 179, 8, 0.05) 100%)'
+              : 'linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(234, 179, 8, 0.03) 100%)',
+          border: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <CardContent sx={{ p: 2.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+            <BlockIcon color="error" />
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+              Indicador 5: Control de Vedas de Especies y Métodos
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', lineHeight: 1.6 }}>
+            Configura vedas biológicas obligatorias cruzando <strong>Especie</strong>, <strong>Región</strong> y <strong>Método de Extracción</strong> (barreteado, varado, buceo).
+            Soporta <strong>Recurrencia Anual</strong> con máscara de meses (ej. huiro negro habilitado únicamente en marzo, septiembre y diciembre) o <strong>Rango de Fechas</strong> extraordinarias.
+            El motor evalúa contra la <strong>fecha de extracción declarada</strong> y bloquea (HTTP 422) o alerta según la política parametrizada.
+          </Typography>
+        </CardContent>
+      </Card>
+
+      {/* Alertas */}
       {mensaje && (
-        <Alert severity={mensaje.type} sx={{ mb: 3, borderRadius: 3, fontFamily: 'Inter' }}>
+        <Alert severity={mensaje.type} sx={{ mb: 3, borderRadius: 2 }} onClose={() => setMensaje(null)}>
           {mensaje.text}
         </Alert>
       )}
 
-      {/* Cabecera del mantenedor */}
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 4,
-          border: 1, borderColor: 'divider',
-          bgcolor: 'background.paper',
-          p: { xs: 2.5, md: 3 },
-          mb: 3,
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          alignItems: { xs: 'flex-start', md: 'center' },
-          justifyContent: 'space-between',
-          gap: 2,
-        }}
-      >
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-            <BlockIcon sx={{ color: 'error.main' }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
-              Vedas de Especies
-            </Typography>
-          </Box>
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', maxWidth: 680, lineHeight: 1.6 }}>
-            Configura los periodos de prohibición de extracción por especie, a nivel nacional o por región,
-            con su resolución oficial. Las declaraciones dentro del periodo de veda generan alertas
-            y aparecen en el reporte de extracción en veda.
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0, flexWrap: 'wrap' }}>
-          {/* Mini KPIs de estado */}
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {Object.entries(ESTADOS).map(([k, meta]) => (
-              <Tooltip key={k} title={`Vedas ${meta.label.toLowerCase()}s`}>
-                <Chip
-                  size="small"
-                  icon={meta.icon}
-                  label={`${resumen[k]} ${meta.label}`}
-                  sx={{
-                    bgcolor: `${meta.color}15`,
-                    color: meta.color,
-                    fontWeight: 700,
-                    fontFamily: 'Inter',
-                    '& .MuiChip-icon': { color: meta.color },
-                  }}
-                />
-              </Tooltip>
-            ))}
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={abrirNueva}
+      {/* Barra de herramientas */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <ToggleButtonGroup
+            value={filtroEstado}
+            exclusive
+            onChange={(e, v) => v && setFiltroEstado(v)}
+            size="small"
             sx={{
-              bgcolor: 'primary.main',
-              '&:hover': { bgcolor: 'primary.light' },
-              boxShadow: 'none',
-              borderRadius: 2.5,
-              px: 3,
-              py: 1.25,
-              fontFamily: 'Outfit',
-              whiteSpace: 'nowrap',
+              bgcolor: 'background.paper',
+              '& .MuiToggleButton-root': {
+                textTransform: 'none',
+                fontFamily: 'Inter',
+                fontWeight: 600,
+                px: 2,
+              },
             }}
           >
-            Nueva Veda
-          </Button>
-        </Box>
-      </Card>
+            <ToggleButton value="TODAS">Todas</ToggleButton>
+            <ToggleButton value="VIGENTE">Vigentes</ToggleButton>
+            <ToggleButton value="PROGRAMADA">Programadas</ToggleButton>
+            <ToggleButton value="EXPIRADA">Expiradas</ToggleButton>
+          </ToggleButtonGroup>
 
-      {/* Filtros */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap', alignItems: 'center' }}>
-        <ToggleButtonGroup
-          value={filtroEstado}
-          exclusive
-          onChange={(e, v) => v && setFiltroEstado(v)}
-          size="small"
+          <TextField
+            size="small"
+            placeholder="Buscar por especie, método, resolución…"
+            value={filtroTexto}
+            onChange={(e) => setFiltroTexto(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: { xs: 260, sm: 320 } }}
+          />
+        </Box>
+
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<AddIcon />}
+          onClick={abrirNueva}
           sx={{
-            bgcolor: 'background.paper',
-            '& .MuiToggleButton-root': {
-              textTransform: 'none',
-              fontFamily: 'Inter',
-              fontWeight: 600,
-              px: 2,
-              border: 1, borderColor: 'divider',
-              color: 'text.secondary',
-              '&.Mui-selected': { bgcolor: 'primary.main', color: '#fff', '&:hover': { bgcolor: 'primary.light' } },
-            },
+            borderRadius: 2.5,
+            textTransform: 'none',
+            fontFamily: 'Outfit',
+            fontWeight: 600,
+            px: 2.5,
           }}
         >
-          <ToggleButton value="TODAS">Todas</ToggleButton>
-          <ToggleButton value="VIGENTE">Vigentes</ToggleButton>
-          <ToggleButton value="PROGRAMADA">Programadas</ToggleButton>
-          <ToggleButton value="EXPIRADA">Expiradas</ToggleButton>
-        </ToggleButtonGroup>
-        <TextField
-          size="small"
-          placeholder="Buscar por especie, región, resolución…"
-          value={filtroTexto}
-          onChange={(e) => setFiltroTexto(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ minWidth: 300, bgcolor: 'background.paper', '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
-        />
-        <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', ml: 'auto' }}>
-          {vedasFiltradas.length} veda(s)
-        </Typography>
+          Nueva Veda
+        </Button>
       </Box>
 
       {/* Tabla de vedas */}
-      <TableContainer
-        component={Card}
-        elevation={0}
-        sx={{ borderRadius: 4, border: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
-      >
-        <Table size="medium">
-          <TableHead>
-            <TableRow sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default' }}>
-              {['Estado', 'Especie', 'Región', 'Inicio', 'Término', 'Duración', 'Resolución', ''].map((h) => (
-                <TableCell
-                  key={h}
-                  sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: 0.4 }}
-                >
-                  {h}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {vedasFiltradas.length === 0 && (
+      <Card elevation={0} sx={{ borderRadius: 3, border: 1, borderColor: 'divider' }}>
+        <TableContainer>
+          <Table size="medium">
+            <TableHead sx={{ bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') }}>
               <TableRow>
-                <TableCell colSpan={8} sx={{ textAlign: 'center', py: 6, color: 'text.disabled', fontFamily: 'Inter' }}>
-                  No hay vedas configuradas{filtroEstado !== 'TODAS' || filtroTexto ? ' con los filtros actuales' : ''}.
-                  Crea la primera con «Nueva Veda».
-                </TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Especie</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Método de Extracción</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Región</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Tipo de Periodo / Calendario</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Estado Actual</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Resolución</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }} align="center">Acciones</TableCell>
               </TableRow>
-            )}
-            {vedasFiltradas.map((v) => {
-              const est = estadoDe(v);
-              const meta = ESTADOS[est];
-              const dias = duracionDias(v);
-              return (
-                <TableRow key={v.id} hover sx={{ opacity: est === 'EXPIRADA' ? 0.6 : 1 }}>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      icon={meta.icon}
-                      label={meta.label}
-                      sx={{
-                        bgcolor: `${meta.color}15`,
-                        color: meta.color,
-                        fontWeight: 700,
-                        fontFamily: 'Inter',
-                        '& .MuiChip-icon': { color: meta.color },
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', fontWeight: 600, color: 'text.primary' }}>
-                    {v.especie?.nombre || '—'}
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
-                    {v.region?.nombre || <em style={{ color: 'text.disabled' }}>Todas</em>}
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary', whiteSpace: 'nowrap' }}>
-                    {fmtFecha(v.fechaInicio)}
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary', whiteSpace: 'nowrap' }}>
-                    {fmtFecha(v.fechaFin)}
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
-                    {dias != null ? `${dias} día(s)` : '—'}
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
-                    {v.resolucion ? (
-                      <Tooltip title={v.observacion || ''}>
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          icon={<GavelIcon sx={{ fontSize: 14 }} />}
-                          label={v.resolucion}
-                          sx={{ fontFamily: 'Inter', fontSize: '0.7rem' }}
-                        />
-                      </Tooltip>
-                    ) : (
-                      '—'
-                    )}
-                  </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    <Tooltip title="Editar">
-                      <IconButton size="small" onClick={() => abrirEdicion(v)}>
-                        <EditIcon sx={{ fontSize: 19 }} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar">
-                      <IconButton size="small" color="error" onClick={() => setPorEliminar(v)}>
-                        <DeleteOutlineIcon sx={{ fontSize: 19 }} />
-                      </IconButton>
-                    </Tooltip>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                    <CircularProgress size={36} color="secondary" />
+                    <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                      Cargando vedas de especies...
+                    </Typography>
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ) : vedasFiltradas.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      No se encontraron vedas configuradas.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                vedasFiltradas.map((v) => {
+                  const est = estadoDe(v);
+                  const esRecurrente = Boolean(v.recurrenciaAnual);
+                  const meses = esRecurrente && v.mesesVeda
+                    ? v.mesesVeda.split(',').map((m) => parseInt(m.trim())).filter(Boolean)
+                    : [];
 
-      {/* Dialog crear / editar */}
-      <Dialog open={dialogOpen} onClose={() => !saving && setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
-          {form.id ? 'Editar Veda' : 'Nueva Veda'}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 0.5 }}>
-            <Autocomplete
-              options={maestros.especies}
-              getOptionLabel={(o) => o.nombre || ''}
-              isOptionEqualToValue={(o, v) => o.id === v.id}
-              value={form.especie}
-              onChange={(e, v) => setForm((f) => ({ ...f, especie: v }))}
-              renderInput={(params) => <TextField {...params} label="Especie *" />}
-            />
+                  return (
+                    <TableRow key={v.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {v.especie?.nombre || 'Todas las especies'}
+                      </TableCell>
 
-            <Autocomplete
-              options={maestros.regiones}
-              getOptionLabel={(o) => o.nombre || ''}
-              isOptionEqualToValue={(o, v) => o.id === v.id}
-              value={form.region}
-              onChange={(e, v) => setForm((f) => ({ ...f, region: v }))}
-              renderInput={(params) => (
-                <TextField {...params} label="Región" helperText="Vacío = la veda aplica en todas las regiones." />
+                      <TableCell>
+                        {v.extraccionTipo ? (
+                          <Chip label={v.extraccionTipo.nombre} size="small" color="primary" variant="outlined" />
+                        ) : (
+                          <Chip label="Todos los métodos" size="small" sx={{ opacity: 0.7 }} />
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        {v.region?.nombre || <Typography variant="caption" sx={{ color: 'text.secondary' }}>Todas las regiones</Typography>}
+                      </TableCell>
+
+                      <TableCell>
+                        {esRecurrente ? (
+                          <Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                              <CalendarIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+                                Recurrencia Anual ({meses.length} meses vedados):
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', gap: 0.4, flexWrap: 'wrap', maxWidth: 280 }}>
+                              {NOMBRES_MESES.map((nombreMes, idx) => {
+                                const mesNum = idx + 1;
+                                const enVeda = meses.includes(mesNum);
+                                return (
+                                  <Box
+                                    key={nombreMes}
+                                    sx={{
+                                      fontSize: '0.65rem',
+                                      px: 0.6,
+                                      py: 0.2,
+                                      borderRadius: 1,
+                                      bgcolor: enVeda ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.1)',
+                                      color: enVeda ? 'error.main' : 'success.main',
+                                      fontWeight: 700,
+                                      border: 1,
+                                      borderColor: enVeda ? 'error.light' : 'success.light',
+                                    }}
+                                  >
+                                    {nombreMes}
+                                  </Box>
+                                );
+                              })}
+                            </Box>
+                          </Box>
+                        ) : (
+                          <Typography variant="body2">
+                            {fmtFecha(v.fechaInicio)} — {fmtFecha(v.fechaFin)}
+                          </Typography>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        <Chip
+                          icon={
+                            est === 'VIGENTE' ? <BlockIcon sx={{ fontSize: 14 }} /> :
+                            est === 'PROGRAMADA' ? <ScheduleIcon sx={{ fontSize: 14 }} /> :
+                            <EventAvailableIcon sx={{ fontSize: 14 }} />
+                          }
+                          label={est}
+                          size="small"
+                          color={est === 'VIGENTE' ? 'error' : est === 'PROGRAMADA' ? 'warning' : 'default'}
+                          variant={est === 'VIGENTE' ? 'filled' : 'outlined'}
+                          sx={{ fontWeight: 700, fontSize: '0.75rem' }}
+                        />
+                      </TableCell>
+
+                      <TableCell>
+                        {v.resolucion ? (
+                          <Tooltip title={v.observacion || v.resolucion}>
+                            <Typography variant="body2" sx={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {v.resolucion}
+                            </Typography>
+                          </Tooltip>
+                        ) : (
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>—</Typography>
+                        )}
+                      </TableCell>
+
+                      <TableCell align="center">
+                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                          <Tooltip title="Editar Veda">
+                            <IconButton size="small" onClick={() => abrirEdicion(v)} color="primary">
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Eliminar Veda">
+                            <IconButton
+                              size="small"
+                              onClick={() => setPorEliminar(v)}
+                              color="error"
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+
+      {/* Dialog Formulario Ampliado */}
+      <Dialog
+        open={dialogOpen}
+        onClose={() => !saving && setDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
+          {form.id ? 'Editar Veda de Especie' : 'Nueva Veda de Especie'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {formError && (
+            <Alert severity="error" sx={{ borderRadius: 2 }}>
+              {formError}
+            </Alert>
+          )}
+
+          {/* Especie, Método y Región */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+            <Autocomplete
+              options={maestros.especies || []}
+              getOptionLabel={(e) => e.nombre || `ID ${e.id}`}
+              value={form.especie}
+              onChange={(e, val) => setForm((p) => ({ ...p, especie: val }))}
+              renderInput={(params) => <TextField {...params} label="Especie *" placeholder="Seleccione especie" />}
             />
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                label="Fecha inicio *"
-                type="date"
-                value={form.fechaInicio}
-                onChange={(e) => setForm((f) => ({ ...f, fechaInicio: e.target.value }))}
-                InputLabelProps={{ shrink: true }}
-                error={!!errorFechas}
-                sx={{ flex: 1 }}
-              />
-              <TextField
-                label="Fecha término *"
-                type="date"
-                value={form.fechaFin}
-                onChange={(e) => setForm((f) => ({ ...f, fechaFin: e.target.value }))}
-                InputLabelProps={{ shrink: true }}
-                error={!!errorFechas}
-                helperText={errorFechas || undefined}
-                sx={{ flex: 1 }}
-              />
-            </Box>
-
-            <TextField
-              label="Resolución"
-              value={form.resolucion}
-              onChange={(e) => setForm((f) => ({ ...f, resolucion: e.target.value }))}
-              placeholder="Ej. Res. Ex. N° 1234-2026 Subpesca"
-              helperText="Número de la resolución o decreto que establece la veda (opcional)."
+            <Autocomplete
+              options={maestros.extraccionTipos || []}
+              getOptionLabel={(et) => et.nombre || `ID ${et.id}`}
+              value={form.extraccionTipo}
+              onChange={(e, val) => setForm((p) => ({ ...p, extraccionTipo: val }))}
+              renderInput={(params) => <TextField {...params} label="Método Extracción" placeholder="Todos los métodos" />}
             />
 
-            <TextField
-              label="Observación"
-              value={form.observacion}
-              onChange={(e) => setForm((f) => ({ ...f, observacion: e.target.value }))}
-              multiline
-              rows={3}
-              placeholder="Notas internas: motivo, alcance, excepciones…"
+            <Autocomplete
+              options={maestros.regiones || []}
+              getOptionLabel={(r) => r.nombre || `ID ${r.id}`}
+              value={form.region}
+              onChange={(e, val) => setForm((p) => ({ ...p, region: val }))}
+              renderInput={(params) => <TextField {...params} label="Región" placeholder="Todas las regiones" />}
             />
+          </Box>
 
-            {formError && (
-              <Alert severity="error" sx={{ borderRadius: 2.5, fontFamily: 'Inter' }}>
-                {formError}
-              </Alert>
+          {/* Tipo de Periodo */}
+          <Box sx={{ p: 2, borderRadius: 2, bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)') }}>
+            <FormControl component="fieldset">
+              <FormLabel component="legend" sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>
+                Tipo de Periodo de Veda:
+              </FormLabel>
+              <RadioGroup
+                row
+                value={form.tipoPeriodo}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setForm((p) => ({
+                    ...p,
+                    tipoPeriodo: val,
+                    recurrenciaAnual: val === 'RECURRENTE',
+                  }));
+                }}
+              >
+                <FormControlLabel
+                  value="RECURRENTE"
+                  control={<Radio color="secondary" />}
+                  label="Anual Recurrente (se repite todos los años sin recarga)"
+                />
+                <FormControlLabel
+                  value="FECHAS"
+                  control={<Radio color="primary" />}
+                  label="Por Rango de Fechas (fechas puntuales/extraordinarias)"
+                />
+              </RadioGroup>
+            </FormControl>
+
+            {form.tipoPeriodo === 'RECURRENTE' ? (
+              <Box sx={{ mt: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    Selecciona los meses en que la especie está <strong>EN VEDA</strong>:
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button size="small" onClick={seleccionarTodosLosMeses} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+                      Todos
+                    </Button>
+                    <Button size="small" onClick={limpiarMeses} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+                      Ninguno
+                    </Button>
+                  </Box>
+                </Box>
+
+                {/* 12 botones de meses interactivos */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 1 }}>
+                  {NOMBRES_MESES.map((nombreMes, idx) => {
+                    const mesNum = idx + 1;
+                    const enVeda = mesesArray.includes(mesNum);
+                    return (
+                      <Button
+                        key={nombreMes}
+                        variant={enVeda ? 'contained' : 'outlined'}
+                        color={enVeda ? 'error' : 'inherit'}
+                        onClick={() => toggleMes(mesNum)}
+                        sx={{
+                          py: 1,
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          borderRadius: 2,
+                        }}
+                      >
+                        {nombreMes}
+                      </Button>
+                    );
+                  })}
+                </Box>
+              </Box>
+            ) : (
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mt: 2 }}>
+                <TextField
+                  label="Fecha de Inicio *"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={form.fechaInicio}
+                  onChange={(e) => setForm((p) => ({ ...p, fechaInicio: e.target.value }))}
+                />
+                <TextField
+                  label="Fecha de Término *"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={form.fechaFin}
+                  onChange={(e) => setForm((p) => ({ ...p, fechaFin: e.target.value }))}
+                />
+              </Box>
             )}
           </Box>
+
+          {/* Vista Previa del Calendario Anual */}
+          <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', display: 'block', mb: 1, textTransform: 'uppercase' }}>
+              Vista Previa del Calendario Anual (Impacto en Fiscalización):
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 0.5, textAlign: 'center' }}>
+              {NOMBRES_MESES.map((nombreMes, idx) => {
+                const mesNum = idx + 1;
+                let enVeda = false;
+                if (form.tipoPeriodo === 'RECURRENTE') {
+                  enVeda = mesesArray.includes(mesNum);
+                } else if (form.fechaInicio && form.fechaFin) {
+                  const y = new Date().getFullYear();
+                  const inicioMes = new Date(y, idx, 1);
+                  const finMes = new Date(y, idx + 1, 0);
+                  const fIni = aFechaLocal(form.fechaInicio);
+                  const fFin = aFechaLocal(form.fechaFin);
+                  if (fIni && fFin && fIni <= finMes && fFin >= inicioMes) {
+                    enVeda = true;
+                  }
+                }
+
+                return (
+                  <Box
+                    key={nombreMes}
+                    sx={{
+                      p: 0.8,
+                      borderRadius: 1.5,
+                      bgcolor: enVeda ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                      color: enVeda ? 'error.main' : 'success.main',
+                      border: 1,
+                      borderColor: enVeda ? 'error.light' : 'success.light',
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ fontWeight: 800, display: 'block', fontSize: '0.7rem' }}>
+                      {nombreMes}
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontSize: '0.6rem', fontWeight: 700 }}>
+                      {enVeda ? 'VEDADO' : 'LIBRE'}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+
+          <TextField
+            label="Nº Resolución / Decreto Subpesca"
+            placeholder="Ej. Res. Ex. Subpesca Nº 321/2024"
+            value={form.resolucion}
+            onChange={(e) => setForm((p) => ({ ...p, resolucion: e.target.value }))}
+          />
+
+          <TextField
+            label="Observaciones (Opcional)"
+            multiline
+            rows={2}
+            value={form.observacion}
+            onChange={(e) => setForm((p) => ({ ...p, observacion: e.target.value }))}
+            placeholder="Fundamentos biológicos, excepciones para ciertas caletas o notas de fiscalización."
+          />
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={form.activo}
+                onChange={(e) => setForm((p) => ({ ...p, activo: e.target.checked }))}
+                color="secondary"
+              />
+            }
+            label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Veda Activa en el Servidor</Typography>}
+          />
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setDialogOpen(false)} disabled={saving} sx={{ fontFamily: 'Outfit', color: 'text.secondary' }}>
+        <DialogActions sx={{ p: 2.5, pt: 1 }}>
+          <Button onClick={() => setDialogOpen(false)} disabled={saving} sx={{ textTransform: 'none' }}>
             Cancelar
           </Button>
           <Button
             variant="contained"
+            color="secondary"
             onClick={guardar}
-            disabled={saving || !!errorFechas}
-            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
-            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.light' }, boxShadow: 'none', borderRadius: 2.5, px: 3, fontFamily: 'Outfit' }}
+            disabled={saving}
+            sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}
           >
-            {saving ? 'Guardando…' : 'Guardar Veda'}
+            {saving ? <CircularProgress size={22} color="inherit" /> : 'Guardar Veda'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Confirmación de borrado */}
-      <Dialog open={!!porEliminar} onClose={() => setPorEliminar(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>Eliminar veda</DialogTitle>
+      {/* Modal Confirmar Eliminación */}
+      <Dialog
+        open={Boolean(porEliminar)}
+        onClose={() => setPorEliminar(null)}
+        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
+          ¿Eliminar Veda de Especie?
+        </DialogTitle>
         <DialogContent>
-          {porEliminar && (
-            <Typography variant="body2" sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
-              ¿Eliminar la veda de <b>{porEliminar.especie?.nombre}</b> (
-              {porEliminar.region?.nombre || 'todas las regiones'}, {fmtFecha(porEliminar.fechaInicio)} —{' '}
-              {fmtFecha(porEliminar.fechaFin)})? Esta acción no se puede deshacer y las declaraciones en ese
-              periodo dejarán de marcarse como extracción en veda.
-            </Typography>
-          )}
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            ¿Estás seguro de que deseas eliminar la veda para <strong>{porEliminar?.especie?.nombre}</strong>? Esta acción no se puede deshacer.
+          </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setPorEliminar(null)} sx={{ fontFamily: 'Outfit', color: 'text.secondary' }}>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setPorEliminar(null)} sx={{ textTransform: 'none' }}>
             Cancelar
           </Button>
-          <Button variant="contained" color="error" onClick={eliminar} sx={{ boxShadow: 'none', borderRadius: 2.5, fontFamily: 'Outfit' }}>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={eliminar}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
             Eliminar
           </Button>
         </DialogActions>

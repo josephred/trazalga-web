@@ -27,6 +27,8 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   InputAdornment,
+  FormControlLabel,
+  LinearProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -37,84 +39,71 @@ import {
   Person as PersonIcon,
   Language as LanguageIcon,
   Scale as ScaleIcon,
-  AccountTree as AccountTreeIcon,
   Search as SearchIcon,
+  Lock as LockIcon,
+  LockOpen as LockOpenIcon,
+  Gavel as GavelIcon,
+  InfoOutlined as InfoIcon,
+  CheckCircle as CheckCircleIcon,
+  WarningAmber as WarningIcon,
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 
-/*
- * Mantenedor de Cuotas de Extracción.
- *
- * Alcances (del más específico al más general): USUARIO > ÁREA DE MANEJO > REGIÓN > GLOBAL.
- * Regla jerárquica (la valida también el backend al guardar):
- *   cuota de usuario ≤ cuota del área de manejo (si existe) ≤ cuota de la región (si existe),
- * comparando cuotas del mismo periodo y especie compatible (sin especie = todas).
- */
-
-const ALCANCES = {
-  REGION: { label: 'Región', color: 'secondary.main', icon: <PublicIcon sx={{ fontSize: 18 }} /> },
-  AREA: { label: 'Área de Manejo', color: '#ec4899', icon: <TerrainIcon sx={{ fontSize: 18 }} /> },
-  USUARIO: { label: 'Usuario', color: 'warning.main', icon: <PersonIcon sx={{ fontSize: 18 }} /> },
-  GLOBAL: { label: 'Global', color: 'text.secondary', icon: <LanguageIcon sx={{ fontSize: 18 }} /> },
-};
-
-const PERFILES = ['RECOLECTOR', 'ARMADOR', 'AREA'];
-const PERIODOS = ['DIARIO', 'MENSUAL'];
-
-const alcanceDe = (c) => {
-  if (c.usuario) return 'USUARIO';
-  if (c.amerb) return 'AREA';
-  if (c.region) return 'REGION';
-  return 'GLOBAL';
-};
-
-const nombreUsuario = (u) =>
-  u ? `${u.nombres || u.nombre || ''} ${u.apellidop || ''}`.trim() || `Usuario ${u.id}` : '';
-
-const nombreRegionDe = (c) => c.region?.nombre || c.amerb?.region || null;
-
-const describirAlcance = (c) => {
-  const tipo = alcanceDe(c);
-  if (tipo === 'USUARIO') return nombreUsuario(c.usuario);
-  if (tipo === 'AREA') return c.amerb?.nombre || `AMERB ${c.amerb?.id}`;
-  if (tipo === 'REGION') return c.region?.nombre || `Región ${c.region?.id}`;
-  return 'Todas las regiones';
-};
+const aInputDate = (v) => (v ? String(v).slice(0, 10) : '');
 
 const fmtKg = (n) =>
-  `${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 }).format(n ?? 0)} kg`;
+  `${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 1 }).format(n ?? 0)} kg`;
 
 const FORM_VACIO = {
   id: null,
-  alcance: 'REGION',
+  perfil: 'RECOLECTOR',
+  nivelAgregacion: 'COMUNA',
+  esPlantilla: false,
   region: null,
+  provincia: null,
+  comuna: null,
   amerb: null,
   usuario: null,
   especie: null,
-  perfil: 'RECOLECTOR',
-  periodo: 'DIARIO',
-  limiteKg: '',
+  extraccionTipo: null,
+  humedadEstado: null,
+  metrica: 'CAPTURA',
+  periodo: 'MENSUAL',
+  limiteKg: 5000,
+  fechaInicio: new Date().toISOString().slice(0, 10),
+  fechaFin: '',
+  resolucion: '',
+  estado: 'ABIERTA',
   activo: true,
 };
 
 export default function CuotasExtraccionMaestro() {
   const [cuotas, setCuotas] = useState([]);
-  const [maestros, setMaestros] = useState({ regiones: [], especies: [], amerbs: [], usuarios: [] });
+  const [consumos, setConsumos] = useState({});
+  const [maestros, setMaestros] = useState({
+    regiones: [],
+    provincias: [],
+    comunas: [],
+    especies: [],
+    extraccionTipos: [],
+    humedadEstados: [],
+    amerbs: [],
+    usuarios: [],
+  });
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState(null);
 
-  // Filtros de la tabla
-  const [filtroAlcance, setFiltroAlcance] = useState('TODOS');
+  // Filtros
+  const [filtroNivel, setFiltroNivel] = useState('TODOS');
   const [filtroTexto, setFiltroTexto] = useState('');
 
-  // Dialog de creación/edición
+  // Dialogs
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState(FORM_VACIO);
   const [formError, setFormError] = useState(null);
   const [saving, setSaving] = useState(false);
-
-  // Dialog de confirmación de borrado
   const [porEliminar, setPorEliminar] = useState(null);
+  const [cuotaPorCerrar, setCuotaPorCerrar] = useState(null);
 
   useEffect(() => {
     cargar();
@@ -124,155 +113,134 @@ export default function CuotasExtraccionMaestro() {
     try {
       setLoading(true);
       const [cuotasRes, maestrosRes] = await Promise.all([
-        api.get('/cuotas'),
-        api.get('/cuotas/maestros'),
+        api.get('/api/cuotas'),
+        api.get('/api/cuotas/maestros'),
       ]);
-      setCuotas(cuotasRes.data || []);
-      setMaestros(maestrosRes.data || { regiones: [], especies: [], amerbs: [], usuarios: [] });
+      const listaCuotas = Array.isArray(cuotasRes.data) ? cuotasRes.data : [];
+      setCuotas(listaCuotas);
+      setMaestros(maestrosRes.data || {});
+
+      // Cargar consumo en segundo plano para cada cuota
+      cargarConsumos(listaCuotas);
     } catch (error) {
-      console.error('Error cargando cuotas', error);
-      setMensaje({ type: 'error', text: 'Error al cargar las cuotas de extracción. Verifica el backend.' });
+      console.error('Error cargando cuotas:', error);
+      setMensaje({ type: 'error', text: 'Error al cargar las cuotas de extracción desde el servidor.' });
     } finally {
       setLoading(false);
     }
   };
 
-  const cuotasFiltradas = useMemo(() => {
-    const txt = filtroTexto.trim().toLowerCase();
-    return cuotas.filter((c) => {
-      if (filtroAlcance !== 'TODOS' && alcanceDe(c) !== filtroAlcance) return false;
-      if (!txt) return true;
-      const blob = [
-        describirAlcance(c),
-        nombreRegionDe(c),
-        c.especie?.nombre,
-        c.perfil,
-        c.periodo,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return blob.includes(txt);
-    });
-  }, [cuotas, filtroAlcance, filtroTexto]);
-
-  /* ------- Topes jerárquicos aplicables al formulario (hint en vivo; el backend revalida) ------- */
-  const topesJerarquicos = useMemo(() => {
-    if (!dialogOpen) return [];
-    const activas = cuotas.filter((c) => c.activo && c.id !== form.id);
-    const compatibles = (c) =>
-      c.periodo?.toUpperCase() === form.periodo &&
-      (!c.especie || !form.especie || c.especie.id === form.especie.id);
-    const regionForm =
-      form.alcance === 'AREA' || (form.alcance === 'USUARIO' && form.amerb)
-        ? form.amerb?.region || form.region?.nombre
-        : form.region?.nombre;
-
-    const topes = [];
-    if (form.alcance === 'USUARIO' && form.amerb) {
-      activas
-        .filter((c) => alcanceDe(c) === 'AREA' && c.amerb?.id === form.amerb.id && compatibles(c))
-        .forEach((c) => topes.push({ nivel: 'Área de manejo', nombre: describirAlcance(c), limite: c.limiteKg }));
-    }
-    if (form.alcance === 'USUARIO' || form.alcance === 'AREA') {
-      if (regionForm) {
-        activas
-          .filter(
-            (c) =>
-              alcanceDe(c) === 'REGION' &&
-              (c.region?.nombre || '').toLowerCase() === regionForm.toLowerCase() &&
-              compatibles(c)
-          )
-          .forEach((c) => topes.push({ nivel: 'Región', nombre: describirAlcance(c), limite: c.limiteKg }));
+  const cargarConsumos = async (lista) => {
+    const mapa = {};
+    for (const c of lista) {
+      try {
+        const { data } = await api.get(`/api/cuotas/${c.id}/consumo`);
+        if (data) {
+          mapa[c.id] = data;
+        }
+      } catch (e) {
+        // Silencioso para cuotas antiguas o sin datos
       }
     }
-    return topes;
-  }, [dialogOpen, cuotas, form]);
-
-  const limiteExcedeTope = useMemo(() => {
-    const lim = parseFloat(form.limiteKg);
-    if (isNaN(lim) || !topesJerarquicos.length) return null;
-    const violado = topesJerarquicos.find((t) => lim > t.limite);
-    return violado || null;
-  }, [form.limiteKg, topesJerarquicos]);
-
-  /* ------------------------------- Acciones ------------------------------- */
-
-  const abrirNueva = () => {
-    setForm(FORM_VACIO);
-    setFormError(null);
-    setDialogOpen(true);
+    setConsumos(mapa);
   };
 
-  const abrirEdicion = (c) => {
+  const abrirNueva = () => {
     setForm({
-      id: c.id,
-      alcance: alcanceDe(c),
-      region: c.region ? { id: c.region.id, nombre: c.region.nombre } : null,
-      amerb: c.amerb ? { id: c.amerb.id, nombre: c.amerb.nombre, region: c.amerb.region } : null,
-      usuario: c.usuario
-        ? { id: c.usuario.id, nombre: nombreUsuario(c.usuario), rut: c.usuario.rut || '' }
-        : null,
-      especie: c.especie ? { id: c.especie.id, nombre: c.especie.nombre } : null,
-      perfil: c.perfil || 'RECOLECTOR',
-      periodo: (c.periodo || 'DIARIO').toUpperCase(),
-      limiteKg: c.limiteKg ?? '',
-      activo: !!c.activo,
+      ...FORM_VACIO,
+      region: maestros.regiones?.[0] || null,
+      especie: maestros.especies?.[0] || null,
+      fechaInicio: new Date().toISOString().slice(0, 10),
     });
     setFormError(null);
     setDialogOpen(true);
   };
 
-  const cambiarAlcance = (nuevo) => {
-    if (!nuevo) return;
-    // Al cambiar el alcance se limpian las referencias que no correspondan.
-    setForm((f) => ({
-      ...f,
-      alcance: nuevo,
-      region: nuevo === 'GLOBAL' ? null : f.region,
-      amerb: nuevo === 'REGION' || nuevo === 'GLOBAL' ? null : f.amerb,
-      usuario: nuevo !== 'USUARIO' ? null : f.usuario,
-    }));
+  const abrirEditar = (c) => {
+    setForm({
+      id: c.id,
+      perfil: c.perfil || 'RECOLECTOR',
+      nivelAgregacion: c.nivelAgregacion || 'COMUNA',
+      esPlantilla: Boolean(c.esPlantilla),
+      region: maestros.regiones?.find((r) => r.id === c.region?.id) || c.region || null,
+      provincia: maestros.provincias?.find((p) => p.id === c.provincia?.id) || c.provincia || null,
+      comuna: maestros.comunas?.find((com) => com.id === c.comuna?.id) || c.comuna || null,
+      amerb: maestros.amerbs?.find((a) => a.id === c.amerb?.id) || c.amerb || null,
+      usuario: maestros.usuarios?.find((u) => u.id === c.usuario?.id) || c.usuario || null,
+      especie: maestros.especies?.find((e) => e.id === c.especie?.id) || c.especie || null,
+      extraccionTipo: maestros.extraccionTipos?.find((et) => et.id === c.extraccionTipo?.id) || c.extraccionTipo || null,
+      humedadEstado: maestros.humedadEstados?.find((h) => h.id === c.humedadEstado?.id) || c.humedadEstado || null,
+      metrica: c.metrica || 'CAPTURA',
+      periodo: c.periodo || 'MENSUAL',
+      limiteKg: c.limiteKg != null ? Number(c.limiteKg) : 5000,
+      fechaInicio: aInputDate(c.fechaInicio),
+      fechaFin: aInputDate(c.fechaFin),
+      resolucion: c.resolucion || '',
+      estado: c.estado || 'ABIERTA',
+      activo: c.activo ?? true,
+    });
+    setFormError(null);
+    setDialogOpen(true);
   };
 
-  const guardar = async () => {
-    setFormError(null);
+  const provinciasFiltradas = useMemo(() => {
+    if (!form.region?.id) return maestros.provincias || [];
+    return (maestros.provincias || []).filter((p) => p.region?.id === form.region.id || p.regionId === form.region.id);
+  }, [maestros.provincias, form.region]);
 
+  const comunasFiltradas = useMemo(() => {
+    if (form.provincia?.id) {
+      return (maestros.comunas || []).filter((c) => c.provincia?.id === form.provincia.id || c.provinciaId === form.provincia.id);
+    }
+    if (form.region?.id) {
+      return (maestros.comunas || []).filter((c) => c.region?.id === form.region.id || c.regionId === form.region.id);
+    }
+    return maestros.comunas || [];
+  }, [maestros.comunas, form.provincia, form.region]);
+
+  const handleGuardar = async () => {
     const lim = parseFloat(form.limiteKg);
     if (isNaN(lim) || lim <= 0) {
-      setFormError('Ingresa un límite en kilogramos mayor que 0.');
+      setFormError('El límite debe ser un número positivo en kilogramos.');
       return;
     }
-    if (form.alcance === 'REGION' && !form.region) {
-      setFormError('Selecciona la región a la que aplica la cuota.');
+    if (!form.fechaInicio) {
+      setFormError('Debe ingresar la fecha de inicio de vigencia.');
       return;
     }
-    if (form.alcance === 'AREA' && !form.amerb) {
-      setFormError('Selecciona el área de manejo a la que aplica la cuota.');
-      return;
-    }
-    if (form.alcance === 'USUARIO' && !form.usuario) {
-      setFormError('Selecciona el usuario al que aplica la cuota.');
+    if (form.fechaFin && form.fechaFin < form.fechaInicio) {
+      setFormError('La fecha de fin no puede ser anterior a la de inicio.');
       return;
     }
 
     const payload = {
       perfil: form.perfil,
+      nivelAgregacion: form.nivelAgregacion,
+      esPlantilla: form.esPlantilla,
+      region: form.region ? { id: form.region.id } : null,
+      provincia: form.provincia ? { id: form.provincia.id } : null,
+      comuna: form.comuna ? { id: form.comuna.id } : null,
+      amerb: form.perfil === 'AREA' && form.amerb ? { id: form.amerb.id } : null,
+      usuario: form.usuario ? { id: form.usuario.id } : null,
+      especie: form.especie ? { id: form.especie.id } : null,
+      extraccionTipo: form.extraccionTipo ? { id: form.extraccionTipo.id } : null,
+      humedadEstado: form.humedadEstado ? { id: form.humedadEstado.id } : null,
+      metrica: form.metrica,
       periodo: form.periodo,
       limiteKg: lim,
-      activo: form.activo,
-      especie: form.especie ? { id: form.especie.id } : null,
-      region: form.alcance !== 'GLOBAL' && form.region ? { id: form.region.id } : null,
-      amerb: (form.alcance === 'AREA' || form.alcance === 'USUARIO') && form.amerb ? { id: form.amerb.id } : null,
-      usuario: form.alcance === 'USUARIO' && form.usuario ? { id: form.usuario.id } : null,
+      fechaInicio: form.fechaInicio ? `${form.fechaInicio}T00:00:00.000Z` : null,
+      fechaFin: form.fechaFin ? `${form.fechaFin}T23:59:59.000Z` : null,
+      resolucion: form.resolucion?.trim() || null,
+      estado: form.estado,
+      activo: Boolean(form.activo),
     };
 
     try {
       setSaving(true);
       if (form.id) {
-        await api.put(`/cuotas/${form.id}`, payload);
+        await api.put(`/api/cuotas/${form.id}`, payload);
       } else {
-        await api.post('/cuotas', payload);
+        await api.post('/api/cuotas', payload);
       }
       setDialogOpen(false);
       setMensaje({ type: 'success', text: `Cuota ${form.id ? 'actualizada' : 'creada'} correctamente.` });
@@ -281,28 +249,42 @@ export default function CuotasExtraccionMaestro() {
     } catch (error) {
       const msg =
         error.response?.data?.message ||
-        'No se pudo guardar la cuota. Verifica los datos y la conexión con el backend.';
+        error.response?.data?.error ||
+        'No se pudo guardar la cuota. Verifica los datos.';
       setFormError(msg);
     } finally {
       setSaving(false);
     }
   };
 
-  const toggleActivo = async (c) => {
+  const handleCerrarCuota = async () => {
+    if (!cuotaPorCerrar) return;
     try {
-      await api.put(`/cuotas/${c.id}`, { ...c, activo: !c.activo });
+      await api.put(`/api/cuotas/${cuotaPorCerrar.id}/cerrar`);
+      setMensaje({ type: 'success', text: `Cuota #${cuotaPorCerrar.id} cerrada administrativamente.` });
+      setCuotaPorCerrar(null);
+      setTimeout(() => setMensaje(null), 4000);
       await cargar();
     } catch (error) {
-      const msg = error.response?.data?.message || 'No se pudo cambiar el estado de la cuota.';
-      setMensaje({ type: 'error', text: msg });
-      setTimeout(() => setMensaje(null), 6000);
+      console.error('Error cerrando cuota:', error);
+      setMensaje({ type: 'error', text: 'No se pudo cerrar administrativamente la cuota.' });
+      setCuotaPorCerrar(null);
+    }
+  };
+
+  const toggleActivo = async (c) => {
+    try {
+      await api.put(`/api/cuotas/${c.id}`, { ...c, activo: !c.activo });
+      await cargar();
+    } catch (error) {
+      setMensaje({ type: 'error', text: 'No se pudo cambiar el estado de la cuota.' });
     }
   };
 
   const eliminar = async () => {
     if (!porEliminar) return;
     try {
-      await api.delete(`/cuotas/${porEliminar.id}`);
+      await api.delete(`/api/cuotas/${porEliminar.id}`);
       setPorEliminar(null);
       setMensaje({ type: 'success', text: 'Cuota eliminada correctamente.' });
       setTimeout(() => setMensaje(null), 4000);
@@ -313,410 +295,583 @@ export default function CuotasExtraccionMaestro() {
     }
   };
 
-  /* ------------------------------- Render ------------------------------- */
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 10 }}>
-        <CircularProgress size={40} />
-      </Box>
-    );
-  }
+  const cuotasFiltradas = useMemo(() => {
+    const txt = filtroTexto.trim().toLowerCase();
+    return cuotas.filter((c) => {
+      if (filtroNivel !== 'TODOS' && (c.nivelAgregacion || 'COMUNA') !== filtroNivel) return false;
+      if (!txt) return true;
+      const blob = [
+        c.especie?.nombre,
+        c.region?.nombre,
+        c.provincia?.nombre,
+        c.comuna?.nombre,
+        c.perfil,
+        c.periodo,
+        c.resolucion,
+        c.extraccionTipo?.nombre,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return blob.includes(txt);
+    });
+  }, [cuotas, filtroNivel, filtroTexto]);
 
   return (
     <Box>
+      {/* Banner explicativo del Indicador 3 */}
+      <Card
+        elevation={0}
+        sx={{
+          mb: 3,
+          borderRadius: 3,
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%)'
+              : 'linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(14, 165, 233, 0.03) 100%)',
+          border: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <CardContent sx={{ p: 2.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+            <ScaleIcon color="secondary" />
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+              Indicador 3: Cuotas de Extracción y Control de Saldos
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', lineHeight: 1.6 }}>
+            Define límites por <strong>Región</strong>, <strong>Provincia</strong> (Atacama), <strong>Comuna</strong> (Coquimbo) o <strong>Cuotas Plantilla Individuales</strong> (Antofagasta).
+            El motor de fiscalización descuenta en <strong>captura biológica corregida</strong> (o desembarque si se indica), imputa a la comuna de inscripción del declarante e impide declaraciones fuera de plazo cuando la cuota ha sido <strong>CERRADA</strong>.
+          </Typography>
+        </CardContent>
+      </Card>
+
+      {/* Alertas */}
       {mensaje && (
-        <Alert severity={mensaje.type} sx={{ mb: 3, borderRadius: 3, fontFamily: 'Inter' }}>
+        <Alert severity={mensaje.type} sx={{ mb: 3, borderRadius: 2 }} onClose={() => setMensaje(null)}>
           {mensaje.text}
         </Alert>
       )}
 
-      {/* Cabecera del mantenedor */}
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 4,
-          border: 1, borderColor: 'divider',
-          bgcolor: 'background.paper',
-          p: { xs: 2.5, md: 3 },
-          mb: 3,
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          alignItems: { xs: 'flex-start', md: 'center' },
-          justifyContent: 'space-between',
-          gap: 2,
-        }}
-      >
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-            <ScaleIcon sx={{ color: 'secondary.main' }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
-              Cuotas de Extracción
-            </Typography>
-          </Box>
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', maxWidth: 680, lineHeight: 1.6 }}>
-            Define límites de extracción por región, área de manejo o usuario, con cantidad máxima por especie.
-            La jerarquía se respeta siempre: una cuota de usuario nunca puede superar la del área de manejo,
-            y ninguna puede superar la de la región.
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={abrirNueva}
-          sx={{
-            bgcolor: 'primary.main',
-            '&:hover': { bgcolor: 'primary.light' },
-            boxShadow: 'none',
-            borderRadius: 2.5,
-            px: 3,
-            py: 1.25,
-            fontFamily: 'Outfit',
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
-          }}
-        >
-          Nueva Cuota
-        </Button>
-      </Card>
-
-      {/* Filtros */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap', alignItems: 'center' }}>
-        <ToggleButtonGroup
-          value={filtroAlcance}
-          exclusive
-          onChange={(e, v) => v && setFiltroAlcance(v)}
-          size="small"
-          sx={{
-            bgcolor: 'background.paper',
-            '& .MuiToggleButton-root': {
-              textTransform: 'none',
-              fontFamily: 'Inter',
-              fontWeight: 600,
-              px: 2,
-              border: 1, borderColor: 'divider',
-              color: 'text.secondary',
-              '&.Mui-selected': { bgcolor: 'primary.main', color: '#fff', '&:hover': { bgcolor: 'primary.light' } },
-            },
-          }}
-        >
-          <ToggleButton value="TODOS">Todas</ToggleButton>
-          <ToggleButton value="REGION">Región</ToggleButton>
-          <ToggleButton value="AREA">Área de Manejo</ToggleButton>
-          <ToggleButton value="USUARIO">Usuario</ToggleButton>
-          <ToggleButton value="GLOBAL">Global</ToggleButton>
-        </ToggleButtonGroup>
-        <TextField
-          size="small"
-          placeholder="Buscar por nombre, especie, región…"
-          value={filtroTexto}
-          onChange={(e) => setFiltroTexto(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ minWidth: 280, bgcolor: 'background.paper', '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
-        />
-        <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', ml: 'auto' }}>
-          {cuotasFiltradas.length} cuota(s)
-        </Typography>
-      </Box>
-
-      {/* Tabla de cuotas */}
-      <TableContainer
-        component={Card}
-        elevation={0}
-        sx={{ borderRadius: 4, border: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
-      >
-        <Table size="medium">
-          <TableHead>
-            <TableRow sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default' }}>
-              {['Alcance', 'Aplica a', 'Región', 'Especie', 'Perfil', 'Periodo', 'Límite', 'Activa', ''].map((h) => (
-                <TableCell
-                  key={h}
-                  sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: 0.4 }}
-                >
-                  {h}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {cuotasFiltradas.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={9} sx={{ textAlign: 'center', py: 6, color: 'text.disabled', fontFamily: 'Inter' }}>
-                  No hay cuotas configuradas{filtroAlcance !== 'TODOS' || filtroTexto ? ' con los filtros actuales' : ''}.
-                  Crea la primera con «Nueva Cuota».
-                </TableCell>
-              </TableRow>
-            )}
-            {cuotasFiltradas.map((c) => {
-              const tipo = alcanceDe(c);
-              const meta = ALCANCES[tipo];
-              return (
-                <TableRow key={c.id} hover sx={{ opacity: c.activo ? 1 : 0.55 }}>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      icon={meta.icon}
-                      label={meta.label}
-                      sx={{
-                        bgcolor: `${meta.color}15`,
-                        color: meta.color,
-                        fontWeight: 700,
-                        fontFamily: 'Inter',
-                        '& .MuiChip-icon': { color: meta.color },
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', fontWeight: 600, color: 'text.primary' }}>
-                    {describirAlcance(c)}
-                    {tipo === 'USUARIO' && c.usuario?.rut ? (
-                      <Typography variant="caption" sx={{ display: 'block', color: 'text.disabled' }}>
-                        {c.usuario.rut}
-                      </Typography>
-                    ) : null}
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>{nombreRegionDe(c) || '—'}</TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
-                    {c.especie?.nombre || <em style={{ color: 'text.disabled' }}>Todas</em>}
-                  </TableCell>
-                  <TableCell>
-                    <Chip size="small" variant="outlined" label={c.perfil} sx={{ fontFamily: 'Inter', fontSize: '0.7rem' }} />
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', color: 'text.primary' }}>{c.periodo}</TableCell>
-                  <TableCell sx={{ fontFamily: 'Inter', fontWeight: 800, color: 'text.primary', whiteSpace: 'nowrap' }}>
-                    {fmtKg(c.limiteKg)}
-                  </TableCell>
-                  <TableCell>
-                    <Switch size="small" checked={!!c.activo} onChange={() => toggleActivo(c)} />
-                  </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    <Tooltip title="Editar">
-                      <IconButton size="small" onClick={() => abrirEdicion(c)}>
-                        <EditIcon sx={{ fontSize: 19 }} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar">
-                      <IconButton size="small" color="error" onClick={() => setPorEliminar(c)}>
-                        <DeleteOutlineIcon sx={{ fontSize: 19 }} />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Dialog crear / editar */}
-      <Dialog open={dialogOpen} onClose={() => !saving && setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
-          {form.id ? 'Editar Cuota de Extracción' : 'Nueva Cuota de Extracción'}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', display: 'block', mb: 1 }}>
-            Alcance de la cuota
-          </Typography>
+      {/* Barra de herramientas */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
           <ToggleButtonGroup
-            value={form.alcance}
+            value={filtroNivel}
             exclusive
-            onChange={(e, v) => cambiarAlcance(v)}
+            onChange={(e, v) => v && setFiltroNivel(v)}
             size="small"
-            fullWidth
             sx={{
-              mb: 3,
+              bgcolor: 'background.paper',
               '& .MuiToggleButton-root': {
                 textTransform: 'none',
                 fontFamily: 'Inter',
                 fontWeight: 600,
-                '&.Mui-selected': { bgcolor: 'primary.main', color: '#fff', '&:hover': { bgcolor: 'primary.light' } },
+                px: 2,
               },
             }}
           >
+            <ToggleButton value="TODOS">Todos los Niveles</ToggleButton>
+            <ToggleButton value="COMUNA">Comuna</ToggleButton>
+            <ToggleButton value="PROVINCIA">Provincia</ToggleButton>
             <ToggleButton value="REGION">Región</ToggleButton>
-            <ToggleButton value="AREA">Área de Manejo</ToggleButton>
-            <ToggleButton value="USUARIO">Usuario</ToggleButton>
-            <ToggleButton value="GLOBAL">Global</ToggleButton>
+            <ToggleButton value="INDIVIDUAL">Individual</ToggleButton>
           </ToggleButtonGroup>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-            {(form.alcance === 'REGION' || form.alcance === 'USUARIO') && (
-              <Autocomplete
-                options={maestros.regiones}
-                getOptionLabel={(o) => o.nombre || ''}
-                isOptionEqualToValue={(o, v) => o.id === v.id}
-                value={form.region}
-                onChange={(e, v) => setForm((f) => ({ ...f, region: v }))}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label={form.alcance === 'REGION' ? 'Región *' : 'Región (contexto jerárquico, opcional)'}
-                    helperText={
-                      form.alcance === 'USUARIO'
-                        ? 'Ancla la cuota del usuario al tope regional. Si eliges un área, la región se infiere de ella.'
-                        : undefined
-                    }
-                  />
-                )}
-              />
-            )}
+          <TextField
+            size="small"
+            placeholder="Buscar por especie, territorio, resolución…"
+            value={filtroTexto}
+            onChange={(e) => setFiltroTexto(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ fontSize: 20, color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: { xs: 260, sm: 320 } }}
+          />
+        </Box>
 
-            {(form.alcance === 'AREA' || form.alcance === 'USUARIO') && (
-              <Autocomplete
-                options={maestros.amerbs}
-                getOptionLabel={(o) => (o.region ? `${o.nombre} — ${o.region}` : o.nombre || '')}
-                isOptionEqualToValue={(o, v) => o.id === v.id}
-                value={form.amerb}
-                onChange={(e, v) => setForm((f) => ({ ...f, amerb: v }))}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label={form.alcance === 'AREA' ? 'Área de Manejo (AMERB) *' : 'Área de Manejo (contexto jerárquico, opcional)'}
-                    helperText={
-                      form.alcance === 'USUARIO'
-                        ? 'Ancla la cuota del usuario al tope del área de manejo.'
-                        : undefined
-                    }
-                  />
-                )}
-              />
-            )}
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<AddIcon />}
+          onClick={abrirNueva}
+          sx={{
+            borderRadius: 2.5,
+            textTransform: 'none',
+            fontFamily: 'Outfit',
+            fontWeight: 600,
+            px: 2.5,
+          }}
+        >
+          Nueva Cuota
+        </Button>
+      </Box>
 
-            {form.alcance === 'USUARIO' && (
-              <Autocomplete
-                options={maestros.usuarios}
-                getOptionLabel={(o) => (o.rut ? `${o.nombre} (${o.rut})` : o.nombre || '')}
-                isOptionEqualToValue={(o, v) => o.id === v.id}
-                value={form.usuario}
-                onChange={(e, v) => setForm((f) => ({ ...f, usuario: v }))}
-                renderInput={(params) => <TextField {...params} label="Usuario *" />}
+      {/* Tabla de cuotas */}
+      <Card elevation={0} sx={{ borderRadius: 3, border: 1, borderColor: 'divider' }}>
+        <TableContainer>
+          <Table size="medium">
+            <TableHead sx={{ bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Alcance Territorial / Nivel</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Especie / Método</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Perfil & Periodo</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }} align="right">Límite Oficial</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', minWidth: 160 }}>Consumo en Vivo</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Estado</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }} align="center">Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                    <CircularProgress size={36} color="secondary" />
+                    <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                      Cargando cuotas de extracción...
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : cuotasFiltradas.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      No se encontraron cuotas registradas.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                cuotasFiltradas.map((c) => {
+                  const dataConsumo = consumos[c.id];
+                  const pctConsumido = dataConsumo ? Number(dataConsumo.pctConsumido || 0) : null;
+                  const pctRestante = dataConsumo ? Number(dataConsumo.pctRestante || 100) : null;
+                  const estaCerrada = (c.estado || '').toUpperCase() === 'CERRADA';
+
+                  return (
+                    <TableRow key={c.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Chip
+                            label={c.nivelAgregacion || 'COMUNA'}
+                            size="small"
+                            color={c.esPlantilla ? 'warning' : 'primary'}
+                            variant={c.esPlantilla ? 'filled' : 'outlined'}
+                            sx={{ fontWeight: 700, fontSize: '0.7rem' }}
+                          />
+                          {c.esPlantilla && (
+                            <Chip label="Plantilla Individual" size="small" sx={{ fontSize: '0.65rem' }} />
+                          )}
+                        </Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {c.comuna?.nombre || c.provincia?.nombre || c.region?.nombre || 'Nacional'}
+                        </Typography>
+                        {c.provincia && c.comuna && (
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                            Prov: {c.provincia.nombre} | Reg: {c.region?.nombre}
+                          </Typography>
+                        )}
+                        {c.resolucion && (
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                            {c.resolucion}
+                          </Typography>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {c.especie?.nombre || 'Todas las especies'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                          Método: {c.extraccionTipo?.nombre || 'Todos'}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell>
+                        <Chip label={c.perfil || 'RECOLECTOR'} size="small" sx={{ fontWeight: 600, fontSize: '0.75rem', mb: 0.5 }} />
+                        <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+                          Periodo: {c.periodo}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell align="right">
+                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+                          {fmtKg(c.limiteKg)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontSize: '0.7rem' }}>
+                          en {c.metrica || 'CAPTURA'}
+                          {c.humedadEstado ? ` (${c.humedadEstado.nombre || c.humedadEstado.estado})` : ''}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell>
+                        {dataConsumo ? (
+                          <Box sx={{ width: '100%', maxWidth: 200 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                              <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                {fmtKg(dataConsumo.consumidoKg)} ({pctConsumido}%)
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontWeight: 700,
+                                  color: pctRestante < 10 ? 'error.main' : pctRestante < 25 ? 'warning.main' : 'success.main',
+                                }}
+                              >
+                                {pctRestante}% disp.
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant="determinate"
+                              value={Math.min(100, pctConsumido || 0)}
+                              color={pctConsumido >= 100 ? 'error' : pctConsumido >= 80 ? 'warning' : 'primary'}
+                              sx={{ height: 6, borderRadius: 3 }}
+                            />
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>Calculando…</Typography>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          <Chip
+                            icon={estaCerrada ? <LockIcon sx={{ fontSize: 14 }} /> : <LockOpenIcon sx={{ fontSize: 14 }} />}
+                            label={estaCerrada ? 'CERRADA' : 'ABIERTA'}
+                            size="small"
+                            color={estaCerrada ? 'error' : 'success'}
+                            variant={estaCerrada ? 'filled' : 'outlined'}
+                            sx={{ fontWeight: 700, fontSize: '0.75rem' }}
+                          />
+                          {c.fechaCierre && (
+                            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                              Cierre: {String(c.fechaCierre).slice(0, 10)}
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+
+                      <TableCell align="center">
+                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                          {!estaCerrada && (
+                            <Tooltip title="Cerrar Cuota Administrativamente">
+                              <IconButton
+                                size="small"
+                                color="warning"
+                                onClick={() => setCuotaPorCerrar(c)}
+                              >
+                                <LockIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          <Tooltip title="Editar Cuota">
+                            <IconButton size="small" onClick={() => abrirEditar(c)} color="primary">
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Eliminar Cuota">
+                            <IconButton
+                              size="small"
+                              onClick={() => setPorEliminar(c)}
+                              color="error"
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+
+      {/* Dialog Formulario Ampliado */}
+      <Dialog
+        open={dialogOpen}
+        onClose={() => !saving && setDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
+          {form.id ? 'Editar Cuota de Extracción' : 'Nueva Cuota de Extracción'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {formError && (
+            <Alert severity="error" sx={{ borderRadius: 2 }}>
+              {formError}
+            </Alert>
+          )}
+
+          {/* Fila 1: Perfil y Agregación */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+            <TextField
+              select
+              label="Perfil *"
+              value={form.perfil}
+              onChange={(e) => setForm((p) => ({ ...p, perfil: e.target.value }))}
+            >
+              <MenuItem value="RECOLECTOR">RECOLECTOR (Orilla)</MenuItem>
+              <MenuItem value="ARMADOR">ARMADOR (Embarcación)</MenuItem>
+              <MenuItem value="AREA">AREA (Manejo AMERB)</MenuItem>
+            </TextField>
+
+            <TextField
+              select
+              label="Nivel de Agregación *"
+              value={form.nivelAgregacion}
+              onChange={(e) => setForm((p) => ({ ...p, nivelAgregacion: e.target.value }))}
+              helperText="Determina la agrupación del consumo"
+            >
+              <MenuItem value="COMUNA">COMUNA (Ej. Coquimbo)</MenuItem>
+              <MenuItem value="PROVINCIA">PROVINCIA (Ej. Atacama)</MenuItem>
+              <MenuItem value="REGION">REGION (Global regional)</MenuItem>
+              <MenuItem value="INDIVIDUAL">INDIVIDUAL (Nominado)</MenuItem>
+            </TextField>
+
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={form.esPlantilla}
+                    onChange={(e) => setForm((p) => ({ ...p, esPlantilla: e.target.checked }))}
+                    color="secondary"
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Cuota Plantilla</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      Límite individual para cada pescador (Antofagasta)
+                    </Typography>
+                  </Box>
+                }
               />
-            )}
+            </Box>
+          </Box>
+
+          {/* Fila 2: Alcance Territorial */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+            <Autocomplete
+              options={maestros.regiones || []}
+              getOptionLabel={(r) => r.nombre || `ID ${r.id}`}
+              value={form.region}
+              onChange={(e, val) => setForm((p) => ({ ...p, region: val, provincia: null, comuna: null }))}
+              renderInput={(params) => <TextField {...params} label="Región (opcional)" placeholder="Todas" />}
+            />
 
             <Autocomplete
-              options={maestros.especies}
-              getOptionLabel={(o) => o.nombre || ''}
-              isOptionEqualToValue={(o, v) => o.id === v.id}
+              options={provinciasFiltradas}
+              getOptionLabel={(prov) => prov.nombre || `ID ${prov.id}`}
+              value={form.provincia}
+              onChange={(e, val) => setForm((p) => ({ ...p, provincia: val, comuna: null }))}
+              renderInput={(params) => <TextField {...params} label="Provincia (opcional)" placeholder="Todas" />}
+            />
+
+            <Autocomplete
+              options={comunasFiltradas}
+              getOptionLabel={(c) => c.nombre || `ID ${c.id}`}
+              value={form.comuna}
+              onChange={(e, val) => setForm((p) => ({ ...p, comuna: val }))}
+              renderInput={(params) => <TextField {...params} label="Comuna (opcional)" placeholder="Todas" />}
+            />
+          </Box>
+
+          {/* Fila 3: Especie y Método */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+            <Autocomplete
+              options={maestros.especies || []}
+              getOptionLabel={(e) => e.nombre || `ID ${e.id}`}
               value={form.especie}
-              onChange={(e, v) => setForm((f) => ({ ...f, especie: v }))}
+              onChange={(e, val) => setForm((p) => ({ ...p, especie: val }))}
+              renderInput={(params) => <TextField {...params} label="Especie Objetivo" placeholder="Todas las especies" />}
+            />
+
+            <Autocomplete
+              options={maestros.extraccionTipos || []}
+              getOptionLabel={(et) => et.nombre || `ID ${et.id}`}
+              value={form.extraccionTipo}
+              onChange={(e, val) => setForm((p) => ({ ...p, extraccionTipo: val }))}
+              renderInput={(params) => <TextField {...params} label="Método de Extracción" placeholder="Todos los métodos" />}
+            />
+          </Box>
+
+          {/* Fila 4: Límite, Humedad de Expresión y Métrica */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+            <TextField
+              label="Límite en Kilogramos (kg) *"
+              type="number"
+              inputProps={{ min: '1', step: '100' }}
+              value={form.limiteKg}
+              onChange={(e) => setForm((p) => ({ ...p, limiteKg: e.target.value }))}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">kg</InputAdornment>,
+              }}
+            />
+
+            <Autocomplete
+              options={maestros.humedadEstados || []}
+              getOptionLabel={(h) => h.nombre || h.estado || `ID ${h.id}`}
+              value={form.humedadEstado}
+              onChange={(e, val) => setForm((p) => ({ ...p, humedadEstado: val }))}
               renderInput={(params) => (
-                <TextField {...params} label="Especie" helperText="Vacío = la cuota aplica a todas las especies." />
+                <TextField {...params} label="Expresado en Humedad" placeholder="Por defecto en métrica" />
               )}
             />
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                select
-                label="Perfil"
-                value={form.perfil}
-                onChange={(e) => setForm((f) => ({ ...f, perfil: e.target.value }))}
-                sx={{ flex: 1 }}
-              >
-                {PERFILES.map((p) => (
-                  <MenuItem key={p} value={p}>
-                    {p}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                select
-                label="Periodo"
-                value={form.periodo}
-                onChange={(e) => setForm((f) => ({ ...f, periodo: e.target.value }))}
-                sx={{ flex: 1 }}
-              >
-                {PERIODOS.map((p) => (
-                  <MenuItem key={p} value={p}>
-                    {p}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
+            <TextField
+              select
+              label="Métrica de Descuento *"
+              value={form.metrica}
+              onChange={(e) => setForm((p) => ({ ...p, metrica: e.target.value }))}
+            >
+              <MenuItem value="CAPTURA">Captura Biológica (recomendado)</MenuItem>
+              <MenuItem value="DESEMBARQUE">Desembarque Físico</MenuItem>
+            </TextField>
+          </Box>
+
+          {/* Fila 5: Periodo y Vigencia */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+            <TextField
+              select
+              label="Período *"
+              value={form.periodo}
+              onChange={(e) => setForm((p) => ({ ...p, periodo: e.target.value }))}
+            >
+              <MenuItem value="DIARIO">DIARIO</MenuItem>
+              <MenuItem value="MENSUAL">MENSUAL</MenuItem>
+              <MenuItem value="ANUAL">ANUAL</MenuItem>
+              <MenuItem value="BIANUAL">BIANUAL</MenuItem>
+            </TextField>
 
             <TextField
-              label="Límite (kg)"
-              type="number"
-              value={form.limiteKg}
-              onChange={(e) => setForm((f) => ({ ...f, limiteKg: e.target.value }))}
-              error={!!limiteExcedeTope}
-              InputProps={{ endAdornment: <InputAdornment position="end">kg</InputAdornment> }}
+              label="Vigencia Inicio *"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              value={form.fechaInicio}
+              onChange={(e) => setForm((p) => ({ ...p, fechaInicio: e.target.value }))}
             />
 
-            {/* Topes jerárquicos aplicables (informativo; el backend revalida al guardar) */}
-            {topesJerarquicos.length > 0 && (
-              <Alert
-                icon={<AccountTreeIcon fontSize="small" />}
-                severity={limiteExcedeTope ? 'error' : 'info'}
-                sx={{ borderRadius: 2.5, fontFamily: 'Inter' }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, fontFamily: 'Inter' }}>
-                  Topes por jerarquía ({form.periodo.toLowerCase()}):
-                </Typography>
-                {topesJerarquicos.map((t, i) => (
-                  <Typography key={i} variant="body2" sx={{ fontFamily: 'Inter' }}>
-                    • {t.nivel} «{t.nombre}»: máx. {fmtKg(t.limite)}
-                  </Typography>
-                ))}
-                {limiteExcedeTope && (
-                  <Typography variant="body2" sx={{ fontWeight: 700, mt: 0.5, fontFamily: 'Inter' }}>
-                    El límite ingresado supera el tope de {limiteExcedeTope.nivel.toLowerCase()} «{limiteExcedeTope.nombre}».
-                  </Typography>
-                )}
-              </Alert>
-            )}
+            <TextField
+              label="Vigencia Fin (Opcional)"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              value={form.fechaFin}
+              onChange={(e) => setForm((p) => ({ ...p, fechaFin: e.target.value }))}
+            />
+          </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ fontFamily: 'Inter', fontWeight: 600, color: 'text.primary' }}>
-                Cuota activa
-              </Typography>
-              <Switch checked={form.activo} onChange={(e) => setForm((f) => ({ ...f, activo: e.target.checked }))} />
-            </Box>
+          <TextField
+            label="Nº Resolución / Decreto Subpesca"
+            placeholder="Ej. Res. Ex. Nº 142/2024"
+            value={form.resolucion}
+            onChange={(e) => setForm((p) => ({ ...p, resolucion: e.target.value }))}
+          />
 
-            {formError && (
-              <Alert severity="error" sx={{ borderRadius: 2.5, fontFamily: 'Inter' }}>
-                {formError}
-              </Alert>
-            )}
+          <Box sx={{ display: 'flex', gap: 3 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.activo}
+                  onChange={(e) => setForm((p) => ({ ...p, activo: e.target.checked }))}
+                  color="secondary"
+                />
+              }
+              label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Cuota Activa</Typography>}
+            />
+            <TextField
+              select
+              size="small"
+              label="Estado Administrativo"
+              value={form.estado}
+              onChange={(e) => setForm((p) => ({ ...p, estado: e.target.value }))}
+              sx={{ width: 180 }}
+            >
+              <MenuItem value="ABIERTA">ABIERTA</MenuItem>
+              <MenuItem value="CERRADA">CERRADA</MenuItem>
+            </TextField>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setDialogOpen(false)} disabled={saving} sx={{ fontFamily: 'Outfit', color: 'text.secondary' }}>
+        <DialogActions sx={{ p: 2.5, pt: 1 }}>
+          <Button onClick={() => setDialogOpen(false)} disabled={saving} sx={{ textTransform: 'none' }}>
             Cancelar
           </Button>
           <Button
             variant="contained"
-            onClick={guardar}
+            color="secondary"
+            onClick={handleGuardar}
             disabled={saving}
-            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
-            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.light' }, boxShadow: 'none', borderRadius: 2.5, px: 3, fontFamily: 'Outfit' }}
+            sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}
           >
-            {saving ? 'Guardando…' : 'Guardar Cuota'}
+            {saving ? <CircularProgress size={22} color="inherit" /> : 'Guardar Cuota'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Confirmación de borrado */}
-      <Dialog open={!!porEliminar} onClose={() => setPorEliminar(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>Eliminar cuota</DialogTitle>
+      {/* Modal Confirmar Cierre Administrativo */}
+      <Dialog
+        open={Boolean(cuotaPorCerrar)}
+        onClose={() => setCuotaPorCerrar(null)}
+        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
+          ¿Cerrar Cuota Administrativamente?
+        </DialogTitle>
         <DialogContent>
-          {porEliminar && (
-            <Typography variant="body2" sx={{ fontFamily: 'Inter', color: 'text.primary' }}>
-              ¿Eliminar la cuota de <b>{describirAlcance(porEliminar)}</b> (
-              {porEliminar.especie?.nombre || 'todas las especies'}, {porEliminar.periodo},{' '}
-              {fmtKg(porEliminar.limiteKg)})? Esta acción no se puede deshacer.
-            </Typography>
-          )}
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+            Al cerrar la cuota <strong>#{cuotaPorCerrar?.id}</strong> (
+            {cuotaPorCerrar?.especie?.nombre || 'General'},{' '}
+            {cuotaPorCerrar?.comuna?.nombre || cuotaPorCerrar?.region?.nombre}), cualquier declaración posterior a la fecha de cierre será marcada con la alerta crítica <strong>POSTERIOR_CIERRE</strong> o bloqueada según la política de fiscalización.
+          </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setPorEliminar(null)} sx={{ fontFamily: 'Outfit', color: 'text.secondary' }}>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setCuotaPorCerrar(null)} sx={{ textTransform: 'none' }}>
             Cancelar
           </Button>
-          <Button variant="contained" color="error" onClick={eliminar} sx={{ boxShadow: 'none', borderRadius: 2.5, fontFamily: 'Outfit' }}>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={handleCerrarCuota}
+            startIcon={<LockIcon />}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            Confirmar Cierre de Cuota
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal Confirmar Eliminación */}
+      <Dialog
+        open={Boolean(porEliminar)}
+        onClose={() => setPorEliminar(null)}
+        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
+          ¿Eliminar Cuota de Extracción?
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            ¿Estás seguro de que deseas eliminar la cuota #{porEliminar?.id}? Esta acción no se puede deshacer.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setPorEliminar(null)} sx={{ textTransform: 'none' }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={eliminar}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
             Eliminar
           </Button>
         </DialogActions>
