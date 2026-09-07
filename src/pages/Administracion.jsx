@@ -46,6 +46,7 @@ import VedasEspecieMaestro from '../components/admin/VedasEspecieMaestro';
 import FactoresConversionMaestro from '../components/admin/FactoresConversionMaestro';
 import LimiteExtraccionDiarioMaestro from '../components/admin/LimiteExtraccionDiarioMaestro';
 import ParametrosGeneralesMaestro from '../components/admin/ParametrosGeneralesMaestro';
+import AmerbEspeciesMaestro from '../components/admin/AmerbEspeciesMaestro';
 import FactoryIcon from '@mui/icons-material/Factory';
 import ScaleIcon from '@mui/icons-material/Scale';
 import BlockIcon from '@mui/icons-material/Block';
@@ -593,6 +594,7 @@ export default function Administracion() {
           <Tab icon={<ScaleIcon sx={{ mr: 1 }} />} iconPosition="start" label="Cuotas de Extracción" />
           <Tab icon={<SpeedIcon sx={{ mr: 1 }} />} iconPosition="start" label="Límites Diarios (LED)" />
           <Tab icon={<BlockIcon sx={{ mr: 1 }} />} iconPosition="start" label="Vedas de Especies" />
+          <Tab icon={<TerrainIcon sx={{ mr: 1 }} />} iconPosition="start" label="Áreas de Manejo (AMERB)" />
           <Tab icon={<MapIcon sx={{ mr: 1 }} />} iconPosition="start" label="Consola de Trazabilidad y GPS" />
           <Tab icon={<CloudSyncIcon sx={{ mr: 1 }} />} iconPosition="start" label="Carga de Datos Maestros" />
         </Tabs>
@@ -764,8 +766,11 @@ export default function Administracion() {
         {/* Renderizado de Pestaña 4: Mantenedor de Vedas de Especies */}
         {activeTab === 4 && <VedasEspecieMaestro />}
 
-        {/* Renderizado de Pestaña 5: Consola de Trazabilidad y GPS */}
-        {activeTab === 5 && (
+        {/* Renderizado de Pestaña 5: Mantenedor de Áreas de Manejo (AMERB) y Especies Habilitadas */}
+        {activeTab === 5 && <AmerbEspeciesMaestro />}
+
+        {/* Renderizado de Pestaña 6: Consola de Trazabilidad y GPS */}
+        {activeTab === 6 && (
           <Grid container spacing={4}>
             {/* Columna Izquierda: Configuración del GPS Móvil */}
             <Grid item xs={12} lg={4}>
@@ -903,8 +908,8 @@ export default function Administracion() {
           </Grid>
         )}
 
-        {/* Renderizado de Pestaña 6: Carga de Datos Maestros (Sernapesca) */}
-        {activeTab === 6 && (
+        {/* Renderizado de Pestaña 7: Carga de Datos Maestros (Sernapesca) */}
+        {activeTab === 7 && (
           <Box>
             {/* Cabecera con acción global */}
             <Card
