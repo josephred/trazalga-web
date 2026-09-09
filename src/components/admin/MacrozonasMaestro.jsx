@@ -78,20 +78,40 @@ export default function MacrozonasMaestro() {
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const [resMz, resReg] = await Promise.all([
+      const [resMz, resReg] = await Promise.allSettled([
         api.get('/api/macrozonas'),
         api.get('/api/regiones'),
       ]);
-      const dataMz = Array.isArray(resMz.data) ? resMz.data : [];
-      setMacrozonas(dataMz);
-      const dataReg = Array.isArray(resReg.data) ? resReg.data : [];
-      setRegiones(dataReg);
 
-      if (dataMz.length > 0 && !selectedMz) {
-        setSelectedMz(dataMz[0]);
-      } else if (selectedMz) {
-        const refrescada = dataMz.find((m) => m.id === selectedMz.id);
-        if (refrescada) setSelectedMz(refrescada);
+      if (resMz.status === 'fulfilled') {
+        const dataMz = Array.isArray(resMz.value?.data) ? resMz.value.data : [];
+        setMacrozonas(dataMz);
+        if (dataMz.length > 0 && !selectedMz) {
+          setSelectedMz(dataMz[0]);
+        } else if (selectedMz) {
+          const refrescada = dataMz.find((m) => m.id === selectedMz.id);
+          if (refrescada) setSelectedMz(refrescada);
+        }
+      } else {
+        console.error('Error al consultar /api/macrozonas:', resMz.reason);
+        setMensaje({
+          type: 'error',
+          text: 'No se pudo conectar con el endpoint de Macrozonas (/api/macrozonas). Verifique que el backend esté actualizado e iniciado.',
+        });
+      }
+
+      if (resReg.status === 'fulfilled' && Array.isArray(resReg.value?.data)) {
+        setRegiones(resReg.value.data);
+      } else {
+        // Fallback a /region si /api/regiones falla
+        try {
+          const fallback = await api.get('/region');
+          if (Array.isArray(fallback?.data)) {
+            setRegiones(fallback.data);
+          }
+        } catch (eFallback) {
+          console.error('Error al cargar catálogo de regiones:', eFallback);
+        }
       }
     } catch (err) {
       console.error('Error al cargar datos de Macrozonas:', err);
