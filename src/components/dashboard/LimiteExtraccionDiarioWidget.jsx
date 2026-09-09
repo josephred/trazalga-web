@@ -15,7 +15,8 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Tooltip
+  Tooltip,
+  Alert
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -63,6 +64,8 @@ export default function LimiteExtraccionDiarioWidget({ dateRange }) {
     }
   };
 
+  const sinRegla = Boolean(data?.sinReglaConfigurada || data?.limiteOficialKg == null);
+
   return (
     <Card
       elevation={0}
@@ -100,15 +103,19 @@ export default function LimiteExtraccionDiarioWidget({ dateRange }) {
                 Límite de Extracción Diario - LED (Indicador 4)
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
-                Monitoreo por {data?.unidadAgregacion || 'EMBARCACION'} · Límite Oficial: <strong>{(data?.limiteOficialKg || 2000).toLocaleString('es-CL')} kg/día</strong>
+                {sinRegla ? (
+                  <>Monitoreo por {data?.unidadAgregacion || 'EMBARCACION'} · <em>Sin regla oficial configurada</em></>
+                ) : (
+                  <>Monitoreo por {data?.unidadAgregacion || 'EMBARCACION'} · Límite: <strong>{data.limiteOficialKg.toLocaleString('es-CL')} kg/día</strong> ({data?.nombreRegla})</>
+                )}
               </Typography>
             </Box>
           </Box>
 
           <Chip
-            label={data?.modoAccion === 'BLOQUEO_DECLARACION' ? 'Bloqueo Activo' : 'Solo Alerta'}
+            label={sinRegla ? 'Sin Regla Activa' : (data?.modoAccion === 'BLOQUEO_DECLARACION' ? 'Bloqueo Activo' : 'Solo Alerta')}
             size="small"
-            color={data?.modoAccion === 'BLOQUEO_DECLARACION' ? 'error' : 'warning'}
+            color={sinRegla ? 'default' : (data?.modoAccion === 'BLOQUEO_DECLARACION' ? 'error' : 'warning')}
             sx={{ fontWeight: 700, fontSize: '0.72rem', height: 24 }}
           />
         </Box>
@@ -119,6 +126,12 @@ export default function LimiteExtraccionDiarioWidget({ dateRange }) {
           </Box>
         ) : (
           <>
+            {sinRegla && (
+              <Alert severity="info" sx={{ mb: 2, borderRadius: 3 }}>
+                No se encuentran reglas oficiales de Límite de Extracción Diario (LED) activas en el sistema. Puede configurar o activar reglas en Administración → Límites de Extracción Diario.
+              </Alert>
+            )}
+
             {/* KPI Cards */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={6} sm={3}>

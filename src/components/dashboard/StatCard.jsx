@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Stack } from '@mui/material';
+import IndicadorHelpButton from './IndicadorHelpButton';
 
-const StatCard = ({ title, value, icon: Icon, trend, color, subtitle }) => {
+const StatCard = ({ title, value, icon: Icon, trend, color, subtitle, helpKey, dateRange }) => {
 
     // Obtener colores y flechas de tendencia para el diseño de píldora
     const getTrendBadge = (val) => {
@@ -40,6 +41,7 @@ const StatCard = ({ title, value, icon: Icon, trend, color, subtitle }) => {
             sx={{ 
                 height: '100%', 
                 borderRadius: 4, 
+                position: 'relative',
                 border: 1, borderColor: 'divider',
                 boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -134,6 +136,7 @@ const StatCard = ({ title, value, icon: Icon, trend, color, subtitle }) => {
                     )}
                 </Stack>
             </CardContent>
+            <IndicadorHelpButton helpKey={helpKey || title} dateRange={dateRange} sx={{ bottom: 8, right: 8 }} />
         </Card>
     );
 };

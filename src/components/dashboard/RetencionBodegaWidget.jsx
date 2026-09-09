@@ -91,9 +91,19 @@ export default function RetencionBodegaWidget() {
               <WarehouseIcon sx={{ fontSize: 24 }} />
             </Box>
             <Box>
-              <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}>
-                Retención en Bodega Virtual (Cadena de Custodia)
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}>
+                  Retención en Bodega Virtual (Cadena de Custodia)
+                </Typography>
+                {data?.activo === false && (
+                  <Chip
+                    label="Control Inactivo"
+                    size="small"
+                    color="warning"
+                    sx={{ fontWeight: 700, fontSize: '0.68rem', height: 20 }}
+                  />
+                )}
+              </Box>
               <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
                 Control anti-invención de stock · Semáforo preventivo por días sin destino a planta
               </Typography>
@@ -107,6 +117,32 @@ export default function RetencionBodegaWidget() {
           </Box>
         ) : (
           <>
+            {data?.activo === false && (
+              <Box
+                sx={{
+                  p: 2,
+                  mb: 2.5,
+                  borderRadius: 3,
+                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(245, 158, 11, 0.08)',
+                  border: 1,
+                  borderColor: '#f59e0b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5
+                }}
+              >
+                <WarningIcon sx={{ color: '#f59e0b', fontSize: 24 }} />
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: '#b45309' }}>
+                    Control de retención en bodega desactivado en Administración
+                  </Typography>
+                  <Typography variant="caption" sx={{ fontFamily: 'Inter', color: 'text.secondary' }}>
+                    El monitoreo de retención de lotes está inactivo mediante el parámetro <code>retencion_bodega_activo = false</code>. Puede activarlo en Administración → Configuración General.
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
             {/* KPI Semáforo Cards */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={6} sm={3}>
@@ -171,7 +207,13 @@ export default function RetencionBodegaWidget() {
               Lotes Retenidos por Comercializadores (Total: {(data?.totalKgEnBodega || 0).toLocaleString('es-CL')} kg)
             </Typography>
 
-            {(!data?.lotes || data.lotes.length === 0) ? (
+            {data?.activo === false ? (
+              <Box sx={{ p: 4, textAlign: 'center', borderRadius: 3, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'grey.50', border: '1px dashed', borderColor: 'divider' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600, fontFamily: 'Inter' }}>
+                  Control desactivado en Administración. Active 'retencion_bodega_activo' para supervisar lotes retenidos en bodega virtual.
+                </Typography>
+              </Box>
+            ) : (!data?.lotes || data.lotes.length === 0) ? (
               <Box sx={{ p: 4, textAlign: 'center', borderRadius: 3, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'grey.50', border: '1px dashed', borderColor: 'divider' }}>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   No hay lotes con retención prolongada en bodega virtual en este momento.

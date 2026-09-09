@@ -46,7 +46,10 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => {
           const stripped = path.replace(/^\/v-api/, '');
-          return stripped.startsWith('/sync') ? stripped : '/api' + stripped;
+          if (stripped.startsWith('/sync') || stripped.startsWith('/api')) {
+            return stripped;
+          }
+          return '/api' + stripped;
         },
         configure: (proxy, _options) => {
           proxy.on('proxyReq', (proxyReq, req, _res) => {

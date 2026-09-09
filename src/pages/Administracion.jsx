@@ -47,6 +47,7 @@ import FactoresConversionMaestro from '../components/admin/FactoresConversionMae
 import LimiteExtraccionDiarioMaestro from '../components/admin/LimiteExtraccionDiarioMaestro';
 import ParametrosGeneralesMaestro from '../components/admin/ParametrosGeneralesMaestro';
 import AmerbEspeciesMaestro from '../components/admin/AmerbEspeciesMaestro';
+import MacrozonasMaestro from '../components/admin/MacrozonasMaestro';
 import FactoryIcon from '@mui/icons-material/Factory';
 import ScaleIcon from '@mui/icons-material/Scale';
 import BlockIcon from '@mui/icons-material/Block';
@@ -595,6 +596,7 @@ export default function Administracion() {
           <Tab icon={<SpeedIcon sx={{ mr: 1 }} />} iconPosition="start" label="Límites Diarios (LED)" />
           <Tab icon={<BlockIcon sx={{ mr: 1 }} />} iconPosition="start" label="Vedas de Especies" />
           <Tab icon={<TerrainIcon sx={{ mr: 1 }} />} iconPosition="start" label="Áreas de Manejo (AMERB)" />
+          <Tab icon={<PublicIcon sx={{ mr: 1 }} />} iconPosition="start" label="Macrozonas" />
           <Tab icon={<MapIcon sx={{ mr: 1 }} />} iconPosition="start" label="Consola de Trazabilidad y GPS" />
           <Tab icon={<CloudSyncIcon sx={{ mr: 1 }} />} iconPosition="start" label="Carga de Datos Maestros" />
         </Tabs>
@@ -769,8 +771,11 @@ export default function Administracion() {
         {/* Renderizado de Pestaña 5: Mantenedor de Áreas de Manejo (AMERB) y Especies Habilitadas */}
         {activeTab === 5 && <AmerbEspeciesMaestro />}
 
-        {/* Renderizado de Pestaña 6: Consola de Trazabilidad y GPS */}
-        {activeTab === 6 && (
+        {/* Renderizado de Pestaña 6: Mantenedor de Macrozonas Configurables */}
+        {activeTab === 6 && <MacrozonasMaestro />}
+
+        {/* Renderizado de Pestaña 7: Consola de Trazabilidad y GPS */}
+        {activeTab === 7 && (
           <Grid container spacing={4}>
             {/* Columna Izquierda: Configuración del GPS Móvil */}
             <Grid item xs={12} lg={4}>
@@ -908,8 +913,8 @@ export default function Administracion() {
           </Grid>
         )}
 
-        {/* Renderizado de Pestaña 7: Carga de Datos Maestros (Sernapesca) */}
-        {activeTab === 7 && (
+        {/* Renderizado de Pestaña 8: Carga de Datos Maestros (Sernapesca) */}
+        {activeTab === 8 && (
           <Box>
             {/* Cabecera con acción global */}
             <Card

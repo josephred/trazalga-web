@@ -66,8 +66,8 @@ export default function AmerbEspeciesMaestro() {
     setLoading(true);
     try {
       const [resAmerb, resEsp] = await Promise.all([
-        api.get('/amerb'),
-        api.get('/especies')
+        api.get('/api/amerbs'),
+        api.get('/api/especies')
       ]);
       const dataAmerb = Array.isArray(resAmerb.data) ? resAmerb.data : [];
       setAmerbs(dataAmerb);

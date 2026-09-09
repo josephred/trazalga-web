@@ -59,6 +59,7 @@ const FORM_VACIO = {
   perfil: 'RECOLECTOR',
   nivelAgregacion: 'COMUNA',
   esPlantilla: false,
+  macrozona: null,
   region: null,
   provincia: null,
   comuna: null,
@@ -81,6 +82,7 @@ export default function CuotasExtraccionMaestro() {
   const [cuotas, setCuotas] = useState([]);
   const [consumos, setConsumos] = useState({});
   const [maestros, setMaestros] = useState({
+    macrozonas: [],
     regiones: [],
     provincias: [],
     comunas: [],
@@ -148,6 +150,7 @@ export default function CuotasExtraccionMaestro() {
   const abrirNueva = () => {
     setForm({
       ...FORM_VACIO,
+      macrozona: null,
       region: maestros.regiones?.[0] || null,
       especie: maestros.especies?.[0] || null,
       fechaInicio: new Date().toISOString().slice(0, 10),
@@ -162,6 +165,7 @@ export default function CuotasExtraccionMaestro() {
       perfil: c.perfil || 'RECOLECTOR',
       nivelAgregacion: c.nivelAgregacion || 'COMUNA',
       esPlantilla: Boolean(c.esPlantilla),
+      macrozona: maestros.macrozonas?.find((m) => m.id === c.macrozona?.id) || c.macrozona || null,
       region: maestros.regiones?.find((r) => r.id === c.region?.id) || c.region || null,
       provincia: maestros.provincias?.find((p) => p.id === c.provincia?.id) || c.provincia || null,
       comuna: maestros.comunas?.find((com) => com.id === c.comuna?.id) || c.comuna || null,
@@ -204,6 +208,10 @@ export default function CuotasExtraccionMaestro() {
       setFormError('El límite debe ser un número positivo en kilogramos.');
       return;
     }
+    if (form.nivelAgregacion === 'MACROZONA' && !form.macrozona) {
+      setFormError('Debe seleccionar una macrozona para el nivel MACROZONA.');
+      return;
+    }
     if (!form.fechaInicio) {
       setFormError('Debe ingresar la fecha de inicio de vigencia.');
       return;
@@ -212,14 +220,19 @@ export default function CuotasExtraccionMaestro() {
       setFormError('La fecha de fin no puede ser anterior a la de inicio.');
       return;
     }
+    if (form.metrica === 'DESEMBARQUE' && !form.resolucion?.trim()) {
+      setFormError('Sernapesca definió que las cuotas se descuentan obligatoriamente con captura biológica corregida. La métrica DESEMBARQUE sólo se permite si la resolución técnica de Subpesca lo especifica expresamente (campo resolución obligatorio).');
+      return;
+    }
 
     const payload = {
       perfil: form.perfil,
       nivelAgregacion: form.nivelAgregacion,
       esPlantilla: form.esPlantilla,
-      region: form.region ? { id: form.region.id } : null,
-      provincia: form.provincia ? { id: form.provincia.id } : null,
-      comuna: form.comuna ? { id: form.comuna.id } : null,
+      macrozona: form.nivelAgregacion === 'MACROZONA' && form.macrozona ? { id: form.macrozona.id } : null,
+      region: form.nivelAgregacion !== 'MACROZONA' && form.region ? { id: form.region.id } : null,
+      provincia: form.nivelAgregacion !== 'MACROZONA' && form.provincia ? { id: form.provincia.id } : null,
+      comuna: form.nivelAgregacion !== 'MACROZONA' && form.comuna ? { id: form.comuna.id } : null,
       amerb: form.perfil === 'AREA' && form.amerb ? { id: form.amerb.id } : null,
       usuario: form.usuario ? { id: form.usuario.id } : null,
       especie: form.especie ? { id: form.especie.id } : null,
@@ -301,6 +314,7 @@ export default function CuotasExtraccionMaestro() {
       if (filtroNivel !== 'TODOS' && (c.nivelAgregacion || 'COMUNA') !== filtroNivel) return false;
       if (!txt) return true;
       const blob = [
+        c.macrozona?.nombre,
         c.especie?.nombre,
         c.region?.nombre,
         c.provincia?.nombre,
@@ -373,9 +387,10 @@ export default function CuotasExtraccionMaestro() {
             }}
           >
             <ToggleButton value="TODOS">Todos los Niveles</ToggleButton>
-            <ToggleButton value="COMUNA">Comuna</ToggleButton>
-            <ToggleButton value="PROVINCIA">Provincia</ToggleButton>
+            <ToggleButton value="MACROZONA">Macrozona</ToggleButton>
             <ToggleButton value="REGION">Región</ToggleButton>
+            <ToggleButton value="PROVINCIA">Provincia</ToggleButton>
+            <ToggleButton value="COMUNA">Comuna</ToggleButton>
             <ToggleButton value="INDIVIDUAL">Individual</ToggleButton>
           </ToggleButtonGroup>
 
@@ -459,16 +474,19 @@ export default function CuotasExtraccionMaestro() {
                           <Chip
                             label={c.nivelAgregacion || 'COMUNA'}
                             size="small"
-                            color={c.esPlantilla ? 'warning' : 'primary'}
+                            color={c.nivelAgregacion === 'MACROZONA' ? 'secondary' : c.esPlantilla ? 'warning' : 'primary'}
                             variant={c.esPlantilla ? 'filled' : 'outlined'}
                             sx={{ fontWeight: 700, fontSize: '0.7rem' }}
                           />
                           {c.esPlantilla && (
                             <Chip label="Plantilla Individual" size="small" sx={{ fontSize: '0.65rem' }} />
                           )}
+                          {c.macrozona?.esNacional && (
+                            <Chip label="Nacional" size="small" color="secondary" sx={{ fontSize: '0.65rem', fontWeight: 600 }} />
+                          )}
                         </Box>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {c.comuna?.nombre || c.provincia?.nombre || c.region?.nombre || 'Nacional'}
+                          {c.macrozona ? `Macrozona ${c.macrozona.nombre}` : (c.comuna?.nombre || c.provincia?.nombre || c.region?.nombre || 'Nacional')}
                         </Typography>
                         {c.provincia && c.comuna && (
                           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
@@ -502,8 +520,17 @@ export default function CuotasExtraccionMaestro() {
                         <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
                           {fmtKg(c.limiteKg)}
                         </Typography>
-                        <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontSize: '0.7rem' }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: 'block',
+                            color: c.metrica === 'DESEMBARQUE' ? 'warning.main' : 'text.secondary',
+                            fontSize: '0.7rem',
+                            fontWeight: c.metrica === 'DESEMBARQUE' ? 600 : 400,
+                          }}
+                        >
                           en {c.metrica || 'CAPTURA'}
+                          {c.metrica === 'DESEMBARQUE' && ' (Excepción)'}
                           {c.humedadEstado ? ` (${c.humedadEstado.nombre || c.humedadEstado.estado})` : ''}
                         </Typography>
                       </TableCell>
@@ -631,9 +658,10 @@ export default function CuotasExtraccionMaestro() {
               onChange={(e) => setForm((p) => ({ ...p, nivelAgregacion: e.target.value }))}
               helperText="Determina la agrupación del consumo"
             >
-              <MenuItem value="COMUNA">COMUNA (Ej. Coquimbo)</MenuItem>
-              <MenuItem value="PROVINCIA">PROVINCIA (Ej. Atacama)</MenuItem>
+              <MenuItem value="MACROZONA">MACROZONA (Multirregional / Nacional)</MenuItem>
               <MenuItem value="REGION">REGION (Global regional)</MenuItem>
+              <MenuItem value="PROVINCIA">PROVINCIA (Ej. Atacama)</MenuItem>
+              <MenuItem value="COMUNA">COMUNA (Ej. Coquimbo)</MenuItem>
               <MenuItem value="INDIVIDUAL">INDIVIDUAL (Nominado)</MenuItem>
             </TextField>
 
@@ -659,31 +687,50 @@ export default function CuotasExtraccionMaestro() {
           </Box>
 
           {/* Fila 2: Alcance Territorial */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
-            <Autocomplete
-              options={maestros.regiones || []}
-              getOptionLabel={(r) => r.nombre || `ID ${r.id}`}
-              value={form.region}
-              onChange={(e, val) => setForm((p) => ({ ...p, region: val, provincia: null, comuna: null }))}
-              renderInput={(params) => <TextField {...params} label="Región (opcional)" placeholder="Todas" />}
-            />
+          {form.nivelAgregacion === 'MACROZONA' ? (
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 2 }}>
+              <Autocomplete
+                options={maestros.macrozonas || []}
+                getOptionLabel={(m) => `${m.nombre || `ID ${m.id}`}${m.esNacional ? ' (Ámbito Nacional)' : ''}`}
+                value={form.macrozona}
+                onChange={(e, val) => setForm((p) => ({ ...p, macrozona: val }))}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Macrozona Asignada *"
+                    placeholder="Seleccione macrozona o Nacional"
+                    helperText="Aplica concurrentemente sobre todas las declaraciones de las regiones integrantes"
+                  />
+                )}
+              />
+            </Box>
+          ) : (
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+              <Autocomplete
+                options={maestros.regiones || []}
+                getOptionLabel={(r) => r.nombre || `ID ${r.id}`}
+                value={form.region}
+                onChange={(e, val) => setForm((p) => ({ ...p, region: val, provincia: null, comuna: null }))}
+                renderInput={(params) => <TextField {...params} label="Región (opcional)" placeholder="Todas" />}
+              />
 
-            <Autocomplete
-              options={provinciasFiltradas}
-              getOptionLabel={(prov) => prov.nombre || `ID ${prov.id}`}
-              value={form.provincia}
-              onChange={(e, val) => setForm((p) => ({ ...p, provincia: val, comuna: null }))}
-              renderInput={(params) => <TextField {...params} label="Provincia (opcional)" placeholder="Todas" />}
-            />
+              <Autocomplete
+                options={provinciasFiltradas}
+                getOptionLabel={(prov) => prov.nombre || `ID ${prov.id}`}
+                value={form.provincia}
+                onChange={(e, val) => setForm((p) => ({ ...p, provincia: val, comuna: null }))}
+                renderInput={(params) => <TextField {...params} label="Provincia (opcional)" placeholder="Todas" />}
+              />
 
-            <Autocomplete
-              options={comunasFiltradas}
-              getOptionLabel={(c) => c.nombre || `ID ${c.id}`}
-              value={form.comuna}
-              onChange={(e, val) => setForm((p) => ({ ...p, comuna: val }))}
-              renderInput={(params) => <TextField {...params} label="Comuna (opcional)" placeholder="Todas" />}
-            />
-          </Box>
+              <Autocomplete
+                options={comunasFiltradas}
+                getOptionLabel={(c) => c.nombre || `ID ${c.id}`}
+                value={form.comuna}
+                onChange={(e, val) => setForm((p) => ({ ...p, comuna: val }))}
+                renderInput={(params) => <TextField {...params} label="Comuna (opcional)" placeholder="Todas" />}
+              />
+            </Box>
+          )}
 
           {/* Fila 3: Especie y Método */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
@@ -728,14 +775,63 @@ export default function CuotasExtraccionMaestro() {
             />
 
             <TextField
-              select
-              label="Métrica de Descuento *"
-              value={form.metrica}
-              onChange={(e) => setForm((p) => ({ ...p, metrica: e.target.value }))}
-            >
-              <MenuItem value="CAPTURA">Captura Biológica (recomendado)</MenuItem>
-              <MenuItem value="DESEMBARQUE">Desembarque Físico</MenuItem>
-            </TextField>
+              label="Métrica de Descuento"
+              value={form.metrica === 'DESEMBARQUE' ? 'DESEMBARQUE (Excepción)' : 'CAPTURA (Obligatoria)'}
+              disabled
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    {form.metrica === 'DESEMBARQUE' ? (
+                      <WarningIcon color="warning" sx={{ fontSize: 18 }} />
+                    ) : (
+                      <LockIcon color="action" sx={{ fontSize: 18 }} />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
+              helperText={form.metrica === 'DESEMBARQUE' ? 'Descuento en kg físicos' : 'Fija por norma Sernapesca'}
+            />
+          </Box>
+
+          {/* Excepción de Métrica a Desembarque */}
+          <Box
+            sx={{
+              p: 1.5,
+              bgcolor: (t) =>
+                form.metrica === 'DESEMBARQUE'
+                  ? t.palette.mode === 'dark'
+                    ? 'rgba(237, 108, 2, 0.12)'
+                    : 'rgba(237, 108, 2, 0.08)'
+                  : t.palette.mode === 'dark'
+                  ? 'rgba(255,255,255,0.03)'
+                  : 'rgba(0,0,0,0.02)',
+              borderRadius: 2,
+              border: 1,
+              borderColor: form.metrica === 'DESEMBARQUE' ? 'warning.main' : 'divider',
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.metrica === 'DESEMBARQUE'}
+                  onChange={(e) => {
+                    const esDesembarque = e.target.checked;
+                    setForm((p) => ({ ...p, metrica: esDesembarque ? 'DESEMBARQUE' : 'CAPTURA' }));
+                  }}
+                  color="warning"
+                />
+              }
+              label={
+                <Typography variant="body2" sx={{ fontWeight: 600, color: form.metrica === 'DESEMBARQUE' ? 'warning.main' : 'text.primary' }}>
+                  Excepción normativa: La resolución técnica especifica descuento por desembarque físico
+                </Typography>
+              }
+            />
+            {form.metrica === 'DESEMBARQUE' && (
+              <Alert severity="warning" icon={<WarningIcon />} sx={{ mt: 1, fontSize: '0.82rem', py: 0.5 }}>
+                <strong>Advertencia Sernapesca:</strong> Sernapesca definió que las cuotas se descuentan obligatoriamente con captura biológica corregida. Use desembarque sólo si la resolución lo indica expresamente.
+              </Alert>
+            )}
           </Box>
 
           {/* Fila 5: Periodo y Vigencia */}
@@ -770,8 +866,17 @@ export default function CuotasExtraccionMaestro() {
           </Box>
 
           <TextField
-            label="Nº Resolución / Decreto Subpesca"
+            label={form.metrica === 'DESEMBARQUE' ? "Nº Resolución / Decreto Subpesca *" : "Nº Resolución / Decreto Subpesca"}
             placeholder="Ej. Res. Ex. Nº 142/2024"
+            required={form.metrica === 'DESEMBARQUE'}
+            error={form.metrica === 'DESEMBARQUE' && !form.resolucion?.trim()}
+            helperText={
+              form.metrica === 'DESEMBARQUE' && !form.resolucion?.trim()
+                ? "Obligatorio por norma Sernapesca para cuotas en desembarque físico"
+                : form.metrica === 'DESEMBARQUE'
+                ? "Resolución requerida que avala la excepción de desembarque físico"
+                : "Recomendado para trazabilidad jurídica del límite"
+            }
             value={form.resolucion}
             onChange={(e) => setForm((p) => ({ ...p, resolucion: e.target.value }))}
           />

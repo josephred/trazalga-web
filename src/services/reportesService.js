@@ -49,7 +49,12 @@ const formatParams = (filters) => {
   if (filters.endDate) params.endDate = filters.endDate;
   if (filters.especieId) params.especieId = filters.especieId;
   if (filters.comunaId) params.comunaId = filters.comunaId;
+  if (filters.provinciaId) params.provinciaId = filters.provinciaId;
   if (filters.regionId) params.regionId = filters.regionId;
+  if (filters.caletaId) params.caletaId = filters.caletaId;
+  if (filters.usuarioId) params.usuarioId = filters.usuarioId;
+  if (filters.macrozonaId) params.macrozonaId = filters.macrozonaId;
+  if (filters.agruparPor) params.agruparPor = filters.agruparPor;
   if (filters.perfil) params.perfil = filters.perfil;
   if (filters.umbral) params.umbral = filters.umbral;
   if (filters.semaforo) params.semaforo = filters.semaforo;

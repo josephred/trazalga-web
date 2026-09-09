@@ -28,6 +28,7 @@ import {
   HelpOutline as HelpIcon,
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
+import { invalidateConfiguracionGeneralCache } from '../dashboard/IndicadorHelpDialog';
 
 export default function ParametrosGeneralesMaestro() {
   const [configs, setConfigs] = useState({});
@@ -70,6 +71,7 @@ export default function ParametrosGeneralesMaestro() {
         clave,
         valor: configs[clave] ?? '',
       });
+      invalidateConfiguracionGeneralCache();
       setMensaje({ type: 'success', text: `Parámetro "${clave}" actualizado correctamente.` });
       setTimeout(() => setMensaje(null), 3500);
     } catch (err) {
@@ -90,6 +92,7 @@ export default function ParametrosGeneralesMaestro() {
           valor: configs[k] ?? '',
         });
       }
+      invalidateConfiguracionGeneralCache();
       setMensaje({ type: 'success', text: 'Parámetros de la categoría guardados exitosamente.' });
       setTimeout(() => setMensaje(null), 4000);
     } catch (err) {

@@ -98,7 +98,7 @@ export default function IndicadorRecolector({ dateRange }) {
     <Card 
       elevation={0}
       sx={{ 
-        mb: 4, 
+        height: '100%',
         borderRadius: 4, 
         border: 1, borderColor: 'divider',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',

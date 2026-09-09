@@ -194,6 +194,11 @@ export default function ControlCuotaDiaria({ dateRange }) {
                         ({cuota.porcentajeUso}%)
                       </span>
                     </Typography>
+                    {cuota.descripcionEquivalencia && (
+                      <Typography variant="caption" sx={{ color: 'info.main', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
+                        {cuota.descripcionEquivalencia}
+                      </Typography>
+                    )}
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
                       Saldo disponible: {Math.max(0, (cuota.limiteCuota || 0) - (cuota.volumenExtraido || 0)).toLocaleString('es-CL')} kg
                     </Typography>

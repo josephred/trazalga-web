@@ -25,6 +25,8 @@ import { useState, useEffect } from 'react';
 import { getResumenGlobal } from '../services/reportesService';
 
 
+import IndicadorHelpButton from '../components/dashboard/IndicadorHelpButton';
+
 export default function Dashboard() {
   const { dateRange } = useOutletContext() || { dateRange: null };
   const [resumen, setResumen] = useState({
@@ -77,6 +79,8 @@ export default function Dashboard() {
               color='secondary.main'
               icon={BarChartIcon}
               subtitle="Toda la cadena de suministro"
+              helpKey="declaracionesTotales"
+              dateRange={dateRange}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
@@ -86,6 +90,8 @@ export default function Dashboard() {
               color='success.main'
               icon={InventoryIcon}
               subtitle="Desembarque declarado"
+              helpKey="volumenTotal"
+              dateRange={dateRange}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
@@ -95,6 +101,8 @@ export default function Dashboard() {
               color='warning.main'
               icon={WarningIcon}
               subtitle="En veda + peso fuera de umbral"
+              helpKey="alertasActivas"
+              dateRange={dateRange}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
@@ -104,6 +112,8 @@ export default function Dashboard() {
               color="#8b5cf6"
               icon={InventoryIcon}
               subtitle="En negociación o rechazadas"
+              helpKey="casosAbiertosKPI"
+              dateRange={dateRange}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
@@ -113,6 +123,8 @@ export default function Dashboard() {
               color='error.main'
               icon={BarChartIcon}
               subtitle="En veda o rechazadas"
+              helpKey="inconsistenciasPct"
+              dateRange={dateRange}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4} lg={2}>
@@ -122,6 +134,8 @@ export default function Dashboard() {
               color='secondary.main'
               icon={GroupIcon}
               subtitle="Con declaraciones en el período"
+              helpKey="actoresFiscalizados"
+              dateRange={dateRange}
             />
           </Grid>
 
@@ -133,6 +147,8 @@ export default function Dashboard() {
               color="#3b82f6"
               icon={InventoryIcon}
               subtitle="Total de documentos"
+              helpKey="declRecolector"
+              dateRange={dateRange}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3} lg={3}>
@@ -144,6 +160,8 @@ export default function Dashboard() {
               subtitle={viajesPorDia != null
                 ? `1 declaración = 1 viaje · ~${viajesPorDia.toLocaleString('es-CL')}/día`
                 : '1 declaración = 1 viaje'}
+              helpKey="viajesArmador"
+              dateRange={dateRange}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3} lg={3}>
@@ -153,6 +171,8 @@ export default function Dashboard() {
               color="#3b82f6"
               icon={InventoryIcon}
               subtitle="Total de documentos"
+              helpKey="declArea"
+              dateRange={dateRange}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3} lg={3}>
@@ -162,6 +182,8 @@ export default function Dashboard() {
               color="#8b5cf6"
               icon={InventoryIcon}
               subtitle="Total de documentos"
+              helpKey="declComercializador"
+              dateRange={dateRange}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3} lg={3}>
@@ -173,61 +195,99 @@ export default function Dashboard() {
               subtitle={diasRango
                 ? `Kg adquiridos · ~${Math.round((resumen.volumenComprado || 0) / diasRango).toLocaleString('es-CL')} kg/día`
                 : 'Kg adquiridos en el período'}
+              helpKey="volumenComprado"
+              dateRange={dateRange}
             />
           </Grid>
 
           {/* Gráfico Principal de Desembarques y Declaraciones */}
           <Grid item xs={12}>
-            <IndicadorRecolector dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <IndicadorRecolector dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="evolucionDesembarque" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
 
-          {/* Indicador 1: Desembarque Físico (reemplaza VolumenPorEspecie) */}
+          {/* Indicador 1: Desembarque Físico */}
           <Grid item xs={12}>
-            <DesembarqueFisicoWidget dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <DesembarqueFisicoWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="desembarqueFisico" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
 
           {/* Indicador 2: Captura Corregida e Indicador 3: Control de Cuotas */}
           <Grid item xs={12} md={6}>
-            <CapturaCorregidaWidget dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <CapturaCorregidaWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="capturaCorregida" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <ControlCuotaDiaria dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <ControlCuotaDiaria dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="controlCuotas" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
 
           {/* Indicador 4: Límite Diario (LED) e Indicador 5: Control de Vedas */}
           <Grid item xs={12} md={6}>
-            <LimiteExtraccionDiarioWidget dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <LimiteExtraccionDiarioWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="limiteDiarioLed" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <ExtraccionVedaWidget dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <ExtraccionVedaWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="controlVedas" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
 
           {/* Indicador 6: Trazabilidad de Peso y Retención en Bodega Virtual */}
           <Grid item xs={12} md={6}>
-            <VariacionPesoWidget dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <VariacionPesoWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="variacionPeso" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <RetencionBodegaWidget />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <RetencionBodegaWidget />
+              <IndicadorHelpButton helpKey="retencionBodega" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <TiempoValidacionWidget dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <TiempoValidacionWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="tiempoValidacion" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <CasosAbiertosWidget dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <CasosAbiertosWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="casosAbiertos" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
           
           <Grid item xs={12} md={6}>
-            <DobleOperacionWidget dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <DobleOperacionWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="dobleOperacion" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
 
           {/* Curva Snake acumulada (AMERB) — ancho completo */}
           <Grid item xs={12}>
-            <CurvaSnakeWidget dateRange={dateRange} />
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <CurvaSnakeWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="curvaSnake" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
           </Grid>
         </Grid>
       </Container>

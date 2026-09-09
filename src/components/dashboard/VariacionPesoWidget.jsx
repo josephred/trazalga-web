@@ -155,15 +155,28 @@ export default function VariacionPesoWidget({ dateRange }) {
       )}
 
       <CardContent sx={{ p: 3, pl: hasAlertas ? 4 : 3, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-          <ScaleIcon sx={{ mr: 1, color: hasAlertas ? 'error.main' : '#8b5cf6' }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
-            Variación de Peso y Cadena de Custodia (Indicador 6)
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <ScaleIcon sx={{ mr: 1, color: hasAlertas ? 'error.main' : '#8b5cf6' }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
+              Variación de Peso y Cadena de Custodia (Indicador 6)
+            </Typography>
+          </Box>
+          {metrics?.bioPerdidaActivo === false && (
+            <Chip
+              label="Merma Biológica Inactiva"
+              size="small"
+              color="default"
+              sx={{ fontWeight: 600, fontSize: '0.7rem', height: 22 }}
+            />
+          )}
         </Box>
 
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
-          Trazabilidad por lote (folio origen) desde la extracción hasta la planta de destino. Umbral general de alerta: ±{metrics.umbralVariacionPct || 5.0}% y consistencia biológica de mermas en tránsito.
+          Trazabilidad por lote (folio origen) desde la extracción hasta la planta de destino. Umbral general de alerta: ±{metrics.umbralVariacionPct || 5.0}%
+          {metrics?.bioPerdidaActivo === false
+            ? ' · [Control de merma biológica desactivado en Administración]'
+            : ' y consistencia biológica de mermas en tránsito.'}
         </Typography>
 
         <Divider sx={{ mb: 2.5, borderColor: hasAlertas ? 'error.light' : 'divider' }} />
@@ -253,6 +266,14 @@ export default function VariacionPesoWidget({ dateRange }) {
             </Typography>
           </DialogTitle>
           <DialogContent dividers sx={{ p: 0, borderColor: 'divider' }}>
+            {metrics?.bioPerdidaActivo === false && (
+              <Box sx={{ p: 1.5, px: 3, bgcolor: 'rgba(245, 158, 11, 0.08)', borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1 }}>
+                <WarningIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
+                  Nota: El control de merma biológica esperada por humedad está desactivado en Administración (parámetro <code>bio_perdida_activo = false</code>).
+                </Typography>
+              </Box>
+            )}
             {loadingDetalle ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                 <CircularProgress />
