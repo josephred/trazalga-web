@@ -14,14 +14,13 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Alert,
   Tooltip as MuiTooltip
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
   Science as ScienceIcon,
-  TrendingUp as TrendingUpIcon,
-  CompareArrows as CompareArrowsIcon,
-  WaterDrop as WaterIcon
+  WarningAmber as WarningAmberIcon,
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { getCapturaCorregida } from '../../services/reportesService';
@@ -69,13 +68,22 @@ export default function CapturaCorregidaWidget({ dateRange }) {
     factor: item.factorPromedio
   }));
 
+  const factorPonderado = data?.factorPonderadoGlobal != null
+    ? data.factorPonderadoGlobal
+    : (data?.factorPromedioGlobal != null ? data.factorPromedioGlobal : 1.0);
+
+  // Detección de error biológico: la captura nunca puede ser menor que el desembarque
+  const hayInconsistencia = data?.totalCapturaKg != null &&
+    data?.totalDesembarqueKg != null &&
+    data.totalCapturaKg < data.totalDesembarqueKg;
+
   return (
     <Card
       elevation={0}
       sx={{
         borderRadius: 4,
         border: 1,
-        borderColor: 'divider',
+        borderColor: hayInconsistencia ? 'error.light' : 'divider',
         bgcolor: 'background.paper',
         p: { xs: 2, md: 3 },
         height: '100%',
@@ -86,14 +94,14 @@ export default function CapturaCorregidaWidget({ dateRange }) {
     >
       <CardContent sx={{ p: 0, '&:last-child': { pb: 0 }, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         {/* Cabecera */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 p: 1.25,
                 borderRadius: 3,
-                bgcolor: 'rgba(14, 165, 233, 0.12)',
-                color: 'secondary.main',
+                bgcolor: hayInconsistencia ? 'rgba(239, 68, 68, 0.12)' : 'rgba(14, 165, 233, 0.12)',
+                color: hayInconsistencia ? 'error.main' : 'secondary.main',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -111,6 +119,18 @@ export default function CapturaCorregidaWidget({ dateRange }) {
             </Box>
           </Box>
         </Box>
+
+        {/* Alerta visible si la captura resulta menor que el desembarque */}
+        {hayInconsistencia && (
+          <Alert severity="error" sx={{ mb: 2.5, borderRadius: 3 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              Error en datos históricos: Captura biológica ({data.totalCapturaKg.toLocaleString('es-CL')} kg) menor que el desembarque físico ({data.totalDesembarqueKg.toLocaleString('es-CL')} kg).
+            </Typography>
+            <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+              Factor ponderado reportado: <strong>{Number(factorPonderado).toFixed(3)}x</strong>. Todos los factores oficiales de Sernapesca son ≥ 1,0. Se requiere ejecutar el recálculo histórico en el mantenedor de factores.
+            </Typography>
+          </Alert>
+        )}
 
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1, minHeight: 250 }}>
@@ -132,11 +152,27 @@ export default function CapturaCorregidaWidget({ dateRange }) {
               </Grid>
 
               <Grid item xs={12} sm={4}>
-                <Box sx={{ p: 2, borderRadius: 3, bgcolor: 'rgba(14, 165, 233, 0.06)', border: 1, borderColor: 'secondary.main' }}>
-                  <Typography variant="caption" sx={{ color: 'secondary.dark', fontWeight: 700, display: 'block' }}>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    bgcolor: hayInconsistencia ? 'rgba(239, 68, 68, 0.08)' : 'rgba(14, 165, 233, 0.06)',
+                    border: 1,
+                    borderColor: hayInconsistencia ? 'error.main' : 'secondary.main'
+                  }}
+                >
+                  <Typography variant="caption" sx={{ color: hayInconsistencia ? 'error.dark' : 'secondary.dark', fontWeight: 700, display: 'block' }}>
                     Captura Biológica Total
                   </Typography>
-                  <Typography variant="h5" sx={{ fontFamily: 'Outfit', fontWeight: 800, color: 'secondary.main', mt: 0.5 }}>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontFamily: 'Outfit',
+                      fontWeight: 800,
+                      color: hayInconsistencia ? 'error.main' : 'secondary.main',
+                      mt: 0.5
+                    }}
+                  >
                     {(data?.totalCapturaKg || 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })} <span style={{ fontSize: '0.85rem' }}>kg</span>
                   </Typography>
                 </Box>
@@ -147,8 +183,16 @@ export default function CapturaCorregidaWidget({ dateRange }) {
                   <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
                     Factor Ponderado Global
                   </Typography>
-                  <Typography variant="h5" sx={{ fontFamily: 'Outfit', fontWeight: 800, color: '#8b5cf6', mt: 0.5 }}>
-                    {Number(data?.factorPromedioGlobal || 1).toFixed(3)}x
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontFamily: 'Outfit',
+                      fontWeight: 800,
+                      color: hayInconsistencia ? 'error.main' : '#8b5cf6',
+                      mt: 0.5
+                    }}
+                  >
+                    {Number(factorPonderado).toFixed(3)}x
                   </Typography>
                 </Box>
               </Grid>
@@ -185,7 +229,7 @@ export default function CapturaCorregidaWidget({ dateRange }) {
                     formatter={(value) => value === 'desembarque' ? 'Desembarque Físico' : 'Captura Corregida'}
                   />
                   <Bar dataKey="desembarque" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="captura" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="captura" fill={hayInconsistencia ? '#ef4444' : '#0ea5e9'} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
@@ -203,21 +247,45 @@ export default function CapturaCorregidaWidget({ dateRange }) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(data?.desglose || []).map((row, idx) => (
-                    <TableRow key={idx} hover>
-                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem', fontWeight: 600 }}>{row.especie}</TableCell>
-                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem' }}>
-                        <Chip
-                          label={row.humedad}
-                          size="small"
-                          sx={{ fontSize: '0.7rem', height: 20, bgcolor: row.humedad.toUpperCase().includes('SEC') ? '#fef3c7' : '#e0f2fe' }}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem' }} align="right">{row.desembarqueKg?.toLocaleString('es-CL')}</TableCell>
-                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem', fontWeight: 700, color: 'secondary.main' }} align="right">{row.capturaKg?.toLocaleString('es-CL')}</TableCell>
-                      <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem', fontWeight: 700 }} align="center">{row.factorPromedio?.toFixed(3)}x</TableCell>
-                    </TableRow>
-                  ))}
+                  {(data?.desglose || []).map((row, idx) => {
+                    const rowInconsistente = row.capturaKg < row.desembarqueKg;
+                    return (
+                      <TableRow key={idx} hover sx={rowInconsistente ? { bgcolor: 'rgba(239, 68, 68, 0.04)' } : {}}>
+                        <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem', fontWeight: 600 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            {row.especie}
+                            {rowInconsistente && (
+                              <MuiTooltip title="Captura menor que desembarque en esta fila">
+                                <WarningAmberIcon color="error" sx={{ fontSize: 16 }} />
+                              </MuiTooltip>
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem' }}>
+                          <Chip
+                            label={row.humedad}
+                            size="small"
+                            sx={{ fontSize: '0.7rem', height: 20, bgcolor: row.humedad.toUpperCase().includes('SEC') ? '#fef3c7' : '#e0f2fe' }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem' }} align="right">{row.desembarqueKg?.toLocaleString('es-CL')}</TableCell>
+                        <TableCell
+                          sx={{
+                            fontFamily: 'Inter',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            color: rowInconsistente ? 'error.main' : 'secondary.main'
+                          }}
+                          align="right"
+                        >
+                          {row.capturaKg?.toLocaleString('es-CL')}
+                        </TableCell>
+                        <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem', fontWeight: 700 }} align="center">
+                          {row.factorPromedio?.toFixed(3)}x
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
