@@ -113,3 +113,13 @@ export const getTrazabilidadLoteDetalle = async (filters) => {
   return response.data;
 };
 
+export const getVariacionPeso = async (filters) => {
+  const response = await api.get('/reportes/variacion-peso', { params: formatParams(filters) });
+  return response.data;
+};
+
+export const getVariacionPesoDetalle = async (filters) => {
+  const response = await api.get('/reportes/variacion-peso-detalle', { params: formatParams(filters) });
+  return response.data;
+};
+

@@ -18,34 +18,47 @@ import {
   TableRow,
   Card,
   CardContent,
-  Tooltip
+  Tooltip,
+  Grid,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   Scale as ScaleIcon,
   Warning as WarningIcon,
   CheckCircle as OkIcon,
-  AccessTime as AccessTimeIcon,
-  Warehouse as WarehouseIcon,
-  WaterDrop as WaterIcon
+  ReceiptLong as VoucherIcon,
+  Description as DocumentIcon,
+  Biotech as BioIcon
 } from '@mui/icons-material';
-import { getTrazabilidadLote, getTrazabilidadLoteDetalle } from '../../services/reportesService';
+import {
+  getVariacionPeso,
+  getVariacionPesoDetalle,
+  getTrazabilidadLote,
+  getTrazabilidadLoteDetalle
+} from '../../services/reportesService';
 
 export default function VariacionPesoWidget({ dateRange }) {
   const [metrics, setMetrics] = useState({
-    totalLotes: 0,
-    totalKgOrigen: 0,
-    totalKgDestino: 0,
+    umbralPct: 5.0,
+    totalConciliaciones: 0,
     promedioVariacionPct: 0,
-    lotesEnBodegaVirtual: 0,
-    alertasVariacion: 0,
-    alertasMerma: 0,
-    umbralVariacionPct: 5.0
+    fueraUmbral: 0,
+    pesajes: 0,
+    documentos: 0,
+    pesaje: { total: 0, promedioVariacionPct: 0, fueraUmbral: 0 },
+    documental: { total: 0, promedioVariacionPct: 0, fueraUmbral: 0 },
+    consolidado: { totalConciliaciones: 0, promedioVariacionPct: 0, fueraUmbral: 0 }
   });
+  const [loteMetrics, setLoteMetrics] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [openModal, setOpenModal] = useState(false);
-  const [detalle, setDetalle] = useState([]);
+  const [tabModal, setTabModal] = useState(0);
+  const [filtroTipo, setFiltroTipo] = useState('TODOS'); // TODOS | PESAJE | DOCUMENTO
+  const [conciliacionesDetalle, setConciliacionesDetalle] = useState([]);
+  const [lotesDetalle, setLotesDetalle] = useState([]);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
 
   const parseDates = () => {
@@ -67,12 +80,39 @@ export default function VariacionPesoWidget({ dateRange }) {
       try {
         setLoading(true);
         const filters = parseDates();
-        const data = await getTrazabilidadLote(filters);
-        setMetrics(data || {});
+        const [pesoData, loteData] = await Promise.all([
+          getVariacionPeso(filters),
+          getTrazabilidadLote(filters)
+        ]);
+
+        const safePeso = pesoData || {};
+        const safePesaje = safePeso.pesaje || {
+          total: safePeso.pesajes || 0,
+          promedioVariacionPct: 0,
+          fueraUmbral: 0
+        };
+        const safeDocumental = safePeso.documental || {
+          total: safePeso.documentos || 0,
+          promedioVariacionPct: safePeso.promedioVariacionPct || 0,
+          fueraUmbral: safePeso.fueraUmbral || 0
+        };
+        const safeConsolidado = safePeso.consolidado || {
+          totalConciliaciones: safePeso.totalConciliaciones || ((safePesaje.total || 0) + (safeDocumental.total || 0)),
+          promedioVariacionPct: safePeso.promedioVariacionPct || 0,
+          fueraUmbral: safePeso.fueraUmbral || 0
+        };
+
+        setMetrics({
+          ...safePeso,
+          pesaje: safePesaje,
+          documental: safeDocumental,
+          consolidado: safeConsolidado
+        });
+        setLoteMetrics(loteData || {});
         setError(null);
       } catch (err) {
-        console.error('Error fetching trazabilidad por lote:', err);
-        setError(err.message || 'Error desconocido');
+        console.error('Error fetching métricas de variación de peso:', err);
+        setError(err.message || 'Error al obtener métricas');
       } finally {
         setLoading(false);
       }
@@ -81,21 +121,30 @@ export default function VariacionPesoWidget({ dateRange }) {
     fetchMetrics();
   }, [dateRange]);
 
-  const hasAlertas = (metrics?.alertasVariacion || 0) > 0 || (metrics?.alertasMerma || 0) > 0;
+  const hasAlertas = (metrics?.fueraUmbral || 0) > 0 || (metrics?.pesaje?.fueraUmbral || 0) > 0;
 
   const handleOpenDetalle = async () => {
     setOpenModal(true);
     setLoadingDetalle(true);
     try {
       const filters = parseDates();
-      const res = await getTrazabilidadLoteDetalle(filters);
-      setDetalle(res || []);
+      const [detallesPeso, detallesLotes] = await Promise.all([
+        getVariacionPesoDetalle(filters),
+        getTrazabilidadLoteDetalle(filters)
+      ]);
+      setConciliacionesDetalle(detallesPeso || []);
+      setLotesDetalle(detallesLotes || []);
     } catch (err) {
-      console.error('Error fetching detalle trazabilidad lote:', err);
+      console.error('Error fetching detalle conciliaciones:', err);
     } finally {
       setLoadingDetalle(false);
     }
   };
+
+  const conciliacionesFiltradas = conciliacionesDetalle.filter(row => {
+    if (filtroTipo === 'TODOS') return true;
+    return (row.tipoRegistro || '').toUpperCase() === filtroTipo;
+  });
 
   if (loading) {
     return (
@@ -104,11 +153,12 @@ export default function VariacionPesoWidget({ dateRange }) {
         sx={{
           height: '100%',
           borderRadius: 4,
-          border: 1, borderColor: 'divider',
+          border: 1,
+          borderColor: 'divider',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: 250
+          minHeight: 280
         }}
       >
         <CircularProgress />
@@ -155,28 +205,25 @@ export default function VariacionPesoWidget({ dateRange }) {
       )}
 
       <CardContent sx={{ p: 3, pl: hasAlertas ? 4 : 3, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+        {/* Cabecera del Indicador */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <ScaleIcon sx={{ mr: 1, color: hasAlertas ? 'error.main' : '#8b5cf6' }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ScaleIcon sx={{ color: hasAlertas ? 'error.main' : '#8b5cf6' }} />
             <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
-              Variación de Peso y Cadena de Custodia (Indicador 6)
+              Variación en Peso (Indicador 6)
             </Typography>
           </Box>
-          {metrics?.bioPerdidaActivo === false && (
-            <Chip
-              label="Merma Biológica Inactiva"
-              size="small"
-              color="default"
-              sx={{ fontWeight: 600, fontSize: '0.7rem', height: 22 }}
-            />
-          )}
+          <Chip
+            label={`Tolerancia ±${metrics.umbralPct || 5.0}%`}
+            size="small"
+            color="primary"
+            variant="outlined"
+            sx={{ fontWeight: 600, fontSize: '0.72rem', height: 24 }}
+          />
         </Box>
 
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontFamily: 'Inter', lineHeight: 1.6 }}>
-          Trazabilidad por lote (folio origen) desde la extracción hasta la planta de destino. Umbral general de alerta: ±{metrics.umbralVariacionPct || 5.0}%
-          {metrics?.bioPerdidaActivo === false
-            ? ' · [Control de merma biológica desactivado en Administración]'
-            : ' y consistencia biológica de mermas en tránsito.'}
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontFamily: 'Inter', lineHeight: 1.5 }}>
+          Control de mermas y adulteración física. Se auditan dos poblaciones independientes: <strong>Pesaje físico en romana</strong> (vinculante) vs <strong>Conciliación documental</strong> (cruce de guías).
         </Typography>
 
         <Divider sx={{ mb: 2.5, borderColor: hasAlertas ? 'error.light' : 'divider' }} />
@@ -187,67 +234,195 @@ export default function VariacionPesoWidget({ dateRange }) {
           </Typography>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', my: 2, flexWrap: 'wrap', gap: 2 }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
-                  {((metrics && metrics.totalLotes) || 0).toLocaleString('es-CL')}
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', fontFamily: 'Inter' }}>
-                  Lotes Trazados
-                </Typography>
-              </Box>
-
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
-                  {metrics.promedioVariacionPct !== null && metrics.promedioVariacionPct !== undefined
-                    ? `${metrics.promedioVariacionPct > 0 ? '+' : ''}${metrics.promedioVariacionPct}%`
-                    : '—'}
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', fontFamily: 'Inter' }}>
-                  Variación promedio
-                </Typography>
-              </Box>
-
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography
-                  variant="h3"
+            {/* Dos Poblaciones de Control R6.1 */}
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              {/* Población 1: Pesaje Físico en Romana */}
+              <Grid item xs={12} sm={6}>
+                <Box
                   sx={{
-                    fontWeight: 800,
-                    fontFamily: 'Outfit',
-                    color: hasAlertas ? 'error.main' : 'text.primary'
+                    p: 2,
+                    borderRadius: 3,
+                    border: '1.5px solid',
+                    borderColor: 'primary.light',
+                    bgcolor: 'rgba(59, 130, 246, 0.03)',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
                   }}
                 >
-                  {(metrics.alertasVariacion || 0) + (metrics.alertasMerma || 0)}
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: hasAlertas ? '#b91c1c' : 'text.secondary', fontFamily: 'Inter' }}>
-                  Alertas de Cadena
-                </Typography>
-              </Box>
-            </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'primary.dark' }}>
+                        Pesaje en Romana
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                        Báscula certificada con voucher
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label="VINCULANTE"
+                      size="small"
+                      color="primary"
+                      sx={{ fontWeight: 800, fontSize: '0.65rem', height: 20 }}
+                    />
+                  </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mt: 1.5 }}>
+                    <Box>
+                      <Typography variant="h4" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
+                        {metrics.pesaje?.total || 0}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
+                        Pesajes Físicos
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 800,
+                          fontFamily: 'Outfit',
+                          color: (metrics.pesaje?.promedioVariacionPct || 0) > (metrics.umbralPct || 5.0) ? 'error.main' : 'text.primary'
+                        }}
+                      >
+                        {metrics.pesaje?.promedioVariacionPct !== null && metrics.pesaje?.promedioVariacionPct !== undefined
+                          ? `${metrics.pesaje.promedioVariacionPct > 0 ? '+' : ''}${metrics.pesaje.promedioVariacionPct}%`
+                          : '—'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                        Promedio Variación
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ mt: 1.5, pt: 1, borderTop: '1px dashed', borderColor: 'divider', display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                      Fuera de umbral:
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 700,
+                        color: (metrics.pesaje?.fueraUmbral || 0) > 0 ? 'error.main' : 'success.main'
+                      }}
+                    >
+                      {metrics.pesaje?.fueraUmbral || 0} alertas
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+
+              {/* Población 2: Conciliación Documental */}
+              <Grid item xs={12} sm={6}>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    bgcolor: 'rgba(100, 116, 139, 0.03)',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
+                        Conciliación Documental
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                        Cruce declarativo de guías
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label="CRUCE GUÍAS"
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontWeight: 700, fontSize: '0.65rem', height: 20, color: 'text.secondary' }}
+                    />
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mt: 1.5 }}>
+                    <Box>
+                      <Typography variant="h4" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
+                        {metrics.documental?.total || 0}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
+                        Documentos
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 800,
+                          fontFamily: 'Outfit',
+                          color: (metrics.documental?.promedioVariacionPct || 0) > (metrics.umbralPct || 5.0) ? 'warning.main' : 'text.primary'
+                        }}
+                      >
+                        {metrics.documental?.promedioVariacionPct !== null && metrics.documental?.promedioVariacionPct !== undefined
+                          ? `${metrics.documental.promedioVariacionPct > 0 ? '+' : ''}${metrics.documental.promedioVariacionPct}%`
+                          : '0.0%'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                        Promedio Variación
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ mt: 1.5, pt: 1, borderTop: '1px dashed', borderColor: 'divider', display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                      Fuera de umbral:
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 700,
+                        color: (metrics.documental?.fueraUmbral || 0) > 0 ? 'warning.main' : 'text.secondary'
+                      }}
+                    >
+                      {metrics.documental?.fueraUmbral || 0} alertas
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+
+            {/* Total Consolidado y Botón de Detalle */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1, borderTop: 1, borderColor: 'divider', flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
+                Total Consolidado: <strong>{(metrics.consolidado?.totalConciliaciones || metrics.totalConciliaciones || 0).toLocaleString('es-CL')}</strong> conciliaciones
+                {' '}({metrics.pesaje?.total || 0} pesajes + {metrics.documental?.total || 0} documentos)
+              </Typography>
+
               <Button
                 variant="contained"
                 onClick={handleOpenDetalle}
+                size="small"
                 sx={{
                   bgcolor: hasAlertas ? 'error.main' : 'primary.main',
-                  '&:hover': { bgcolor: hasAlertas ? 'error.dark' : 'primary.light' },
-                  borderRadius: 2.5,
+                  '&:hover': { bgcolor: hasAlertas ? 'error.dark' : 'primary.dark' },
+                  borderRadius: 2,
                   textTransform: 'none',
                   fontFamily: 'Outfit',
                   fontWeight: 600,
-                  px: 3,
-                  py: 1,
+                  px: 2.5,
+                  py: 0.8,
                   boxShadow: 'none'
                 }}
               >
-                Ver Detalle de Trazabilidad de Lotes
+                Auditoría y Detalle Nominal
               </Button>
             </Box>
           </Box>
         )}
 
-        {/* Modal de Detalle */}
+        {/* Modal de Detalle con Doble Pestaña: Conciliaciones vs Trazabilidad */}
         <Dialog
           open={openModal}
           onClose={() => setOpenModal(false)}
@@ -259,102 +434,240 @@ export default function VariacionPesoWidget({ dateRange }) {
             }
           }}
         >
-          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', p: 3 }}>
-            Trazabilidad por Lote (Folio Origen) y Cadena de Custodia
-            <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', mt: 0.5 }}>
-              Seguimiento Origen &rarr; Comercializador &rarr; Planta. Incluye estado de humedad, días transcurridos y evaluación de consistencia biológica.
-            </Typography>
-          </DialogTitle>
-          <DialogContent dividers sx={{ p: 0, borderColor: 'divider' }}>
-            {metrics?.bioPerdidaActivo === false && (
-              <Box sx={{ p: 1.5, px: 3, bgcolor: 'rgba(245, 158, 11, 0.08)', borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1 }}>
-                <WarningIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
-                  Nota: El control de merma biológica esperada por humedad está desactivado en Administración (parámetro <code>bio_perdida_activo = false</code>).
+          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', p: 2.5 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: 'Outfit' }}>
+                  Auditoría de Variación de Peso y Consistencia Biológica
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                  Separación formal entre pesaje físico en báscula/romana y cruce documental de declaraciones.
                 </Typography>
               </Box>
-            )}
+            </Box>
+          </DialogTitle>
+
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper', px: 3 }}>
+            <Tabs value={tabModal} onChange={(_, val) => setTabModal(val)} sx={{ '& .MuiTab-root': { fontFamily: 'Outfit', fontWeight: 700, textTransform: 'none' } }}>
+              <Tab icon={<ScaleIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={`Conciliaciones de Peso (${conciliacionesDetalle.length})`} />
+              <Tab icon={<BioIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={`Trazabilidad por Lote y Merma Biológica (${lotesDetalle.length})`} />
+            </Tabs>
+          </Box>
+
+          <DialogContent dividers sx={{ p: 0, borderColor: 'divider' }}>
             {loadingDetalle ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
                 <CircularProgress />
               </Box>
-            ) : detalle.length === 0 ? (
-              <Typography sx={{ p: 4, color: 'text.secondary', fontFamily: 'Inter', textAlign: 'center' }}>
-                No hay lotes con trazabilidad registrados para este periodo.
-              </Typography>
+            ) : tabModal === 0 ? (
+              /* Pestaña 0: Conciliaciones de Peso (Pesaje vs Documental) */
+              <Box>
+                <Box sx={{ p: 1.5, px: 3, bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
+                    Filtrar por tipo de conciliación:
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip
+                      label={`Todos (${conciliacionesDetalle.length})`}
+                      size="small"
+                      clickable
+                      color={filtroTipo === 'TODOS' ? 'primary' : 'default'}
+                      onClick={() => setFiltroTipo('TODOS')}
+                      sx={{ fontWeight: 600, fontSize: '0.72rem' }}
+                    />
+                    <Chip
+                      icon={<VoucherIcon sx={{ fontSize: 14 }} />}
+                      label={`Pesaje en Romana (${conciliacionesDetalle.filter(c => c.tipoRegistro === 'PESAJE').length})`}
+                      size="small"
+                      clickable
+                      color={filtroTipo === 'PESAJE' ? 'primary' : 'default'}
+                      onClick={() => setFiltroTipo('PESAJE')}
+                      sx={{ fontWeight: 700, fontSize: '0.72rem' }}
+                    />
+                    <Chip
+                      icon={<DocumentIcon sx={{ fontSize: 14 }} />}
+                      label={`Documental (${conciliacionesDetalle.filter(c => c.tipoRegistro === 'DOCUMENTO').length})`}
+                      size="small"
+                      clickable
+                      color={filtroTipo === 'DOCUMENTO' ? 'primary' : 'default'}
+                      onClick={() => setFiltroTipo('DOCUMENTO')}
+                      sx={{ fontWeight: 600, fontSize: '0.72rem' }}
+                    />
+                  </Box>
+                </Box>
+
+                {conciliacionesFiltradas.length === 0 ? (
+                  <Typography sx={{ p: 4, color: 'text.secondary', fontFamily: 'Inter', textAlign: 'center' }}>
+                    No se encontraron conciliaciones con el filtro seleccionado.
+                  </Typography>
+                ) : (
+                  <TableContainer sx={{ maxHeight: 460 }}>
+                    <Table size="small" stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Tipo</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Eslabón</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Fecha</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Actor / Titular</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Especie</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Origen</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Destino / Romana</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Variación (%)</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Voucher Romana</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {conciliacionesFiltradas.map((row, idx) => {
+                          const fuera = Math.abs(row.variacionPct || 0) > (metrics.umbralPct || 5.0);
+                          const esPesaje = row.tipoRegistro === 'PESAJE';
+                          return (
+                            <TableRow key={idx} hover>
+                              <TableCell sx={{ fontSize: '0.8rem' }}>
+                                <Chip
+                                  label={row.tipoRegistro}
+                                  size="small"
+                                  color={esPesaje ? 'primary' : 'default'}
+                                  variant={esPesaje ? 'filled' : 'outlined'}
+                                  sx={{ fontWeight: 800, fontSize: '0.65rem', height: 20 }}
+                                />
+                              </TableCell>
+                              <TableCell sx={{ fontSize: '0.82rem', fontWeight: 600 }}>{row.eslabon}</TableCell>
+                              <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+                                {row.fecha ? new Date(row.fecha).toLocaleDateString('es-CL') : '—'}
+                              </TableCell>
+                              <TableCell sx={{ fontSize: '0.82rem' }}>{row.actor || '—'}</TableCell>
+                              <TableCell sx={{ fontSize: '0.82rem' }}>{row.especie || '—'}</TableCell>
+                              <TableCell sx={{ fontSize: '0.82rem' }} align="right">
+                                {row.kgOrigen ? row.kgOrigen.toLocaleString('es-CL') : '—'}
+                              </TableCell>
+                              <TableCell sx={{ fontSize: '0.82rem', fontWeight: 700, color: esPesaje ? 'primary.main' : 'text.primary' }} align="right">
+                                {row.kgDestino ? row.kgDestino.toLocaleString('es-CL') : '—'}
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  fontSize: '0.85rem',
+                                  fontWeight: 800,
+                                  color: fuera ? 'error.main' : 'text.primary'
+                                }}
+                                align="right"
+                              >
+                                {row.variacionPct !== null && row.variacionPct !== undefined
+                                  ? `${row.variacionPct > 0 ? '+' : ''}${row.variacionPct}%`
+                                  : '0.0%'}
+                              </TableCell>
+                              <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
+                                {row.voucherRomanaNumero ? (
+                                  <Chip
+                                    icon={<VoucherIcon sx={{ fontSize: 13 }} />}
+                                    label={row.voucherRomanaNumero}
+                                    size="small"
+                                    color="success"
+                                    variant="outlined"
+                                    sx={{ fontWeight: 700, fontSize: '0.7rem', height: 22 }}
+                                  />
+                                ) : (
+                                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>—</Typography>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Box>
             ) : (
-              <TableContainer sx={{ maxHeight: 460 }}>
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Folio Origen</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Origen (Actor / Tipo)</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Especie / Humedad</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Origen</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Comercializador</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Planta</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">&Delta; Peso (%)</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Tránsito / Bodega</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Estado / Alertas</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {detalle.map((row, idx) => (
-                      <TableRow key={idx} hover>
-                        <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8rem', fontWeight: 600 }}>{row.folioOrigen}</TableCell>
-                        <TableCell sx={{ fontSize: '0.82rem' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.82rem' }}>{row.actorOrigen}</Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>{row.eslabonOrigen} {row.embarcacion ? `(${row.embarcacion})` : ''}</Typography>
-                        </TableCell>
-                        <TableCell sx={{ fontSize: '0.82rem' }}>
-                          <Typography variant="body2" sx={{ fontSize: '0.82rem' }}>{row.especie}</Typography>
-                          <Chip label={row.humedadOrigen} size="small" sx={{ fontSize: '0.68rem', height: 18, mt: 0.3 }} />
-                        </TableCell>
-                        <TableCell sx={{ fontSize: '0.82rem', fontWeight: 600 }} align="right">{row.kgOrigen?.toLocaleString('es-CL')}</TableCell>
-                        <TableCell sx={{ fontSize: '0.82rem' }} align="right">{row.kgComercializador ? row.kgComercializador.toLocaleString('es-CL') : '—'}</TableCell>
-                        <TableCell sx={{ fontSize: '0.82rem', fontWeight: 700, color: 'secondary.main' }} align="right">{row.kgPlanta ? row.kgPlanta.toLocaleString('es-CL') : '—'}</TableCell>
-                        <TableCell
-                          sx={{
-                            fontSize: '0.85rem',
-                            fontWeight: 800,
-                            color: row.alertaVariacion ? 'error.main' : 'text.primary'
-                          }}
-                          align="right"
-                        >
-                          {row.deltaPct > 0 ? `+${row.deltaPct}%` : `${row.deltaPct}%`}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: '0.78rem' }} align="center">
-                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.3 }}>
-                            <Typography variant="caption" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>{row.diasTranscurridos} d viaje</Typography>
-                            {row.diasEnBodega > 0 && (
-                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>{row.diasEnBodega} d bodega</Typography>
-                            )}
-                          </Box>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'center' }}>
-                            {row.alertaMerma && (
-                              <Tooltip title={row.motivoMerma || 'Merma inconsistente'}>
-                                <Chip label="Merma Anómala" size="small" color="error" sx={{ fontSize: '0.65rem', height: 18, fontWeight: 700 }} />
-                              </Tooltip>
-                            )}
-                            {row.alertaVariacion && (
-                              <Chip label="Fuera Umbral" size="small" color="warning" sx={{ fontSize: '0.65rem', height: 18, fontWeight: 700 }} />
-                            )}
-                            {!row.alertaMerma && !row.alertaVariacion && (
-                              <Chip label="OK" size="small" color="success" sx={{ fontSize: '0.65rem', height: 18, fontWeight: 700 }} />
-                            )}
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              /* Pestaña 1: Trazabilidad por Lote y Reglas Biológicas R6.4 */
+              <Box>
+                {lotesDetalle.length === 0 ? (
+                  <Typography sx={{ p: 4, color: 'text.secondary', fontFamily: 'Inter', textAlign: 'center' }}>
+                    No hay lotes con trazabilidad registrados para este periodo.
+                  </Typography>
+                ) : (
+                  <TableContainer sx={{ maxHeight: 460 }}>
+                    <Table size="small" stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Folio Origen</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Origen</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Especie / Humedad</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Origen</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Planta</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">&Delta; Peso (%)</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Tránsito</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Inconsistencia Biológica</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {lotesDetalle.map((row, idx) => (
+                          <TableRow key={idx} hover>
+                            <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8rem', fontWeight: 600 }}>{row.folioOrigen}</TableCell>
+                            <TableCell sx={{ fontSize: '0.82rem' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.82rem' }}>{row.actorOrigen}</Typography>
+                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{row.eslabonOrigen}</Typography>
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.82rem' }}>
+                              <Typography variant="body2" sx={{ fontSize: '0.82rem' }}>{row.especie}</Typography>
+                              <Chip label={row.humedadOrigen} size="small" sx={{ fontSize: '0.68rem', height: 18, mt: 0.3 }} />
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.82rem', fontWeight: 600 }} align="right">{row.kgOrigen?.toLocaleString('es-CL')}</TableCell>
+                            <TableCell sx={{ fontSize: '0.82rem', fontWeight: 700, color: 'secondary.main' }} align="right">{row.kgPlanta ? row.kgPlanta.toLocaleString('es-CL') : '—'}</TableCell>
+                            <TableCell
+                              sx={{
+                                fontSize: '0.85rem',
+                                fontWeight: 800,
+                                color: row.alertaVariacion ? 'error.main' : 'text.primary'
+                              }}
+                              align="right"
+                            >
+                              {row.deltaPct > 0 ? `+${row.deltaPct}%` : `${row.deltaPct}%`}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.78rem' }} align="center">
+                              <Typography variant="caption" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                                {row.diasTranscurridos} d viaje
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              {row.inconsistenciaBiologica === 'HUMEDO_SIN_MERMA' ? (
+                                <Tooltip title="Alga húmeda transportada por 3 o más días sin registrar la merma física esperada por deshidratación (mínimo -5%). Posible blanqueo o hidratación.">
+                                  <Chip
+                                    label="HÚMEDO SIN MERMA"
+                                    size="small"
+                                    color="error"
+                                    sx={{ fontSize: '0.65rem', height: 20, fontWeight: 800 }}
+                                  />
+                                </Tooltip>
+                              ) : row.inconsistenciaBiologica === 'SECO_MERMA_EXCESIVA' ? (
+                                <Tooltip title="Alga seca con merma superior a la tolerancia física del 3%.">
+                                  <Chip
+                                    label="SECO MERMA EXCESIVA"
+                                    size="small"
+                                    color="error"
+                                    sx={{ fontSize: '0.65rem', height: 20, fontWeight: 800 }}
+                                  />
+                                </Tooltip>
+                              ) : (
+                                <Chip label="CONSISTENTE" size="small" color="success" sx={{ fontSize: '0.65rem', height: 20, fontWeight: 700 }} />
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Box>
             )}
           </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setOpenModal(false)} sx={{ fontFamily: 'Inter' }}>
+
+          <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', pl: 1 }}>
+              {tabModal === 0
+                ? `Mostrando ${conciliacionesFiltradas.length} de ${conciliacionesDetalle.length} conciliaciones evaluadas.`
+                : `Mostrando ${lotesDetalle.length} lotes con trazabilidad de origen a destino.`}
+            </Typography>
+            <Button onClick={() => setOpenModal(false)} sx={{ fontFamily: 'Inter', fontWeight: 600 }}>
               Cerrar
             </Button>
           </DialogActions>
