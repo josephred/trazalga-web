@@ -52,6 +52,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
   // Filtros dimensionales
   const [perfil, setPerfil] = useState('TODOS');
   const [especieId, setEspecieId] = useState('');
+  const [macrozonaId, setMacrozonaId] = useState('');
   const [regionId, setRegionId] = useState('');
   const [provinciaId, setProvinciaId] = useState('');
   const [comunaId, setComunaId] = useState('');
@@ -60,6 +61,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
 
   // Catálogos
   const [especies, setEspecies] = useState([]);
+  const [macrozonas, setMacrozonas] = useState([]);
   const [regiones, setRegiones] = useState([]);
   const [provincias, setProvincias] = useState([]);
   const [comunas, setComunas] = useState([]);
@@ -69,9 +71,18 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
   // Carga inicial de catálogos base
   useEffect(() => {
     api.get('/api/especies').then((r) => setEspecies(Array.isArray(r.data) ? r.data : [])).catch(() => {});
+    api.get('/api/macrozonas/activas').catch(() => api.get('/api/macrozonas')).then((r) => setMacrozonas(Array.isArray(r.data) ? r.data : [])).catch(() => {});
     api.get('/api/regiones').catch(() => api.get('/regiones')).then((r) => setRegiones(Array.isArray(r.data) ? r.data : [])).catch(() => {});
     api.get('/api/usuarios').catch(() => api.get('/usuario')).then((r) => setUsuarios(Array.isArray(r.data) ? r.data : [])).catch(() => {});
   }, []);
+
+  // Cascada: cuando cambia macrozona
+  useEffect(() => {
+    setRegionId('');
+    setProvinciaId('');
+    setComunaId('');
+    setCaletaId('');
+  }, [macrozonaId]);
 
   // Cascada: cuando cambia región
   useEffect(() => {
@@ -111,12 +122,13 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
   }, [comunaId]);
 
   const hayFiltrosActivos = Boolean(
-    (perfil && perfil !== 'TODOS') || especieId || regionId || provinciaId || comunaId || caletaId || usuarioId
+    (perfil && perfil !== 'TODOS') || especieId || macrozonaId || regionId || provinciaId || comunaId || caletaId || usuarioId
   );
 
   const handleLimpiarFiltros = () => {
     setPerfil('TODOS');
     setEspecieId('');
+    setMacrozonaId('');
     setRegionId('');
     setProvinciaId('');
     setComunaId('');
@@ -137,6 +149,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
     }
     if (perfil && perfil !== 'TODOS') filters.perfil = perfil;
     if (especieId) filters.especieId = especieId;
+    if (macrozonaId) filters.macrozonaId = macrozonaId;
     if (regionId) filters.regionId = regionId;
     if (provinciaId) filters.provinciaId = provinciaId;
     if (comunaId) filters.comunaId = comunaId;
@@ -165,7 +178,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
     };
 
     fetchMetrics();
-  }, [dateRange, perfil, especieId, regionId, provinciaId, comunaId, caletaId, usuarioId, agruparPor]);
+  }, [dateRange, perfil, especieId, macrozonaId, regionId, provinciaId, comunaId, caletaId, usuarioId, agruparPor]);
 
   const handleToggleDetalle = async () => {
     if (!showDetalle && detalle.length === 0) {
@@ -186,6 +199,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
   const chartData = (metrics?.datosAgrupados || metrics?.porEspecie || []).slice(0, 8);
 
   const etiquetaAgrupacion = {
+    MACROZONA: 'Macrozona',
     CALETA: 'Caleta',
     RECOLECTOR: 'Persona / Recolector',
     ESPECIE: 'Especie',
@@ -257,6 +271,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
                 },
               }}
             >
+              <ToggleButton value="MACROZONA">🌐 Macrozona</ToggleButton>
               <ToggleButton value="CALETA">🏝️ Caleta</ToggleButton>
               <ToggleButton value="RECOLECTOR">👤 Persona</ToggleButton>
               <ToggleButton value="ESPECIE">🐟 Especie</ToggleButton>
@@ -265,6 +280,26 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
               <ToggleButton value="REGION">Región</ToggleButton>
             </ToggleButtonGroup>
           </Box>
+        </Box>
+
+        {/* Nota Normativa de Doble Imputación Territorial (R1.3) */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mb: 1.5,
+            px: 1.5,
+            py: 0.75,
+            bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(14, 165, 233, 0.08)' : 'rgba(14, 165, 233, 0.05)'),
+            borderLeft: 3,
+            borderColor: '#0ea5e9',
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="caption" sx={{ fontFamily: 'Inter', color: 'text.secondary', fontSize: '0.75rem' }}>
+            <strong>Nota territorial:</strong> El desembarque se imputa a la caleta y comuna donde ocurrió. El consumo de cuota de recolectores se imputa a la comuna de inscripción.
+          </Typography>
         </Box>
 
         {/* Barra de Filtros Encadenados Jerárquicos */}
@@ -282,6 +317,23 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
             borderColor: 'divider',
           }}
         >
+          {/* Macrozona */}
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <Select
+              value={macrozonaId}
+              onChange={(e) => setMacrozonaId(e.target.value)}
+              displayEmpty
+              sx={{ borderRadius: 2, fontSize: '0.78rem', fontFamily: 'Inter' }}
+            >
+              <MenuItem value="">Todas las macrozonas</MenuItem>
+              {macrozonas.map((m) => (
+                <MenuItem key={m.id} value={m.id}>
+                  {m.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           {/* Región */}
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select

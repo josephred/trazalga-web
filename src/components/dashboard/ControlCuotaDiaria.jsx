@@ -145,6 +145,27 @@ export default function ControlCuotaDiaria({ dateRange }) {
             </FormControl>
           </Box>
         </Box>
+
+        {/* Nota Normativa de Doble Imputación Territorial (R1.3) */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mb: 2,
+            px: 1.5,
+            py: 0.75,
+            bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.08)' : 'rgba(139, 92, 246, 0.05)'),
+            borderLeft: 3,
+            borderColor: '#8b5cf6',
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="caption" sx={{ fontFamily: 'Inter', color: 'text.secondary', fontSize: '0.74rem' }}>
+            <strong>Nota territorial:</strong> El consumo de cuota de recolectores se imputa a la comuna de inscripción (RPA). El desembarque físico se imputa a la caleta de descarga.
+          </Typography>
+        </Box>
+
         <Divider sx={{ mb: 3, borderColor: 'divider' }} />
         
         {cuotas.length === 0 ? (
@@ -155,16 +176,36 @@ export default function ControlCuotaDiaria({ dateRange }) {
           </Box>
         ) : (
           cuotas.map((cuota, index) => {
+            const limiteEfectivo = cuota.limiteEfectivo != null ? cuota.limiteEfectivo : (cuota.limiteCuota || 0);
+            const limiteNominal = cuota.limiteNominal != null ? cuota.limiteNominal : limiteEfectivo;
             const displayPercentage = cuota.porcentajeUso > 100 ? 100 : cuota.porcentajeUso;
             const colors = getProgressColors(cuota.porcentajeUso);
             
             return (
               <Box key={index} sx={{ mb: 3, '&:last-child': { mb: 1 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'baseline' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0, flexWrap: 'wrap' }}>
                     <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
                       {cuota.especieNombre}
                     </Typography>
+                    {cuota.humedadEstadoNombre && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontFamily: 'Inter',
+                          color: 'primary.main',
+                          bgcolor: 'rgba(14, 165, 233, 0.08)',
+                          border: 1, borderColor: 'rgba(14, 165, 233, 0.2)',
+                          borderRadius: 2,
+                          px: 0.8,
+                          py: 0.1,
+                          fontSize: '0.7rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        {cuota.humedadEstadoNombre}
+                      </Typography>
+                    )}
                     {cuota.alcance && cuota.alcance !== 'Global' && (
                       <Typography
                         variant="caption"
@@ -189,18 +230,22 @@ export default function ControlCuotaDiaria({ dateRange }) {
                   </Box>
                   <Box sx={{ textAlign: 'right' }}>
                     <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.825rem', color: 'text.secondary' }}>
-                      {cuota.volumenExtraido?.toLocaleString('es-CL')} / {cuota.limiteCuota?.toLocaleString('es-CL')} kg ({cuota.metrica || 'CAPTURA'}){' '}
+                      {cuota.volumenExtraido?.toLocaleString('es-CL')} / {limiteEfectivo?.toLocaleString('es-CL')} kg ({cuota.metrica || 'CAPTURA'}){' '}
                       <span style={{ fontWeight: 700, color: colors.label }}>
                         ({cuota.porcentajeUso}%)
                       </span>
                     </Typography>
-                    {cuota.descripcionEquivalencia && (
+                    {cuota.descripcionEquivalencia ? (
                       <Typography variant="caption" sx={{ color: 'info.main', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
                         {cuota.descripcionEquivalencia}
                       </Typography>
-                    )}
+                    ) : (limiteNominal !== limiteEfectivo && limiteNominal > 0 && (
+                      <Typography variant="caption" sx={{ color: 'info.main', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
+                        {limiteNominal.toLocaleString('es-CL')} kg nominal ≡ {limiteEfectivo.toLocaleString('es-CL')} kg captura
+                      </Typography>
+                    ))}
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
-                      Saldo disponible: {Math.max(0, (cuota.limiteCuota || 0) - (cuota.volumenExtraido || 0)).toLocaleString('es-CL')} kg
+                      Saldo disponible: {Math.max(0, limiteEfectivo - (cuota.volumenExtraido || 0)).toLocaleString('es-CL')} kg
                     </Typography>
                   </Box>
                 </Box>

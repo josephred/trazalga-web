@@ -59,7 +59,7 @@ const FORM_VACIO = {
   metrica: 'DESEMBARQUE',
   limiteKg: 2000,
   margenToleranciaPct: 0,
-  modoAccion: 'SOLO_ALERTA',
+  modoAccion: 'ALERTA_FISCALIZACION',
   vigenciaInicio: new Date().toISOString().slice(0, 10),
   vigenciaFin: '',
   activo: true,
@@ -131,7 +131,7 @@ export default function LimiteExtraccionDiarioMaestro() {
       metrica: regla.metrica || 'DESEMBARQUE',
       limiteKg: regla.limiteKg != null ? Number(regla.limiteKg) : 2000,
       margenToleranciaPct: regla.margenToleranciaPct != null ? Number(regla.margenToleranciaPct) : 0,
-      modoAccion: regla.modoAccion || 'SOLO_ALERTA',
+      modoAccion: regla.modoAccion === 'SOLO_ALERTA' ? 'ALERTA_FISCALIZACION' : (regla.modoAccion || 'ALERTA_FISCALIZACION'),
       vigenciaInicio: aInputDate(regla.vigenciaInicio),
       vigenciaFin: aInputDate(regla.vigenciaFin),
       activo: regla.activo ?? true,
@@ -424,7 +424,7 @@ export default function LimiteExtraccionDiarioMaestro() {
                     <TableCell>
                       <Chip
                         icon={item.modoAccion === 'BLOQUEO_DECLARACION' ? <BlockIcon sx={{ fontSize: 14 }} /> : <NotificationsActiveIcon sx={{ fontSize: 14 }} />}
-                        label={item.modoAccion === 'BLOQUEO_DECLARACION' ? 'Bloqueo' : 'Alerta'}
+                        label={item.modoAccion === 'BLOQUEO_DECLARACION' ? 'Bloqueo' : 'Alerta Fiscalización'}
                         size="small"
                         color={item.modoAccion === 'BLOQUEO_DECLARACION' ? 'error' : 'warning'}
                         variant={item.modoAccion === 'BLOQUEO_DECLARACION' ? 'filled' : 'outlined'}
@@ -622,17 +622,17 @@ export default function LimiteExtraccionDiarioMaestro() {
               </FormLabel>
               <RadioGroup
                 row
-                value={formData.modoAccion}
+                value={formData.modoAccion === 'SOLO_ALERTA' ? 'ALERTA_FISCALIZACION' : formData.modoAccion}
                 onChange={(e) => setFormData((p) => ({ ...p, modoAccion: e.target.value }))}
               >
                 <FormControlLabel
-                  value="SOLO_ALERTA"
+                  value="ALERTA_FISCALIZACION"
                   control={<Radio color="secondary" />}
                   label={
                     <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>Solo Alerta</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>Alerta Fiscalización (Recomendado)</Typography>
                       <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        Permite guardar la declaración, registra la marca LED_EXCEDIDO y notifica a fiscalización.
+                        Permite guardar la declaración, registra la marca permanente LED_EXCEDIDO y notifica a fiscalización.
                       </Typography>
                     </Box>
                   }

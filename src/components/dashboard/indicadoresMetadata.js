@@ -282,7 +282,7 @@ export const INDICADORES_METADATA = {
     periodoFechas: 'Declaraciones registradas dentro del rango temporal seleccionado.',
     formula: 'SUM(desembarque) GROUP BY caleta_id, usuario_id, especie_id, humedad_estado_id (con agregación por comuna y provincia)',
     criterioFiscalizacion:
-      'Permite monitorear tendencias de volumen por caleta y por pescador. Aplica detección estadística de desembarques atípicos: si un desembarque supera en más de 2.5 desviaciones estándar el promedio histórico del perfil en esa comuna o caleta, o rebasa el umbral configurable de {{desembarque_umbral_atipico_kg:5000}} kg (`desembarque_umbral_atipico_kg`), se etiqueta con la marca oficial DESEMBARQUE_ATIPICO.'
+      'Permite monitorear tendencias de volumen por caleta y por pescador. Aplica detección estadística de desembarques atípicos: si un desembarque supera en más de 2.5 desviaciones estándar el promedio histórico del perfil en esa comuna o caleta, o rebasa el umbral configurable de {{desembarque_umbral_atipico_kg:5000}} kg (`desembarque_umbral_atipico_kg`), se etiqueta con la marca oficial DESEMBARQUE_ATIPICO. Doble Imputación Territorial: El desembarque físico se imputa a la caleta y comuna física donde ocurrió la descarga en costa (reflejando la presión extractiva sobre el ecosistema local), a diferencia del consumo de cuotas de recolectores (Indicador 3) que se imputa a su comuna de inscripción RPA.'
   },
 
   capturaCorregida: {
@@ -314,7 +314,7 @@ export const INDICADORES_METADATA = {
     icono: 'Scale',
     color: '#8b5cf6',
     resumenNegocio:
-      'Monitorea el consumo acumulado frente a los techos legales decretados por Subpesca. Implementa la arquitectura de evaluación concurrente: una declaración debe cumplir simultáneamente con todas las cuotas que la cubren (Comunal, Provincial, Regional, Macrozonal y Nacional).',
+      'Monitorea el consumo acumulado frente a los techos legales decretados por Subpesca. Implementa la arquitectura de evaluación concurrente: una declaración debe cumplir simultáneamente con todas las cuotas que la cubren (Comunal, Provincial, Regional, Macrozonal y Nacional). Doble Imputación Territorial: el consumo de cuota de recolectores de orilla se imputa a la comuna de inscripción del declarante en el RPA, mientras que el desembarque físico (Indicador 1) se imputa a la comuna física donde ocurrió la descarga.',
     metricaBase:
       'Descuenta según la métrica legal de la cuota: **Captura Biológica Corregida** (obligatoria por norma) o **Desembarque Físico** (sólo si la resolución técnica lo explicita expresamente). Imputa a la comuna de inscripción del declarante.',
     humedadFactor:
@@ -402,7 +402,7 @@ export const INDICADORES_METADATA = {
     periodoFechas: 'Lotes con saldo disponible en inventario a la fecha actual.',
     formula: 'Días Retención = CURRENT_DATE - fecha_ingreso_bodega',
     criterioFiscalizacion:
-      'El control es de tres niveles y sus umbrales se configuran en Administración → Configuración General → Cadena de Custodia: alerta amarilla preventiva a los {{retencion_bodega_dias_amarilla:3}} días (`retencion_bodega_dias_amarilla`), naranja crítica a los {{retencion_bodega_dias_naranja:5}} días (`retencion_bodega_dias_naranja`) y roja al superar el plazo máximo recomendado de {{retencion_bodega_dias_roja:7}} días (`retencion_bodega_dias_roja`). Aplica a los estados de humedad indicados en `retencion_bodega_estados_sujetos` (por defecto, sólo {{retencion_bodega_estados_sujetos:HÚMEDO}}), gobernado por el switch maestro `retencion_bodega_activo`.'
+      'El control es de tres niveles y sus umbrales se configuran en Administración → Configuración General → Cadena de Custodia: alerta amarilla preventiva a los {{retencion_bodega_dias_amarilla:3}} días (`retencion_bodega_dias_amarilla`), naranja crítica a los {{retencion_bodega_dias_naranja:5}} días (`retencion_bodega_dias_naranja`) y roja al superar el plazo máximo recomendado de {{retencion_bodega_dias_roja:7}} días (`retencion_bodega_dias_roja`). Aplica a los estados de humedad indicados en `retencion_bodega_estados_sujetos` (por defecto, sólo {{retencion_bodega_estados_sujetos:HUMEDO}}), gobernado por el switch maestro `retencion_bodega_activo`.'
   },
 
   integracionHumedadTiempo: {
@@ -567,7 +567,7 @@ export const DEFAULT_CONFIG_VALUES = {
   retencion_bodega_dias_amarilla: '3',
   retencion_bodega_dias_naranja: '5',
   retencion_bodega_dias_roja: '7',
-  retencion_bodega_estados_sujetos: 'HÚMEDO',
+  retencion_bodega_estados_sujetos: 'HUMEDO',
   bio_perdida_activo: 'true',
   bio_humedo_dias_minimos_transito: '3',
   bio_humedo_merma_minima_pct: '5.0',

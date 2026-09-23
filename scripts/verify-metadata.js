@@ -1,13 +1,20 @@
 /**
  * RX.3: Test automatizado de sincronización y validación del Catálogo de Indicadores
  * Verifica que todos los parámetros {{clave}}, marcas, tablas y columnas citados
- * en indicadoresMetadata.js existan y sean válidos en el backend de TrazAlga.
+ * en indicadoresMetadata.js existan y sean válidos en el backend de TrazAlga,
+ * conectando el catálogo con el contrato formal de backend-config-keys.json.
  */
 
 import assert from 'node:assert';
+import fs from 'node:fs';
 import { INDICADORES_METADATA, DEFAULT_CONFIG_VALUES } from '../src/components/dashboard/indicadoresMetadata.js';
 
 console.log('--- Iniciando verificación de catálogo (RX.3) ---');
+
+// 0. Cargar contrato formal de claves del backend (desacopla de la autovalidación)
+const backendKeysPath = new URL('../src/config/backend-config-keys.json', import.meta.url);
+const backendConfig = JSON.parse(fs.readFileSync(backendKeysPath, 'utf-8'));
+const BACKEND_CONFIG_KEYS = new Set(backendConfig.keys);
 
 // 1. Marcas oficiales permitidas en declaracion_marca
 const VALID_MARCAS = new Set([
@@ -18,13 +25,13 @@ const VALID_MARCAS = new Set([
   'POSTERIOR_CIERRE'
 ]);
 
-// 2. Términos expresamente prohibidos / obsoletos según plan R X.3
+// 2. Términos expresamente prohibidos / obsoletos según plan RX.3
 const FORBIDDEN_TOKENS = [
   'PESO_FUERA_UMBRAL',
   'factor_conversion_guardado'
 ];
 
-// 3. Tablas válidas de la base de datos de TrazAlga
+// 3. Tablas válidas de la base de datos de TrazAlga (esquema JPA / MySQL)
 const VALID_TABLES = new Set([
   'declaracion_recolector',
   'declaracion_armador',
@@ -42,9 +49,6 @@ const VALID_TABLES = new Set([
   'configuracion_general',
   'configuracion_auditoria'
 ]);
-
-// 4. Parámetros de configuracion_general reconocidos por el backend
-const KNOWN_CONFIG_KEYS = new Set(Object.keys(DEFAULT_CONFIG_VALUES));
 
 // Extraer todos los textos del catálogo
 function collectAllStrings(obj) {
@@ -81,9 +85,9 @@ for (const forbidden of FORBIDDEN_TOKENS) {
 console.log('✓ Ningún término prohibido (PESO_FUERA_UMBRAL, factor_conversion_guardado) encontrado.');
 
 // =========================================================================
-// TEST 2: Marcadores {{clave}} o {{clave:default}}
+// TEST 2: Marcadores {{clave}} validados contra contrato de Backend
 // =========================================================================
-console.log('[TEST 2] Verificando marcadores de parámetros dinámicos...');
+console.log('[TEST 2] Verificando marcadores {{clave}} contra contrato de backend (backend-config-keys.json)...');
 const placeholderRegex = /\{\{\s*([a-zA-Z0-9_]+)(?::([^}]+))?\s*\}\}/g;
 let match;
 const extractedKeys = new Set();
@@ -92,24 +96,59 @@ while ((match = placeholderRegex.exec(fullTextCorpus)) !== null) {
   const key = match[1];
   extractedKeys.add(key);
   assert.ok(
-    KNOWN_CONFIG_KEYS.has(key),
-    `FALLO RX.3: El marcador {{${key}}} citado en el catálogo no existe en DEFAULT_CONFIG_VALUES ni en configuracion_general.`
+    BACKEND_CONFIG_KEYS.has(key),
+    `FALLO RX.3: El marcador {{${key}}} citado en el catálogo no existe en el contrato del backend (backend-config-keys.json ni configuracion_general).`
   );
 }
-console.log(`✓ ${extractedKeys.size} marcadores verificados exitosamente contra configuracion_general.`);
+
+// Validar que DEFAULT_CONFIG_VALUES esté sincronizado con el backend sin claves huérfanas
+for (const key of Object.keys(DEFAULT_CONFIG_VALUES)) {
+  assert.ok(
+    BACKEND_CONFIG_KEYS.has(key),
+    `FALLO RX.3: La clave "${key}" en DEFAULT_CONFIG_VALUES del frontend no existe en el backend.`
+  );
+}
+
+assert.strictEqual(
+  Object.keys(DEFAULT_CONFIG_VALUES).length,
+  BACKEND_CONFIG_KEYS.size,
+  `FALLO RX.3: Desincronización en número de claves entre frontend (${Object.keys(DEFAULT_CONFIG_VALUES).length}) y backend (${BACKEND_CONFIG_KEYS.size}).`
+);
+console.log(`✓ ${extractedKeys.size} marcadores en texto y ${BACKEND_CONFIG_KEYS.size} claves sincronizadas exactamente con el backend.`);
 
 // =========================================================================
-// TEST 3: Marcas oficiales citadas en textos
+// TEST 3: Marcas oficiales citadas en el texto del catálogo (sin tautologías)
 // =========================================================================
-console.log('[TEST 3] Verificando marcas oficiales citadas...');
-const marcaCandidates = ['EN_VEDA', 'LED_EXCEDIDO', 'DESEMBARQUE_ATIPICO', 'CUOTA_EXCEDIDA', 'POSTERIOR_CIERRE'];
-for (const marca of marcaCandidates) {
+console.log('[TEST 3] Verificando marcas normativas citadas en el corpus del catálogo...');
+
+// Extraer menciones de marcas contextuales en el catálogo
+const marcaCitationRegex = /(?:marca(?:s)?(?:\s+(?:oficial|activa|normativa|de))?)\s+([A-Z0-9_]+)/gi;
+const citedMarcas = new Set();
+let marcaMatch;
+while ((marcaMatch = marcaCitationRegex.exec(fullTextCorpus)) !== null) {
+  const token = marcaMatch[1];
+  if (token.includes('_') || VALID_MARCAS.has(token)) {
+    citedMarcas.add(token);
+  }
+}
+
+// Validar que cada marca citada sea una marca legal válida
+assert.ok(citedMarcas.size > 0, 'FALLO RX.3: No se detectaron citas a marcas normativas en el catálogo.');
+for (const marca of citedMarcas) {
   assert.ok(
     VALID_MARCAS.has(marca),
-    `FALLO RX.3: Marca ${marca} no es parte de las marcas oficiales.`
+    `FALLO RX.3: La marca "${marca}" citada en el catálogo no es una marca válida permitida.`
   );
 }
-console.log(`✓ Todas las marcas referenciadas pertenecen a la especificación normativa oficial.`);
+
+// Validar que las 5 marcas oficiales estén cubiertas en el catálogo
+for (const officialMarca of VALID_MARCAS) {
+  assert.ok(
+    fullTextCorpus.includes(officialMarca),
+    `FALLO RX.3: La marca oficial "${officialMarca}" debe estar presente y explicada en el catálogo de metadatos.`
+  );
+}
+console.log(`✓ ${citedMarcas.size} citas de marcas validadas y las 5 marcas oficiales están debidamente documentadas.`);
 
 // =========================================================================
 // TEST 4: Tablas referenciadas en fuentesDatos
@@ -134,32 +173,28 @@ for (const [indKey, ind] of Object.entries(INDICADORES_METADATA)) {
 console.log(`✓ ${tableCount} menciones a tablas de base de datos verificadas contra el esquema.`);
 
 // =========================================================================
-// TEST 5: Existencia de los 9 indicadores oficiales
+// TEST 5: Existencia y estructura de los 9 indicadores oficiales
 // =========================================================================
 console.log('[TEST 5] Verificando presencia de los 9 indicadores oficiales de la sesión 11-sep...');
 const REQUIRED_INDICATORS = [
-  'desembarqueFisico',      // Indicador 1
-  'capturaCorregida',       // Indicador 2
-  'controlCuotas',          // Indicador 3
-  'limiteDiarioLed',        // Indicador 4
-  'controlVedas',           // Indicador 5
-  'variacionPeso',          // Indicador 6
-  'retencionBodega',        // Indicador 7
+  'desembarqueFisico',        // Indicador 1
+  'capturaCorregida',         // Indicador 2
+  'controlCuotas',            // Indicador 3
+  'limiteDiarioLed',          // Indicador 4
+  'controlVedas',             // Indicador 5
+  'variacionPeso',            // Indicador 6
+  'retencionBodega',          // Indicador 7
   'integracionHumedadTiempo', // Indicador 8
-  'perfiladorRiesgo'        // Indicador 9
+  'perfiladorRiesgo'          // Indicador 9
 ];
 
-for (const reqKey of REQUIRED_INDICATORS) {
-  assert.ok(
-    INDICADORES_METADATA[reqKey],
-    `FALLO RX.3: Falta la ficha oficial para el indicador requerido "${reqKey}".`
-  );
-  assert.ok(INDICADORES_METADATA[reqKey].nombre, `Ficha ${reqKey} carece de nombre.`);
-  assert.ok(INDICADORES_METADATA[reqKey].formula, `Ficha ${reqKey} carece de formula.`);
-  assert.ok(INDICADORES_METADATA[reqKey].criterioFiscalizacion, `Ficha ${reqKey} carece de criterioFiscalizacion.`);
+for (const reqId of REQUIRED_INDICATORS) {
+  const item = INDICADORES_METADATA[reqId];
+  assert.ok(item, `FALLO RX.3: Falta la ficha del indicador requerido "${reqId}".`);
+  assert.ok(item.nombre, `El indicador "${reqId}" no tiene nombre definido.`);
+  assert.ok(item.formula, `El indicador "${reqId}" no tiene fórmula definida.`);
+  assert.ok(item.criterioFiscalizacion, `El indicador "${reqId}" no tiene criterio de fiscalización definido.`);
 }
-console.log('✓ Los 9 indicadores oficiales poseen fichas metodológicas completas y conformes.');
+console.log('✓ Los 9 indicadores requeridos están presentes con ficha completa.');
 
-console.log('\n=======================================================');
-console.log('✓ TODOS LOS TESTS RX.3 DE SINCRONIZACIÓN PASARON EXITOSAMENTE');
-console.log('=======================================================');
+console.log('--- Suite RX.3 completada exitosamente sin errores ---');
