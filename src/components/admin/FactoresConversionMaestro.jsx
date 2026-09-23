@@ -270,8 +270,8 @@ export default function FactoresConversionMaestro() {
     return especies.filter((e) => (e.nombre || '').toLowerCase().includes(q));
   }, [especies, search]);
 
-  // Identificador de especie oficial
-  const esOficial = (especieId) => [1, 8, 9].includes(Number(especieId));
+  // Identificador de especie oficial: todas las especies cuentan con factor oficial
+  const esOficial = () => true;
 
   return (
     <Box>
@@ -455,7 +455,7 @@ export default function FactoresConversionMaestro() {
                         const esProvisorio = factorActivo && (
                           (factorActivo.descripcion || '').toLowerCase().includes('provisorio') ||
                           (factorActivo.descripcion || '').toLowerCase().includes('sin factor oficial') ||
-                          !esOficial(esp.id)
+                          (factorActivo.resolucion || '').toLowerCase().includes('provisorio')
                         );
 
                         return (
