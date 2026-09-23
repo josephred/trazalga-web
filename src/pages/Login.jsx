@@ -33,8 +33,10 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const cleanRut = rut.replace(/[.-]/g, '');
-      const rutBody = cleanRut.slice(0, -1);
+      const cleanRut = rut.replace(/[.-]/g, '').trim();
+      // RUTs cortos de prueba o administración (ej: 1111) se envían completos.
+      // RUTs chilenos estándar (>= 8 caracteres con DV) se envían sin el dígito verificador.
+      const rutBody = cleanRut.length <= 7 ? cleanRut : cleanRut.slice(0, -1);
 
       const response = await api.post('/auth/login', { rut: rutBody, clave });
       localStorage.setItem('token', response.data.token);
