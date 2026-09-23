@@ -1,9 +1,7 @@
-import { Typography, Box } from '@mui/material';
+import React from 'react';
+import ConsolaHallazgos from '../components/dashboard/ConsolaHallazgos';
 
 export default function Alertas() {
-  return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="body1">Página en construcción.</Typography>
-    </Box>
-  );
+  return <ConsolaHallazgos />;
 }
+

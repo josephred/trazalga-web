@@ -76,6 +76,7 @@ const FORM_VACIO = {
   resolucion: '',
   estado: 'ABIERTA',
   activo: true,
+  modoAccion: 'SOLO_ALERTA',
 };
 
 export default function CuotasExtraccionMaestro() {
@@ -182,6 +183,7 @@ export default function CuotasExtraccionMaestro() {
       resolucion: c.resolucion || '',
       estado: c.estado || 'ABIERTA',
       activo: c.activo ?? true,
+      modoAccion: c.modoAccion || 'SOLO_ALERTA',
     });
     setFormError(null);
     setDialogOpen(true);
@@ -246,6 +248,7 @@ export default function CuotasExtraccionMaestro() {
       resolucion: form.resolucion?.trim() || null,
       estado: form.estado,
       activo: Boolean(form.activo),
+      modoAccion: form.modoAccion || 'SOLO_ALERTA',
     };
 
     try {
@@ -579,6 +582,13 @@ export default function CuotasExtraccionMaestro() {
                               Cierre: {String(c.fechaCierre).slice(0, 10)}
                             </Typography>
                           )}
+                          <Chip
+                            label={c.modoAccion === 'BLOQUEO_DECLARACION' ? 'Bloqueo' : 'Alerta'}
+                            size="small"
+                            color={c.modoAccion === 'BLOQUEO_DECLARACION' ? 'error' : 'default'}
+                            variant="outlined"
+                            sx={{ fontSize: '0.65rem', fontWeight: 600, height: 20 }}
+                          />
                         </Box>
                       </TableCell>
 
@@ -863,6 +873,39 @@ export default function CuotasExtraccionMaestro() {
               value={form.fechaFin}
               onChange={(e) => setForm((p) => ({ ...p, fechaFin: e.target.value }))}
             />
+          </Box>
+
+          {/* Modo de Acción ante Exceso (R3.2) */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              border: 1,
+              borderColor: form.modoAccion === 'BLOQUEO_DECLARACION' ? 'error.main' : 'info.main',
+              bgcolor: (t) =>
+                form.modoAccion === 'BLOQUEO_DECLARACION'
+                  ? t.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)'
+                  : t.palette.mode === 'dark' ? 'rgba(14, 165, 233, 0.1)' : 'rgba(14, 165, 233, 0.05)',
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+              Política de Acción ante Exceso de Cuota (Refinamiento Sernapesca)
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 2fr' }, gap: 2, alignItems: 'center' }}>
+              <TextField
+                select
+                size="small"
+                label="Modo de Acción *"
+                value={form.modoAccion || 'SOLO_ALERTA'}
+                onChange={(e) => setForm((p) => ({ ...p, modoAccion: e.target.value }))}
+              >
+                <MenuItem value="SOLO_ALERTA">SOLO_ALERTA (Rotula faena con CUOTA_EXCEDIDA)</MenuItem>
+                <MenuItem value="BLOQUEO_DECLARACION">BLOQUEO_DECLARACION (Rechaza con HTTP 422)</MenuItem>
+              </TextField>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                «El bloqueo rechaza la declaración en terreno. La evidencia histórica de Sernapesca muestra pesquerías operando en déficit; use bloqueo sólo donde la resolución lo respalde.»
+              </Typography>
+            </Box>
           </Box>
 
           <TextField
