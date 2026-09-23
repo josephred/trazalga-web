@@ -41,6 +41,8 @@ import {
   History as HistoryIcon,
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
+import { getPerfil } from '../../auth/sesion';
+import { puedeHacer } from '../../auth/perfiles';
 
 // Metadatos de configuración visual para cada tipo de marca
 const MARCA_CONFIG = {
@@ -92,6 +94,9 @@ const MARCA_CONFIG = {
 };
 
 export default function ConsolaHallazgos() {
+  const perfil = getPerfil();
+  const puedeResolver = puedeHacer(perfil, 'RESOLVER_HALLAZGO');
+
   const [hallazgos, setHallazgos] = useState([]);
   const [resumen, setResumen] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -620,25 +625,31 @@ export default function ConsolaHallazgos() {
 
                         {/* Acción */}
                         <TableCell align="center">
-                          {!h.resuelta ? (
-                            <Tooltip title="Marcar como fiscalizado / resuelto">
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="success"
-                                startIcon={<CheckCircleIcon sx={{ fontSize: 15 }} />}
-                                onClick={() => handleResolver(h.id)}
-                                sx={{ textTransform: 'none', fontSize: '0.72rem', py: 0.3, px: 1.2, borderRadius: 2 }}
-                              >
-                                Resolver
-                              </Button>
-                            </Tooltip>
+                          {puedeResolver ? (
+                            !h.resuelta ? (
+                              <Tooltip title="Marcar como fiscalizado / resuelto">
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="success"
+                                  startIcon={<CheckCircleIcon sx={{ fontSize: 15 }} />}
+                                  onClick={() => handleResolver(h.id)}
+                                  sx={{ textTransform: 'none', fontSize: '0.72rem', py: 0.3, px: 1.2, borderRadius: 2 }}
+                                >
+                                  Resolver
+                                </Button>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip title="Reabrir hallazgo">
+                                <IconButton size="small" color="default" onClick={() => handleReabrir(h.id)}>
+                                  <HistoryIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )
                           ) : (
-                            <Tooltip title="Reabrir hallazgo">
-                              <IconButton size="small" color="default" onClick={() => handleReabrir(h.id)}>
-                                <HistoryIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                            <Typography variant="caption" sx={{ color: 'text.disabled', fontStyle: 'italic', fontSize: '0.7rem' }}>
+                              Sólo lectura
+                            </Typography>
                           )}
                         </TableCell>
                       </TableRow>

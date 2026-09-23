@@ -14,10 +14,12 @@ import MainLayout from './components/layout/MainLayout';
 
 import { useEffect } from 'react';
 import { requestFirebaseNotificationPermission } from './firebase';
+import { getToken, getPerfil } from './auth/sesion';
+import { puedeVer } from './auth/perfiles';
 
 // Un componente simple para proteger rutas (si no hay token, manda al login)
 const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   
   useEffect(() => {
     if (token) {
@@ -25,7 +27,13 @@ const PrivateRoute = ({ children }) => {
     }
   }, [token]);
 
-  return token ? children : <Navigate to="/login" />;
+  return token ? children : <Navigate to="/login" replace />;
+};
+
+// Guarda de perfil: si el perfil no tiene acceso a la ruta, redirige al dashboard
+const RutaConPerfil = ({ ruta, children }) => {
+  const perfil = getPerfil();
+  return puedeVer(perfil, ruta) ? children : <Navigate to="/dashboard" replace />;
 };
 
 function App() {
@@ -46,14 +54,14 @@ function App() {
             } 
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="consultas" element={<Consultas />} />
-            <Route path="alertas" element={<Alertas />} />
-            <Route path="casos" element={<Casos />} />
-            <Route path="reportes" element={<Reportes />} />
-            <Route path="mapa" element={<Mapa />} />
-            <Route path="administracion" element={<Administracion />} />
-            <Route path="ayuda" element={<Ayuda />} />
+            <Route path="dashboard" element={<RutaConPerfil ruta="/dashboard"><Dashboard /></RutaConPerfil>} />
+            <Route path="consultas" element={<RutaConPerfil ruta="/consultas"><Consultas /></RutaConPerfil>} />
+            <Route path="alertas" element={<RutaConPerfil ruta="/alertas"><Alertas /></RutaConPerfil>} />
+            <Route path="casos" element={<RutaConPerfil ruta="/casos"><Casos /></RutaConPerfil>} />
+            <Route path="reportes" element={<RutaConPerfil ruta="/reportes"><Reportes /></RutaConPerfil>} />
+            <Route path="mapa" element={<RutaConPerfil ruta="/mapa"><Mapa /></RutaConPerfil>} />
+            <Route path="administracion" element={<RutaConPerfil ruta="/administracion"><Administracion /></RutaConPerfil>} />
+            <Route path="ayuda" element={<RutaConPerfil ruta="/ayuda"><Ayuda /></RutaConPerfil>} />
           </Route>
 
           {/* Redirección por defecto */}

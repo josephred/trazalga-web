@@ -25,6 +25,9 @@ import { useTheme } from '@mui/material/styles';
 import { ColorModeContext } from '../../theme/ThemeContext';
 import sernapescaLogo from '../../assets/sernapesca.png';
 import { onMessageListener } from '../../firebase';
+import { getPerfil, getNombre, cerrarSesion, revalidarPerfilServidor } from '../../auth/sesion';
+import { puedeVer } from '../../auth/perfiles';
+import api from '../../api/axiosConfig';
 
 const drawerWidth = 240;
 
@@ -52,6 +55,14 @@ export default function MainLayout() {
   const openNotif = Boolean(notifAnchorEl);
   const [notifications, setNotifications] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', title: '' });
+
+  const perfil = getPerfil();
+  const nombre = getNombre();
+  const itemsVisibles = menuItems.filter((item) => puedeVer(perfil, item.path));
+
+  useEffect(() => {
+    revalidarPerfilServidor(api);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onMessageListener((payload) => {
@@ -104,8 +115,7 @@ export default function MainLayout() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    cerrarSesion();
     navigate('/login');
   };
 
@@ -161,7 +171,7 @@ export default function MainLayout() {
 
           {/* Enlaces del Menú */}
           <List sx={{ flex: 1, pt: 2, px: 0 }}>
-            {menuItems.map((item) => {
+            {itemsVisibles.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <ListItem key={item.text} disablePadding>
@@ -428,10 +438,10 @@ export default function MainLayout() {
                 >
                   <Box sx={{ textAlign: 'right' }}>
                     <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary', fontFamily: 'Outfit' }}>
-                      Analista Regional
+                      {nombre || 'Usuario Sernapesca'}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.65rem', color: 'text.secondary', fontFamily: 'Inter' }}>
-                      IV Región
+                    <Typography sx={{ fontSize: '0.65rem', color: 'primary.main', fontFamily: 'Inter', fontWeight: 700 }}>
+                      {perfil || 'CONSULTA'}
                     </Typography>
                   </Box>
                   <Avatar 

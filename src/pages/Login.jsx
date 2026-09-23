@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import { useState } from 'react';
-import { Box, TextField, Button, Typography, InputAdornment, IconButton } from '@mui/material';
+import { Box, TextField, Button, Typography, InputAdornment, IconButton, Stack } from '@mui/material';
 import { Visibility, VisibilityOff, Lock, HelpOutline, MenuBook, Language, Warning, BarChart, CheckCircle, VerifiedUser, Security, Analytics } from '@mui/icons-material';
 import api from '../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,40 @@ import { validateRut } from '../utils/rutValidator';
 import { Alert, Snackbar } from '@mui/material';
 import sernapescaLogo from '../assets/sernapesca.png';
 import loginBarco from '../assets/login_barco.png';
+import { guardarSesion } from '../auth/sesion';
+
+const CUENTAS_ACCESO_RAPIDO = [
+  {
+    perfil: 'ADMINISTRADOR',
+    etiqueta: 'Administrador',
+    subtitulo: 'Acceso Total (Parámetros y Normas)',
+    rut: '1111',
+    clave: '1111',
+    badgeColor: '#0369a1',
+    badgeBg: '#f0f9ff',
+    borderColor: '#7dd3fc',
+  },
+  {
+    perfil: 'FISCALIZADOR',
+    etiqueta: 'Fiscalizador',
+    subtitulo: 'Operativo (Resolver Hallazgos)',
+    rut: '222-2',
+    clave: '222-2',
+    badgeColor: '#c2410c',
+    badgeBg: '#fff7ed',
+    borderColor: '#fdba74',
+  },
+  {
+    perfil: 'AUDITOR',
+    etiqueta: 'Auditor',
+    subtitulo: 'Sólo Lectura (Sin Casos ni Admin)',
+    rut: '333-3',
+    clave: '333-3',
+    badgeColor: '#047857',
+    badgeBg: '#f0fdf4',
+    borderColor: '#86efac',
+  },
+];
 
 export default function Login() {
   const [rut, setRut] = useState('');
@@ -19,27 +53,34 @@ export default function Login() {
 
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (e, customRut, customClave) => {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const targetRut = customRut !== undefined ? customRut : rut;
+    const targetClave = customClave !== undefined ? customClave : clave;
 
     let newErrors = { rut: '', clave: '' };
     let isValid = true;
-    if (!rut) { newErrors.rut = 'El RUT es obligatorio'; isValid = false; }
-    else if (!validateRut(rut)) { newErrors.rut = 'RUT no válido'; isValid = false; }
-    if (!clave) { newErrors.clave = 'La clave es obligatoria'; isValid = false; }
+    if (!targetRut) { newErrors.rut = 'El RUT es obligatorio'; isValid = false; }
+    else if (!validateRut(targetRut)) { newErrors.rut = 'RUT no válido'; isValid = false; }
+    if (!targetClave) { newErrors.clave = 'La clave es obligatoria'; isValid = false; }
 
     setErrors(newErrors);
     if (!isValid) return;
 
     setLoading(true);
     try {
-      const cleanRut = rut.replace(/[.-]/g, '').trim();
-      // RUTs cortos de prueba o administración (ej: 1111) se envían completos.
-      // RUTs chilenos estándar (>= 8 caracteres con DV) se envían sin el dígito verificador.
-      const rutBody = cleanRut.length <= 7 ? cleanRut : cleanRut.slice(0, -1);
+      const clean = targetRut.trim();
+      let rutBody;
+      if (clean === '222-2' || clean === '333-3') {
+        rutBody = clean;
+      } else {
+        const cleanRut = clean.replace(/[.-]/g, '');
+        rutBody = cleanRut.length <= 7 ? cleanRut : cleanRut.slice(0, -1);
+      }
 
-      const response = await api.post('/auth/login', { rut: rutBody, clave });
-      localStorage.setItem('token', response.data.token);
+      const response = await api.post('/auth/login', { rut: rutBody, clave: targetClave });
+      guardarSesion(response.data);
       navigate('/dashboard');
     } catch (error) {
       console.error('Error en Login:', error);
@@ -47,6 +88,12 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const accesoRapido = async (cuenta) => {
+    setRut(cuenta.rut);
+    setClave(cuenta.clave);
+    await handleLogin(null, cuenta.rut, cuenta.clave);
   };
 
   const handleCloseSnackbar = () => {
@@ -388,6 +435,70 @@ export default function Login() {
               }}>
                 ¿Olvidó su contraseña?
               </Typography>
+
+              {/* Acceso Rápido de Pruebas (Siempre visible en modo dev y producción) */}
+              <Box sx={{ mt: 3, pt: 2.5, borderTop: '1px dashed #cbd5e1' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                  <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Acceso rápido de pruebas
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>
+                    1-clic
+                  </Typography>
+                </Box>
+                <Stack spacing={1}>
+                  {CUENTAS_ACCESO_RAPIDO.map((cuenta) => (
+                    <Button
+                      key={cuenta.perfil}
+                      fullWidth
+                      variant="outlined"
+                      size="small"
+                      disabled={loading}
+                      onClick={() => accesoRapido(cuenta)}
+                      sx={{
+                        py: 0.8,
+                        px: 1.5,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        textTransform: 'none',
+                        borderRadius: 2,
+                        borderColor: cuenta.borderColor,
+                        bgcolor: cuenta.badgeBg,
+                        color: '#0f172a',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          bgcolor: cuenta.badgeBg,
+                          borderColor: cuenta.borderColor,
+                          boxShadow: '0 3px 8px rgba(0,0,0,0.08)',
+                          transform: 'translateY(-1px)',
+                        }
+                      }}
+                    >
+                      <Box sx={{ textAlign: 'left' }}>
+                        <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: cuenta.badgeColor, lineHeight: 1.2 }}>
+                          {cuenta.etiqueta}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.68rem', color: '#64748b', lineHeight: 1.1 }}>
+                          {cuenta.subtitulo} · RUT {cuenta.rut}
+                        </Typography>
+                      </Box>
+                      <Box sx={{
+                        bgcolor: cuenta.badgeColor,
+                        color: '#fff',
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        px: 1.2,
+                        py: 0.4,
+                        borderRadius: 1,
+                        letterSpacing: 0.3,
+                      }}>
+                        Ingresar
+                      </Box>
+                    </Button>
+                  ))}
+                </Stack>
+              </Box>
 
               {/* Footer notice */}
               <Box sx={{
