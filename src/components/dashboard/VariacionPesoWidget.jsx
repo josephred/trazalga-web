@@ -42,13 +42,13 @@ export default function VariacionPesoWidget({ dateRange }) {
   const [metrics, setMetrics] = useState({
     umbralPct: 5.0,
     totalConciliaciones: 0,
-    promedioVariacionPct: 0,
+    promedioVariacionPct: null,
     fueraUmbral: 0,
     pesajes: 0,
     documentos: 0,
-    pesaje: { total: 0, promedioVariacionPct: 0, fueraUmbral: 0 },
-    documental: { total: 0, promedioVariacionPct: 0, fueraUmbral: 0 },
-    consolidado: { totalConciliaciones: 0, promedioVariacionPct: 0, fueraUmbral: 0 }
+    pesaje: { total: 0, promedioVariacionPct: null, fueraUmbral: 0 },
+    documental: { total: 0, promedioVariacionPct: null, fueraUmbral: 0 },
+    consolidado: { totalConciliaciones: 0, promedioVariacionPct: null, fueraUmbral: 0 }
   });
   const [loteMetrics, setLoteMetrics] = useState({});
   const [loading, setLoading] = useState(true);
@@ -86,19 +86,31 @@ export default function VariacionPesoWidget({ dateRange }) {
         ]);
 
         const safePeso = pesoData || {};
-        const safePesaje = safePeso.pesaje || {
+        const safePesaje = safePeso.pesaje ? {
+          total: safePeso.pesaje.total ?? safePeso.pesajes ?? 0,
+          promedioVariacionPct: (safePeso.pesaje.total > 0 || safePeso.pesajes > 0)
+            ? (safePeso.pesaje.promedioVariacionPct ?? null)
+            : null,
+          fueraUmbral: safePeso.pesaje.fueraUmbral ?? 0
+        } : {
           total: safePeso.pesajes || 0,
-          promedioVariacionPct: 0,
+          promedioVariacionPct: safePeso.pesajes > 0 ? (safePeso.promedioPesajesPct ?? null) : null,
           fueraUmbral: 0
         };
-        const safeDocumental = safePeso.documental || {
+        const safeDocumental = safePeso.documental ? {
+          total: safePeso.documental.total ?? safePeso.documentos ?? 0,
+          promedioVariacionPct: (safePeso.documental.total > 0 || safePeso.documentos > 0)
+            ? (safePeso.documental.promedioVariacionPct ?? safePeso.promedioVariacionPct ?? null)
+            : null,
+          fueraUmbral: safePeso.documental.fueraUmbral ?? safePeso.fueraUmbral ?? 0
+        } : {
           total: safePeso.documentos || 0,
-          promedioVariacionPct: safePeso.promedioVariacionPct || 0,
+          promedioVariacionPct: safePeso.documentos > 0 ? (safePeso.promedioVariacionPct ?? null) : null,
           fueraUmbral: safePeso.fueraUmbral || 0
         };
         const safeConsolidado = safePeso.consolidado || {
           totalConciliaciones: safePeso.totalConciliaciones || ((safePesaje.total || 0) + (safeDocumental.total || 0)),
-          promedioVariacionPct: safePeso.promedioVariacionPct || 0,
+          promedioVariacionPct: safePeso.totalConciliaciones > 0 ? (safePeso.promedioVariacionPct ?? null) : null,
           fueraUmbral: safePeso.fueraUmbral || 0
         };
 
@@ -284,7 +296,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                         sx={{
                           fontWeight: 800,
                           fontFamily: 'Outfit',
-                          color: (metrics.pesaje?.promedioVariacionPct || 0) > (metrics.umbralPct || 5.0) ? 'error.main' : 'text.primary'
+                          color: metrics.pesaje?.promedioVariacionPct != null && Math.abs(metrics.pesaje.promedioVariacionPct) > (metrics.umbralPct || 5.0) ? 'error.main' : 'text.primary'
                         }}
                       >
                         {metrics.pesaje?.promedioVariacionPct !== null && metrics.pesaje?.promedioVariacionPct !== undefined
@@ -362,12 +374,12 @@ export default function VariacionPesoWidget({ dateRange }) {
                         sx={{
                           fontWeight: 800,
                           fontFamily: 'Outfit',
-                          color: (metrics.documental?.promedioVariacionPct || 0) > (metrics.umbralPct || 5.0) ? 'warning.main' : 'text.primary'
+                          color: metrics.documental?.promedioVariacionPct != null && Math.abs(metrics.documental.promedioVariacionPct) > (metrics.umbralPct || 5.0) ? 'warning.main' : 'text.primary'
                         }}
                       >
                         {metrics.documental?.promedioVariacionPct !== null && metrics.documental?.promedioVariacionPct !== undefined
                           ? `${metrics.documental.promedioVariacionPct > 0 ? '+' : ''}${metrics.documental.promedioVariacionPct}%`
-                          : '0.0%'}
+                          : '—'}
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
                         Promedio Variación
