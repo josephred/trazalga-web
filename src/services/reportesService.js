@@ -58,8 +58,24 @@ const formatParams = (filters) => {
   if (filters.perfil) params.perfil = filters.perfil;
   if (filters.umbral) params.umbral = filters.umbral;
   if (filters.semaforo) params.semaforo = filters.semaforo;
+  if (filters.embarcacionId) params.embarcacionId = filters.embarcacionId;
   if (filters.fecha) params.fecha = filters.fecha;
   return params;
+};
+
+export const getExtraccionVeda = async (filters) => {
+  const response = await api.get('/reportes/extraccion-veda', { params: formatParams(filters) });
+  return response.data;
+};
+
+export const getExtraccionVedaDetalle = async (filters) => {
+  const response = await api.get('/reportes/extraccion-veda-detalle', { params: formatParams(filters) });
+  return response.data;
+};
+
+export const getLedHallazgos = async (filters) => {
+  const response = await api.get('/reportes/led-hallazgos', { params: formatParams(filters) });
+  return response.data;
 };
 
 export const getDesembarqueFisico = async (filters) => {

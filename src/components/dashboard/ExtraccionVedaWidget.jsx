@@ -16,9 +16,11 @@ import {
   TableHead,
   TableRow,
   Card,
-  CardContent
+  CardContent,
+  Chip
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import DownloadIcon from '@mui/icons-material/FileDownload';
 import api from '../../api/axiosConfig';
 
 export default function ExtraccionVedaWidget({ dateRange }) {
@@ -63,12 +65,40 @@ export default function ExtraccionVedaWidget({ dateRange }) {
         queryParams = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
       }
       const response = await api.get(`/reportes/extraccion-veda-detalle${queryParams}`);
-      setDetalle(response.data);
+      setDetalle(response.data || []);
     } catch (err) {
       console.error('Error fetching detalle veda:', err);
     } finally {
       setLoadingDetalle(false);
     }
+  };
+
+  const exportarCSV = () => {
+    if (!detalle || detalle.length === 0) return;
+    const headers = ['Folio', 'Tipo Declaracion', 'Declarante', 'RUT', 'Caleta', 'Comuna', 'Region', 'Especie', 'Metodo', 'Fecha Extraccion', 'Kilos', 'Resolucion Infringida'];
+    const rows = detalle.map(d => [
+      `"${d.folio || ('FAENA-' + d.id)}"`,
+      `"${d.tipoDeclaracion || d.perfil || ''}"`,
+      `"${d.nombreDeclarante || d.actor || ''}"`,
+      `"${d.rut || ''}"`,
+      `"${d.caleta || ''}"`,
+      `"${d.comuna || ''}"`,
+      `"${d.region || ''}"`,
+      `"${d.especie || ''}"`,
+      `"${d.metodo || ''}"`,
+      `"${d.fechaExtraccion ? new Date(d.fechaExtraccion).toLocaleDateString('es-CL') : (d.fecha ? new Date(d.fecha).toLocaleDateString('es-CL') : '')}"`,
+      d.kilos || d.kg || 0,
+      `"${d.resolucion || ''}"`
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `extraccion_veda_detalle_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (loading) {
@@ -202,17 +232,17 @@ export default function ExtraccionVedaWidget({ dateRange }) {
                   boxShadow: 'none'
                 }}
               >
-                Ver Detalle de Infracciones
+                Ver Detalle Nominal de Infracciones
               </Button>
             </Box>
           </Box>
         )}
 
-        {/* Modal de Detalle */}
+        {/* Modal de Detalle Nominal */}
         <Dialog 
           open={openModal} 
           onClose={() => setOpenModal(false)} 
-          maxWidth="md" 
+          maxWidth="lg" 
           fullWidth
           slotProps={{
             paper: {
@@ -220,8 +250,44 @@ export default function ExtraccionVedaWidget({ dateRange }) {
             }
           }}
         >
-          <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', p: 3 }}>
-            Detalle de Extracciones en Veda
+          <DialogTitle sx={{ 
+            fontWeight: 700, 
+            fontFamily: 'Outfit', 
+            color: 'text.primary', 
+            bgcolor: 'background.default', 
+            borderBottom: 1, 
+            borderColor: 'divider', 
+            p: 2.5,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1.5
+          }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+                Detalle Nominal de Extracciones en Veda (R5.1)
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                Total infractor: {metrics.declaracionesVeda} faenas · {((metrics && metrics.totalKgVeda) || 0).toLocaleString('es-CL')} kg
+              </Typography>
+            </Box>
+            <Button
+              startIcon={<DownloadIcon />}
+              onClick={exportarCSV}
+              disabled={detalle.length === 0}
+              variant="outlined"
+              size="small"
+              sx={{ 
+                borderRadius: 2, 
+                textTransform: 'none', 
+                fontFamily: 'Outfit', 
+                fontWeight: 600,
+                borderColor: 'divider'
+              }}
+            >
+              Exportar CSV
+            </Button>
           </DialogTitle>
           <DialogContent dividers sx={{ p: 0, borderColor: 'divider' }}>
             {loadingDetalle ? (
@@ -233,34 +299,77 @@ export default function ExtraccionVedaWidget({ dateRange }) {
                 No hay declaraciones en veda registradas para este periodo.
               </Typography>
             ) : (
-              <TableContainer sx={{ maxHeight: 400 }}>
-                <Table size="medium" stickyHeader>
+              <TableContainer sx={{ maxHeight: 460 }}>
+                <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Fecha</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Perfil</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Actor</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Especie</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }}>Método</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', fontFamily: 'Outfit', borderBottom: 2, borderColor: 'divider' }} align="right">Volumen (Kg)</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }}>Folio</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }}>Tipo</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }}>Declarante (RUT)</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }}>Caleta / Comuna</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }}>Especie</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }}>Método</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }}>Fecha Faena</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }} align="right">Desembarque (Kg)</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }}>Resolución</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {detalle.map((row) => (
+                    {detalle.map((row, idx) => (
                       <TableRow 
-                        key={row.id}
+                        key={row.id || idx}
+                        hover
                         sx={{ 
                           '&:hover': { bgcolor: 'background.default' }, 
                           transition: 'background-color 0.2s ease' 
                         }}
                       >
-                        <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{new Date(row.fecha).toLocaleDateString('es-CL')}</TableCell>
-                        <TableCell sx={{ py: 1.5, fontFamily: 'Inter', fontWeight: 600 }}>{row.perfil}</TableCell>
-                        <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.actor}</TableCell>
-                        <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.especie}</TableCell>
-                        <TableCell sx={{ py: 1.5, fontFamily: 'Inter' }}>{row.metodo || row.extraccionTipo || 'General'}</TableCell>
-                        <TableCell sx={{ py: 1.5, fontFamily: 'Outfit', fontWeight: 700, color: 'error.main' }} align="right">
-                          {((row && row.kg) || 0).toLocaleString('es-CL')}
+                        <TableCell sx={{ py: 1.2, fontFamily: 'monospace', fontSize: '0.8rem', fontWeight: 600 }}>
+                          {row.folio || ('FAENA-' + row.id)}
+                        </TableCell>
+                        <TableCell sx={{ py: 1.2, fontFamily: 'Inter', fontSize: '0.8rem' }}>
+                          <Chip 
+                            label={row.tipoDeclaracion || row.perfil} 
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontSize: '0.68rem', height: 20, fontWeight: 600 }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ py: 1.2, fontFamily: 'Inter', fontSize: '0.8rem' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem' }}>
+                            {row.nombreDeclarante || row.actor}
+                          </Typography>
+                          {row.rut && (
+                            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                              {row.rut}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell sx={{ py: 1.2, fontFamily: 'Inter', fontSize: '0.8rem' }}>
+                          {row.caleta || '—'} {row.comuna ? `(${row.comuna})` : ''}
+                        </TableCell>
+                        <TableCell sx={{ py: 1.2, fontFamily: 'Inter', fontSize: '0.8rem', fontWeight: 600 }}>
+                          {row.especie}
+                        </TableCell>
+                        <TableCell sx={{ py: 1.2, fontFamily: 'Inter', fontSize: '0.8rem' }}>
+                          <Chip 
+                            label={row.metodo || 'General'} 
+                            size="small" 
+                            color={row.metodo === 'Barreteado' ? 'error' : 'default'}
+                            variant="outlined"
+                            sx={{ fontSize: '0.68rem', height: 20 }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ py: 1.2, fontFamily: 'Inter', fontSize: '0.8rem' }}>
+                          {row.fechaExtraccion 
+                            ? new Date(row.fechaExtraccion).toLocaleDateString('es-CL')
+                            : (row.fecha ? new Date(row.fecha).toLocaleDateString('es-CL') : '—')}
+                        </TableCell>
+                        <TableCell sx={{ py: 1.2, fontFamily: 'Outfit', fontWeight: 700, color: 'error.main', fontSize: '0.85rem' }} align="right">
+                          {((row.kilos != null ? row.kilos : row.kg) || 0).toLocaleString('es-CL')}
+                        </TableCell>
+                        <TableCell sx={{ py: 1.2, fontFamily: 'Inter', fontSize: '0.75rem', color: 'text.secondary' }}>
+                          {row.resolucion || 'Subpesca'}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -269,7 +378,7 @@ export default function ExtraccionVedaWidget({ dateRange }) {
               </TableContainer>
             )}
           </DialogContent>
-          <DialogActions sx={{ p: 2.5, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
+          <DialogActions sx={{ p: 2, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
             <Button 
               onClick={() => setOpenModal(false)}
               sx={{ 
