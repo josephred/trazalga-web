@@ -596,7 +596,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Planta</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">&Delta; Peso (%)</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Tránsito</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Inconsistencia Biológica</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Severidad Biológica (R8.1)</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -629,26 +629,38 @@ export default function VariacionPesoWidget({ dateRange }) {
                               </Typography>
                             </TableCell>
                             <TableCell align="center">
-                              {row.inconsistenciaBiologica === 'HUMEDO_SIN_MERMA' ? (
-                                <Tooltip title="Alga húmeda transportada por 3 o más días sin registrar la merma física esperada por deshidratación (mínimo -5%). Posible blanqueo o hidratación.">
-                                  <Chip
-                                    label="HÚMEDO SIN MERMA"
-                                    size="small"
-                                    color="error"
-                                    sx={{ fontSize: '0.65rem', height: 20, fontWeight: 800 }}
-                                  />
+                              {row.severidadBiologica === 'CRITICA' ? (
+                                <Tooltip title={row.motivoMerma || "Inconsistencia biológica crítica: alga húmeda transportada por 3 o más días sin registrar merma o con incremento de peso. Presunción de blanqueo o hidratación no declarada en ruta."}>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.3 }}>
+                                    <Chip
+                                      label="CRÍTICA"
+                                      size="small"
+                                      sx={{ fontSize: '0.68rem', height: 22, fontWeight: 900, bgcolor: '#b91c1c', color: '#fff' }}
+                                    />
+                                    <Typography variant="caption" sx={{ fontSize: '0.65rem', color: '#b91c1c', fontWeight: 700 }}>
+                                      {row.inconsistenciaBiologica}
+                                    </Typography>
+                                  </Box>
                                 </Tooltip>
-                              ) : row.inconsistenciaBiologica === 'SECO_MERMA_EXCESIVA' ? (
-                                <Tooltip title="Alga seca con merma superior a la tolerancia física del 3%.">
-                                  <Chip
-                                    label="SECO MERMA EXCESIVA"
-                                    size="small"
-                                    color="error"
-                                    sx={{ fontSize: '0.65rem', height: 20, fontWeight: 800 }}
-                                  />
+                              ) : row.severidadBiologica === 'ATENCION' ? (
+                                <Tooltip title={row.motivoMerma || (row.inconsistenciaBiologica === 'SECO_MERMA_EXCESIVA' ? "Alga seca con merma superior al límite físico tolerable (3%)." : "Merma húmeda inferior a la tasa de evaporación física esperada.")}>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.3 }}>
+                                    <Chip
+                                      label="ATENCIÓN"
+                                      size="small"
+                                      sx={{ fontSize: '0.68rem', height: 22, fontWeight: 800, bgcolor: '#f59e0b', color: '#fff' }}
+                                    />
+                                    <Typography variant="caption" sx={{ fontSize: '0.65rem', color: '#b45309', fontWeight: 600 }}>
+                                      {row.inconsistenciaBiologica}
+                                    </Typography>
+                                  </Box>
                                 </Tooltip>
+                              ) : row.severidadBiologica === 'NEUTRA' ? (
+                                <Chip label="NEUTRA" size="small" color="success" variant="outlined" sx={{ fontSize: '0.68rem', height: 20, fontWeight: 700 }} />
                               ) : (
-                                <Chip label="CONSISTENTE" size="small" color="success" sx={{ fontSize: '0.65rem', height: 20, fontWeight: 700 }} />
+                                <Tooltip title="Control biológico desactivado en Administración (bio_perdida_activo = false)">
+                                  <Chip label="DESACTIVADO" size="small" sx={{ fontSize: '0.65rem', height: 20, bgcolor: 'action.hover', color: 'text.disabled' }} />
+                                </Tooltip>
                               )}
                             </TableCell>
                           </TableRow>
