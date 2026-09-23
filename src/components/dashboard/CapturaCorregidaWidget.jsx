@@ -87,6 +87,7 @@ export default function CapturaCorregidaWidget({ dateRange }) {
     <Card
       elevation={0}
       sx={{
+        width: '100%',
         borderRadius: 4,
         border: 1,
         borderColor: hayInconsistencia ? 'error.light' : 'divider',

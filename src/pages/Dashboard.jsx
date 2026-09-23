@@ -210,23 +210,24 @@ export default function Dashboard() {
           </Grid>
 
           {/* Indicador 1: Desembarque Físico */}
-          <Grid item xs={12}>
-            <Box sx={{ position: 'relative', height: '100%' }}>
+          <Grid item xs={12} md={12} sx={{ width: '100%' }}>
+            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <DesembarqueFisicoWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="desembarqueFisico" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 
-          {/* Indicador 2: Captura Corregida e Indicador 3: Control de Cuotas */}
-          <Grid item xs={12} md={6}>
-            <Box sx={{ position: 'relative', height: '100%' }}>
+          {/* Indicador 2: Captura Corregida */}
+          <Grid item xs={12} md={12} sx={{ width: '100%' }}>
+            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <CapturaCorregidaWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="capturaCorregida" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 
-          <Grid item xs={12} md={6}>
-            <Box sx={{ position: 'relative', height: '100%' }}>
+          {/* Indicador 3: Control de Cuotas */}
+          <Grid item xs={12} md={12} sx={{ width: '100%' }}>
+            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <ControlCuotaDiaria dateRange={dateRange} />
               <IndicadorHelpButton helpKey="controlCuotas" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
@@ -248,15 +249,15 @@ export default function Dashboard() {
           </Grid>
 
           {/* Indicador 6: Trazabilidad de Peso y Retención en Bodega Virtual */}
-          <Grid item xs={12} md={6}>
-            <Box sx={{ position: 'relative', height: '100%' }}>
+          <Grid item xs={12} md={12} sx={{ width: '100%' }}>
+            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <VariacionPesoWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="variacionPeso" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 
-          <Grid item xs={12} md={6}>
-            <Box sx={{ position: 'relative', height: '100%' }}>
+          <Grid item xs={12} md={12} sx={{ width: '100%' }}>
+            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <RetencionBodegaWidget />
               <IndicadorHelpButton helpKey="retencionBodega" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>

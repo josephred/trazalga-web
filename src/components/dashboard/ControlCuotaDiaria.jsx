@@ -94,6 +94,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
     <Card 
       elevation={0}
       sx={{ 
+        width: '100%',
         height: '100%',
         borderRadius: 4, 
         border: 1, borderColor: 'divider',

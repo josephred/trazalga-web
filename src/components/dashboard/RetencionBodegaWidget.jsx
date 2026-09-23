@@ -66,6 +66,7 @@ export default function RetencionBodegaWidget() {
     <Card
       elevation={0}
       sx={{
+        width: '100%',
         borderRadius: 4,
         border: 1,
         borderColor: isDesactivado ? 'divider' : (data?.semaforoRojo || 0) > 0 ? 'error.light' : 'divider',
