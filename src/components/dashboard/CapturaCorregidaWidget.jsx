@@ -72,6 +72,12 @@ export default function CapturaCorregidaWidget({ dateRange }) {
     ? data.factorPonderadoGlobal
     : (data?.factorPromedioGlobal != null ? data.factorPromedioGlobal : 1.0);
 
+  // Formateador con localización chilena (coma decimal) para evitar confundir decimal con miles (ej: 1,00x vs 1.000x)
+  const formatFactor = (val) => {
+    if (val == null || isNaN(val)) return '-';
+    return Number(val).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 3 }) + 'x';
+  };
+
   // Detección de error biológico: la captura nunca puede ser menor que el desembarque
   const hayInconsistencia = data?.totalCapturaKg != null &&
     data?.totalDesembarqueKg != null &&
@@ -127,7 +133,7 @@ export default function CapturaCorregidaWidget({ dateRange }) {
               Error en datos históricos: Captura biológica ({data.totalCapturaKg.toLocaleString('es-CL')} kg) menor que el desembarque físico ({data.totalDesembarqueKg.toLocaleString('es-CL')} kg).
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
-              Factor ponderado reportado: <strong>{Number(factorPonderado).toFixed(3)}x</strong>. Todos los factores oficiales de Sernapesca son ≥ 1,0. Se requiere ejecutar el recálculo histórico en el mantenedor de factores.
+              Factor ponderado reportado: <strong>{formatFactor(factorPonderado)}</strong>. Todos los factores oficiales de Sernapesca son ≥ 1,0. Se requiere ejecutar el recálculo histórico en el mantenedor de factores.
             </Typography>
           </Alert>
         )}
@@ -192,7 +198,7 @@ export default function CapturaCorregidaWidget({ dateRange }) {
                       mt: 0.5
                     }}
                   >
-                    {Number(factorPonderado).toFixed(3)}x
+                    {formatFactor(factorPonderado)}
                   </Typography>
                 </Box>
               </Grid>
@@ -281,7 +287,7 @@ export default function CapturaCorregidaWidget({ dateRange }) {
                           {row.capturaKg?.toLocaleString('es-CL')}
                         </TableCell>
                         <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem', fontWeight: 700 }} align="center">
-                          {row.factorPromedio?.toFixed(3)}x
+                          {formatFactor(row.factorPromedio)}
                         </TableCell>
                       </TableRow>
                     );
