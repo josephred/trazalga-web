@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Typography,
   Box,
@@ -11,9 +12,10 @@ import {
   Grid,
   Alert,
   CircularProgress,
-  Tabs,
-  Tab,
-  Chip
+  Chip,
+  TextField,
+  InputAdornment,
+  IconButton
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -37,7 +39,12 @@ import {
   ErrorOutline as ErrorOutlineIcon,
   PlayArrow as PlayArrowIcon,
   DeleteSweep as DeleteSweepIcon,
-  Link as LinkIcon
+  Link as LinkIcon,
+  ArrowBack as ArrowBackIcon,
+  Search as SearchIcon,
+  Clear as ClearIcon,
+  ChevronRight as ChevronRightIcon,
+  GridView as GridViewIcon
 } from '@mui/icons-material';
 import api from '../api/axiosConfig';
 import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
@@ -53,6 +60,141 @@ import ScaleIcon from '@mui/icons-material/Scale';
 import BlockIcon from '@mui/icons-material/Block';
 import ScienceIcon from '@mui/icons-material/Science';
 import Divider from '@mui/material/Divider';
+
+// Categorías temáticas para el Centro de Control (Patrón C)
+export const CATEGORIAS_MODULOS = [
+  {
+    id: 'regulacion',
+    nombre: 'Regulación Pesquera y Cuotas',
+    descripcion: 'Límites normativos, factores de conversión biológica, vedas y sensibilidad de alertas de fiscalización.',
+    color: '#0284c7',
+  },
+  {
+    id: 'territorio',
+    nombre: 'Territorio y Georreferenciación',
+    descripcion: 'Áreas de manejo, macrozonas costeras y telemetría GPS satelital de embarcaciones y recolectores.',
+    color: '#10b981',
+  },
+  {
+    id: 'sistema',
+    nombre: 'Sistema e Integraciones',
+    descripcion: 'Sincronización de registros maestros con Sernapesca, API y mantenimiento de datos base.',
+    color: '#8b5cf6',
+  }
+];
+
+// Metadatos de los 9 módulos administrativos del sistema
+export const ADMIN_MODULES = [
+  {
+    id: 'alertas',
+    tabIndex: 0,
+    categoria: 'regulacion',
+    titulo: 'Configuración General y Alertas',
+    nombreCorto: 'Alertas y Parámetros',
+    descripcion: 'Sensibilidad y umbrales de disparadores automáticos, mermas biológicas y parámetros de fiscalización.',
+    badge: 'Operativo',
+    color: '#0284c7',
+    icon: <TuneIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'factores',
+    tabIndex: 1,
+    categoria: 'regulacion',
+    titulo: 'Factores de Conversión Biológica',
+    nombreCorto: 'Factores Biológicos',
+    descripcion: 'Parámetros de conversión según estado de humedad (húmedo, semi húmedo, semi seco, seco) por recurso.',
+    badge: 'Humedad',
+    color: '#8b5cf6',
+    icon: <ScienceIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'cuotas',
+    tabIndex: 2,
+    categoria: 'regulacion',
+    titulo: 'Cuotas de Extracción',
+    nombreCorto: 'Cuotas Globales',
+    descripcion: 'Cuotas anuales y periódicas decretadas por Subpesca por macrozona marítima y recurso alga.',
+    badge: 'Subpesca',
+    color: '#f59e0b',
+    icon: <ScaleIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'led',
+    tabIndex: 3,
+    categoria: 'regulacion',
+    titulo: 'Límites Diarios (LED)',
+    nombreCorto: 'Límites LED',
+    descripcion: 'Límite de extracción diario máximo por recolector u operador para prevenir sobreexplotación.',
+    badge: 'Diario',
+    color: '#06b6d4',
+    icon: <SpeedIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'vedas',
+    tabIndex: 4,
+    categoria: 'regulacion',
+    titulo: 'Vedas de Especies',
+    nombreCorto: 'Vedas Oficiales',
+    descripcion: 'Periodos de veda biológica, reproductiva y extractiva por especie y región marítima.',
+    badge: 'Fiscalización',
+    color: '#ef4444',
+    icon: <BlockIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'amerb',
+    tabIndex: 5,
+    categoria: 'territorio',
+    titulo: 'Áreas de Manejo (AMERB)',
+    nombreCorto: 'AMERB y Especies',
+    descripcion: 'Polígonos AMERB, sindicatos titulares y especies habilitadas con sus respectivas cuotas.',
+    badge: 'Polígonos',
+    color: '#10b981',
+    icon: <TerrainIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'macrozonas',
+    tabIndex: 6,
+    categoria: 'territorio',
+    titulo: 'Macrozonas Costeras',
+    nombreCorto: 'Macrozonas',
+    descripcion: 'Agrupaciones territoriales de caletas y comunas para la administración consolidada de desembarques.',
+    badge: 'Geografía',
+    color: '#14b8a6',
+    icon: <PublicIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'gps',
+    tabIndex: 7,
+    categoria: 'territorio',
+    titulo: 'Consola de Trazabilidad y GPS',
+    nombreCorto: 'Consola GPS',
+    descripcion: 'Monitoreo de coordenadas en tiempo real, intervalos de telemetría y mapa de trayectorias.',
+    badge: 'Telemetría',
+    color: '#3b82f6',
+    icon: <MapIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'carga-maestros',
+    tabIndex: 8,
+    categoria: 'sistema',
+    titulo: 'Carga de Datos Maestros',
+    nombreCorto: 'Sincronización',
+    descripcion: 'Poblamiento y actualización masiva de pescadores, embarcaciones, AMERB y caletas vía Sernapesca.',
+    badge: 'Sernapesca',
+    color: '#a855f7',
+    icon: <CloudSyncIcon sx={{ fontSize: 26 }} />,
+  }
+];
+
+// Función para resolver el tab según parámetro de URL (slug o índice numérico)
+export const resolveAdminTab = (param) => {
+  if (!param || param === 'hub') return 'hub';
+  const num = parseInt(param, 10);
+  if (!isNaN(num) && num >= 0 && num <= 8) return num;
+  const mod = ADMIN_MODULES.find(m => m.id === param);
+  if (mod) return mod.tabIndex;
+  return 'hub';
+};
 
 // Styled Switch matching IOS visual cues
 const IOSSwitch = styled((props) => (
@@ -207,10 +349,34 @@ const SYNC_TASKS = [
 ];
 
 export default function Administracion() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filtroTexto, setFiltroTexto] = useState('');
+  const [activeTab, setActiveTab] = useState(() => resolveAdminTab(searchParams.get('tab')));
+
+  // Sincronizar activeTab cuando cambia el parámetro ?tab= en la URL
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    setActiveTab(resolveAdminTab(tabParam));
+  }, [searchParams]);
+
+  const handleSelectTab = (tabVal) => {
+    setActiveTab(tabVal);
+    if (tabVal === 'hub') {
+      setSearchParams({ tab: 'hub' });
+    } else {
+      const mod = ADMIN_MODULES.find(m => m.tabIndex === tabVal);
+      setSearchParams({ tab: mod ? mod.id : String(tabVal) });
+    }
+  };
+
+  const handleVolverHub = () => {
+    setActiveTab('hub');
+    setSearchParams({ tab: 'hub' });
+  };
+
   const [configuraciones, setConfiguraciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState(null);
-  const [activeTab, setActiveTab] = useState(0);
 
   // Estado del poblamiento de datos maestros (pestaña Sernapesca)
   const [syncResults, setSyncResults] = useState({});
@@ -406,6 +572,18 @@ export default function Administracion() {
     }
   };
 
+  // Módulos filtrados en tiempo real por el buscador del Centro de Control
+  const modulosFiltrados = useMemo(() => {
+    if (!filtroTexto.trim()) return ADMIN_MODULES;
+    const q = filtroTexto.toLowerCase().trim();
+    return ADMIN_MODULES.filter(m => 
+      m.titulo.toLowerCase().includes(q) ||
+      m.descripcion.toLowerCase().includes(q) ||
+      m.badge.toLowerCase().includes(q) ||
+      m.nombreCorto.toLowerCase().includes(q)
+    );
+  }, [filtroTexto]);
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 2 }}>
@@ -563,43 +741,452 @@ export default function Administracion() {
           </Alert>
         )}
 
-        {/* Pestañas de Navegación del Panel */}
-        <Tabs
-          value={activeTab}
-          onChange={(e, val) => setActiveTab(val)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            mb: 4,
-            borderBottom: 1, borderColor: 'divider',
-            '& .MuiTabs-indicator': {
-              height: 3,
-              borderRadius: '3px 3px 0 0',
-              backgroundColor: 'secondary.main',
-            },
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.95rem',
-              fontFamily: 'Outfit',
-              color: 'text.secondary',
-              pb: 1.5,
-              '&.Mui-selected': {
-                color: 'secondary.main',
-              },
-            },
-          }}
-        >
-          <Tab icon={<TuneIcon sx={{ mr: 1 }} />} iconPosition="start" label="Configuración General y Alertas" />
-          <Tab icon={<ScienceIcon sx={{ mr: 1 }} />} iconPosition="start" label="Factores de Conversión" />
-          <Tab icon={<ScaleIcon sx={{ mr: 1 }} />} iconPosition="start" label="Cuotas de Extracción" />
-          <Tab icon={<SpeedIcon sx={{ mr: 1 }} />} iconPosition="start" label="Límites Diarios (LED)" />
-          <Tab icon={<BlockIcon sx={{ mr: 1 }} />} iconPosition="start" label="Vedas de Especies" />
-          <Tab icon={<TerrainIcon sx={{ mr: 1 }} />} iconPosition="start" label="Áreas de Manejo (AMERB)" />
-          <Tab icon={<PublicIcon sx={{ mr: 1 }} />} iconPosition="start" label="Macrozonas" />
-          <Tab icon={<MapIcon sx={{ mr: 1 }} />} iconPosition="start" label="Consola de Trazabilidad y GPS" />
-          <Tab icon={<CloudSyncIcon sx={{ mr: 1 }} />} iconPosition="start" label="Carga de Datos Maestros" />
-        </Tabs>
+        {/* ========================================================================= */}
+        {/* PATRÓN C: VISTA 1 - CENTRO DE CONTROL / SETTINGS HUB (activeTab === 'hub') */}
+        {/* ========================================================================= */}
+        {activeTab === 'hub' && (
+          <Box sx={{ mb: 4 }}>
+            {/* Barra de Búsqueda y Filtros en Tiempo Real */}
+            <Box
+              sx={{
+                mb: 4,
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                justifyContent: 'space-between',
+                gap: 2,
+              }}
+            >
+              <TextField
+                fullWidth
+                size="small"
+                value={filtroTexto}
+                onChange={(e) => setFiltroTexto(e.target.value)}
+                placeholder="Buscar mantenedor por nombre, recurso, cuota, veda, telemetría o norma..."
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: filtroTexto ? (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setFiltroTexto('')}>
+                        <ClearIcon sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null,
+                }}
+                sx={{
+                  maxWidth: { xs: '100%', sm: 540 },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    bgcolor: 'background.paper',
+                    fontFamily: 'Inter',
+                    fontSize: '0.9rem',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                    '& fieldset': {
+                      borderColor: 'divider',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'secondary.main',
+                    },
+                  },
+                }}
+              />
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, alignSelf: { xs: 'flex-start', sm: 'center' } }}>
+                <Chip
+                  size="small"
+                  label={
+                    filtroTexto.trim()
+                      ? `${modulosFiltrados.length} de ${ADMIN_MODULES.length} mantenedores`
+                      : `${ADMIN_MODULES.length} mantenedores disponibles`
+                  }
+                  sx={{
+                    fontFamily: 'Outfit',
+                    fontWeight: 700,
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    color: 'text.secondary',
+                    borderRadius: 2,
+                  }}
+                />
+              </Box>
+            </Box>
+
+            {/* Categorías Temáticas con Grid de Tarjetas */}
+            {CATEGORIAS_MODULOS.map((cat) => {
+              const modulosDeCategoria = modulosFiltrados.filter((m) => m.categoria === cat.id);
+              if (modulosDeCategoria.length === 0) return null;
+
+              return (
+                <Box key={cat.id} sx={{ mb: 4.5 }}>
+                  {/* Título y badge de categoría */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                    <Box
+                      sx={{
+                        width: 4,
+                        height: 22,
+                        bgcolor: cat.color,
+                        borderRadius: 1,
+                      }}
+                    />
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: 'Outfit',
+                        fontWeight: 700,
+                        fontSize: '1.15rem',
+                        color: 'text.primary',
+                        letterSpacing: -0.2,
+                      }}
+                    >
+                      {cat.nombre}
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label={`${modulosDeCategoria.length}`}
+                      sx={{
+                        height: 22,
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        bgcolor: `${cat.color}15`,
+                        color: cat.color,
+                        borderRadius: 1.5,
+                      }}
+                    />
+                  </Box>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      fontFamily: 'Inter',
+                      mb: 2.5,
+                      pl: 2.5,
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    {cat.descripcion}
+                  </Typography>
+
+                  {/* Grid de Tarjetas de Módulo */}
+                  <Grid container spacing={2.5}>
+                    {modulosDeCategoria.map((mod) => (
+                      <Grid item xs={12} sm={6} md={4} key={mod.id}>
+                        <Card
+                          elevation={0}
+                          onClick={() => handleSelectTab(mod.tabIndex)}
+                          sx={{
+                            p: 2.5,
+                            borderRadius: 3.5,
+                            border: 1,
+                            borderColor: 'divider',
+                            bgcolor: 'background.paper',
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            cursor: 'pointer',
+                            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&:hover': {
+                              borderColor: mod.color,
+                              transform: 'translateY(-3px)',
+                              boxShadow: `0 12px 24px -6px ${mod.color}25`,
+                              '& .action-text': {
+                                color: mod.color,
+                                transform: 'translateX(4px)',
+                              },
+                              '& .icon-wrapper': {
+                                transform: 'scale(1.08)',
+                                bgcolor: `${mod.color}25`,
+                              },
+                            },
+                          }}
+                        >
+                          <Box>
+                            {/* Cabecera de la tarjeta: Icono + Badge */}
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                              <Box
+                                className="icon-wrapper"
+                                sx={{
+                                  p: 1.25,
+                                  borderRadius: 2.5,
+                                  bgcolor: `${mod.color}15`,
+                                  color: mod.color,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  transition: 'all 0.25s ease',
+                                }}
+                              >
+                                {mod.icon}
+                              </Box>
+                              <Chip
+                                size="small"
+                                label={mod.badge}
+                                sx={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                                  color: 'text.secondary',
+                                  border: 1,
+                                  borderColor: 'divider',
+                                }}
+                              />
+                            </Box>
+
+                            {/* Título y descripción */}
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                fontFamily: 'Outfit',
+                                fontWeight: 700,
+                                fontSize: '1.02rem',
+                                mb: 1,
+                                color: 'text.primary',
+                                lineHeight: 1.3,
+                              }}
+                            >
+                              {mod.titulo}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: 'Inter',
+                                color: 'text.secondary',
+                                fontSize: '0.85rem',
+                                lineHeight: 1.55,
+                              }}
+                            >
+                              {mod.descripcion}
+                            </Typography>
+                          </Box>
+
+                          {/* Enlace de acción rápida */}
+                          <Box
+                            sx={{
+                              pt: 2.5,
+                              mt: 2,
+                              borderTop: 1,
+                              borderColor: 'divider',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <Typography
+                              className="action-text"
+                              variant="caption"
+                              sx={{
+                                fontFamily: 'Outfit',
+                                fontWeight: 700,
+                                color: 'text.secondary',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                transition: 'all 0.2s ease',
+                              }}
+                            >
+                              Abrir configuración
+                              <ChevronRightIcon sx={{ fontSize: 16 }} />
+                            </Typography>
+                          </Box>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              );
+            })}
+
+            {/* Estado vacío cuando no hay resultados de búsqueda */}
+            {modulosFiltrados.length === 0 && (
+              <Card
+                elevation={0}
+                sx={{
+                  p: 6,
+                  textAlign: 'center',
+                  borderRadius: 3.5,
+                  border: 1,
+                  borderColor: 'divider',
+                  bgcolor: 'background.paper',
+                }}
+              >
+                <SearchIcon sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.4, mb: 1.5 }} />
+                <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                  No se encontraron mantenedores para "{filtroTexto}"
+                </Typography>
+                <Typography variant="body2" sx={{ fontFamily: 'Inter', color: 'text.secondary', mb: 3 }}>
+                  Intenta buscar con otro término como cuotas, veda, factores, alertas o GPS.
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setFiltroTexto('')}
+                  sx={{
+                    borderRadius: 2.5,
+                    textTransform: 'none',
+                    fontFamily: 'Outfit',
+                    fontWeight: 600,
+                  }}
+                >
+                  Limpiar búsqueda
+                </Button>
+              </Card>
+            )}
+          </Box>
+        )}
+
+        {/* ========================================================================= */}
+        {/* PATRÓN C: VISTA 2 - BARRA SUPERIOR CONTEXTUAL (activeTab !== 'hub')         */}
+        {/* ========================================================================= */}
+        {activeTab !== 'hub' && (
+          <Box sx={{ mb: 3.5 }}>
+            <Card
+              elevation={0}
+              sx={{
+                p: { xs: 2, md: 2.25 },
+                borderRadius: 3.5,
+                border: 1,
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.02)',
+                display: 'flex',
+                flexDirection: { xs: 'column', lg: 'row' },
+                alignItems: { xs: 'flex-start', lg: 'center' },
+                justifyContent: 'space-between',
+                gap: 2,
+              }}
+            >
+              {/* Botón Volver al Hub + Título del Módulo Activo */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ArrowBackIcon />}
+                  onClick={handleVolverHub}
+                  sx={{
+                    borderRadius: 2.5,
+                    textTransform: 'none',
+                    fontFamily: 'Outfit',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    borderColor: 'divider',
+                    color: 'text.primary',
+                    px: 2,
+                    py: 0.8,
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                    '&:hover': {
+                      borderColor: 'secondary.main',
+                      bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                    },
+                  }}
+                >
+                  Centro de Control
+                </Button>
+
+                <Divider
+                  orientation="vertical"
+                  flexItem
+                  sx={{ display: { xs: 'none', sm: 'block' }, mx: 0.5, height: 26, alignSelf: 'center' }}
+                />
+
+                {(() => {
+                  const modActual = ADMIN_MODULES.find((m) => m.tabIndex === activeTab);
+                  if (!modActual) return null;
+                  return (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box
+                        sx={{
+                          p: 0.8,
+                          borderRadius: 2,
+                          bgcolor: `${modActual.color}15`,
+                          color: modActual.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        {modActual.icon}
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ fontFamily: 'Outfit', fontWeight: 800, lineHeight: 1.2, color: 'text.primary' }}>
+                          {modActual.titulo}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontFamily: 'Inter', color: 'text.secondary' }}>
+                          {modActual.badge} • Mantenedor activo
+                        </Typography>
+                      </Box>
+                    </Box>
+                  );
+                })()}
+              </Box>
+
+              {/* Selector Rápido de Píldoras (Quick Switcher) */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 1,
+                  alignItems: 'center',
+                  overflowX: 'auto',
+                  maxWidth: '100%',
+                  py: 0.5,
+                  '&::-webkit-scrollbar': { height: 4 },
+                  '&::-webkit-scrollbar-thumb': { bgcolor: 'divider', borderRadius: 2 },
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 700,
+                    fontFamily: 'Outfit',
+                    color: 'text.secondary',
+                    textTransform: 'uppercase',
+                    fontSize: '0.68rem',
+                    letterSpacing: 0.5,
+                    whiteSpace: 'nowrap',
+                    mr: 0.5,
+                    display: { xs: 'none', xl: 'block' },
+                  }}
+                >
+                  Ir a:
+                </Typography>
+                {ADMIN_MODULES.map((m) => {
+                  const isActive = m.tabIndex === activeTab;
+                  return (
+                    <Chip
+                      key={m.id}
+                      onClick={() => handleSelectTab(m.tabIndex)}
+                      label={m.nombreCorto}
+                      size="small"
+                      clickable
+                      sx={{
+                        fontFamily: 'Outfit',
+                        fontWeight: isActive ? 800 : 600,
+                        fontSize: '0.8rem',
+                        borderRadius: 2,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        bgcolor: isActive ? `${m.color}20` : 'transparent',
+                        color: isActive ? m.color : 'text.secondary',
+                        border: 1,
+                        borderColor: isActive ? m.color : 'divider',
+                        '&:hover': {
+                          borderColor: m.color,
+                          color: m.color,
+                          bgcolor: `${m.color}10`,
+                        },
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+            </Card>
+          </Box>
+        )}
 
         {/* Renderizado de Pestaña 0: Configuración de Alertas & Parámetros Operativos */}
         {activeTab === 0 && (
