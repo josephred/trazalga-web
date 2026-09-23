@@ -479,6 +479,43 @@ export const INDICADORES_METADATA = {
     formula: 'Curva Real = SUM(captura_corregida) acumulada vs Curva Planificada en Plan de Manejo',
     criterioFiscalizacion:
       'Permite constatar si la organización pesquera está acelerando la extracción por encima del ritmo biológico sustentable aprobado.'
+  },
+
+  perfiladorRiesgo: {
+    id: 'perfiladorRiesgo',
+    numero: 9,
+    codigo: 'IND-09',
+    nombre: 'Perfilador de Riesgo de Fiscalización',
+    categoria: 'Inteligencia y Fiscalización Focalizada',
+    subtitulo: 'Matriz bidimensional Variación vs Retención con modulador biológico y agravantes',
+    icono: 'Shield',
+    color: '#ef4444',
+    resumenNegocio:
+      'Cruza multidimensionalmente la variación de peso entre origen y destino final con el tiempo de permanencia en bodega virtual. Modula la severidad según consistencia biológica y escala niveles ante infracciones activas (EN_VEDA, LED_EXCEDIDO) para priorizar las fiscalizaciones in situ de Sernapesca.',
+    metricaBase:
+      'Nivel de riesgo consolidado (VERDE, AMARILLO, ROJO) por lote y jerarquización de actores.',
+    humedadFactor:
+      'Aplica el control de retención prioritariamente a recurso en estado {{retencion_bodega_estados_sujetos:HÚMEDO}}.',
+    fuentesDatos:
+      'Trazabilidad integral de lotes cruzando declaraciones de recolectores, armadores, áreas, comercializadores, plantas y marcas activas en `declaracion_marca`.',
+    periodoFechas:
+      'Desde la extracción en origen hasta la recepción en planta dentro del período evaluado.',
+    formula:
+      'Nivel = MAX(NivelVariacion, NivelRetencion). Si severidadBiologica = CRITICA => ROJO. Por cada marca activa (EN_VEDA, LED_EXCEDIDO) sube {{riesgo_agravante_veda_niveles:1}} nivel (tope: ROJO).',
+    criterioFiscalizacion:
+      'Lotes en ROJO (variación >= {{riesgo_variacion_rojo_pct:10.0}}% o retención >= {{riesgo_dias_rojo:7}} días o alga húmeda sin merma tras tránsito o marcas activas) orientan las inspecciones prioritarias de Sernapesca.',
+    preguntasFrecuentes: [
+      {
+        pregunta: '¿Por qué un lote sin variación puede terminar en ROJO?',
+        respuesta:
+          'Porque si el alga húmeda viajó más de {{bio_humedo_dias_minimos_transito:3}} días sin registrar merma (o ganando peso), el modulador biológico escala directamente a ROJO por presunción grave de blanqueo o hidratación en ruta.'
+      },
+      {
+        pregunta: '¿Cómo incide una veda o sobrepaso de límite diario?',
+        respuesta:
+          'Una marca activa EN_VEDA o LED_EXCEDIDO incrementa automáticamente el nivel de riesgo en {{riesgo_agravante_veda_niveles:1}} nivel.'
+      }
+    ]
   }
 };
 
@@ -510,7 +547,15 @@ export const DEFAULT_CONFIG_VALUES = {
   bio_perdida_activo: 'true',
   bio_humedo_dias_minimos_transito: '3',
   bio_humedo_merma_minima_pct: '5.0',
-  bio_seco_merma_maxima_pct: '3.0'
+  bio_seco_merma_maxima_pct: '3.0',
+  riesgo_activo: 'true',
+  riesgo_variacion_amarillo_pct: '5.0',
+  riesgo_variacion_rojo_pct: '10.0',
+  riesgo_dias_amarillo: '3',
+  riesgo_dias_rojo: '7',
+  riesgo_escala_humedo_sin_merma: 'ROJO',
+  riesgo_agravante_veda_niveles: '1',
+  riesgo_agravante_led_niveles: '1'
 };
 
 /**

@@ -16,6 +16,7 @@ import LimiteExtraccionDiarioWidget from '../components/dashboard/LimiteExtracci
 import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
 import VariacionPesoWidget from '../components/dashboard/VariacionPesoWidget';
 import RetencionBodegaWidget from '../components/dashboard/RetencionBodegaWidget';
+import PerfiladorRiesgoWidget from '../components/dashboard/PerfiladorRiesgoWidget';
 import DobleOperacionWidget from '../components/dashboard/DobleOperacionWidget';
 import TiempoValidacionWidget from '../components/dashboard/TiempoValidacionWidget';
 import CasosAbiertosWidget from '../components/dashboard/CasosAbiertosWidget';
@@ -258,6 +259,13 @@ export default function Dashboard() {
             <Box sx={{ position: 'relative', height: '100%' }}>
               <RetencionBodegaWidget />
               <IndicadorHelpButton helpKey="retencionBodega" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
+          </Grid>
+
+          {/* Indicador 9: Perfilador de Riesgo de Fiscalización (Ancho Completo) */}
+          <Grid item xs={12}>
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <PerfiladorRiesgoWidget dateRange={dateRange} />
             </Box>
           </Grid>
 

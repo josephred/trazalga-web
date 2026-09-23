@@ -123,3 +123,8 @@ export const getVariacionPesoDetalle = async (filters) => {
   return response.data;
 };
 
+export const getPerfiladorRiesgo = async (filters) => {
+  const response = await api.get('/reportes/perfilador-riesgo', { params: formatParams(filters) });
+  return response.data;
+};
+
