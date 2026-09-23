@@ -370,20 +370,20 @@ export const INDICADORES_METADATA = {
     codigo: 'IND-06',
     nombre: 'Indicador 6: Trazabilidad de Peso y Variación en Ruta',
     categoria: 'Cadena de Custodia y Balances',
-    subtitulo: 'Comparación peso origen vs peso recepción en comprador',
+    subtitulo: 'Comparación peso origen vs peso recepción en comprador (Pesaje física romana vs Conciliación documental)',
     icono: 'CompareArrows',
     color: '#06b6d4',
     resumenNegocio:
-      'Compara el peso declarado por el pescador en origen frente al peso registrado por comercializadores y plantas en la recepción de la carga. Reconstruye la cadena completa para detectar deshidratación natural, mermas físicas justificadas o blanqueo de algas agregadas en el trayecto.',
+      'Compara el peso declarado por el pescador en origen frente al peso registrado por comercializadores y plantas en la recepción de la carga. Separa de forma estricta el pesaje físico en romana —con número de voucher obligatorio y vinculante para fiscalización— de la conciliación documental entre guías, para no distorsionar el promedio de mermas reales.',
     metricaBase: 'Variación porcentual de peso físico en cada tramo de custodia: `((Peso Recepción - Peso Origen) / Peso Origen) * 100`.',
     humedadFactor:
       'Diferencia el comportamiento según estado de humedad de origen y días de tránsito: para alga húmeda con más de {{bio_humedo_dias_minimos_transito:3}} días de traslado (`bio_humedo_dias_minimos_transito`) se exige una merma mínima del {{bio_humedo_merma_minima_pct:5.0}}% (`bio_humedo_merma_minima_pct`) por deshidratación natural; para alga seca la tolerancia de variación máxima es de {{bio_seco_merma_maxima_pct:3.0}}% (`bio_seco_merma_maxima_pct`).',
     fuentesDatos:
-      'Reconstrucción de la cadena de custodia de tres puntos vinculada por `folio_origen`: Origen (recolector/armador/área) → Comercializador Intermedio → Planta de Procesamiento.',
+      'Reconstrucción de la cadena de custodia de tres puntos vinculada por `folio_origen`: Origen (recolector/armador/área) → Comercializador Intermedio → Planta de Procesamiento (`declaracion_planta_abastecimiento`), con campos de pesaje físico en romana (`peso_romana_kg`, `voucher_romana_numero`, `fecha_pesaje`).',
     periodoFechas: 'Declaraciones vinculadas procesadas en el período seleccionado.',
     formula: 'Variación % = ((desembarque_receptor - desembarque_emisor) / desembarque_emisor) × 100 evaluada junto con días de tránsito y estado de humedad de origen.',
     criterioFiscalizacion:
-      'Evalúa la variación frente al umbral general (`variacion_peso_umbral_general_pct`, {{variacion_peso_umbral_general_pct:5.0}}%) y las reglas biológicas específicas por humedad (control gobernado por el interruptor maestro `bio_perdida_activo`). Discrepancias anómalas (como incrementos de peso en ruta o alga húmeda que no merma tras varios días) se reportan en el widget y abren auditoría sobre el transporte, sin generar una marca de base de datos directa.'
+      'Evalúa la variación frente al umbral general (`variacion_peso_umbral_general_pct`, {{variacion_peso_umbral_general_pct:5.0}}%). Separa los lotes con pesaje en romana certificado (vinculante, exigencia gobernada por `variacion_peso_exige_voucher`, {{variacion_peso_exige_voucher:true}}) de los lotes sólo documentales. Las discrepancias anómalas alimentan el indicador 8 y el modulador biológico del perfilador de riesgo.'
   },
 
   retencionBodega: {
@@ -405,9 +405,32 @@ export const INDICADORES_METADATA = {
       'El control es de tres niveles y sus umbrales se configuran en Administración → Configuración General → Cadena de Custodia: alerta amarilla preventiva a los {{retencion_bodega_dias_amarilla:3}} días (`retencion_bodega_dias_amarilla`), naranja crítica a los {{retencion_bodega_dias_naranja:5}} días (`retencion_bodega_dias_naranja`) y roja al superar el plazo máximo recomendado de {{retencion_bodega_dias_roja:7}} días (`retencion_bodega_dias_roja`). Aplica a los estados de humedad indicados en `retencion_bodega_estados_sujetos` (por defecto, sólo {{retencion_bodega_estados_sujetos:HÚMEDO}}), gobernado por el switch maestro `retencion_bodega_activo`.'
   },
 
+  integracionHumedadTiempo: {
+    id: 'integracionHumedadTiempo',
+    numero: 8,
+    codigo: 'IND-08',
+    nombre: 'Indicador 8: Integración de Humedad vs. Tiempo (Consistencia Biológica)',
+    categoria: 'Consistencia Biológica y Modulación de Severidad',
+    subtitulo: 'Modula la severidad del riesgo según merma esperada por estado de humedad y días de tránsito',
+    icono: 'WaterDrop',
+    color: '#0284c7',
+    resumenNegocio:
+      'Modula la severidad del riesgo cruzando el estado de humedad del recurso con los días transcurridos y la merma de peso registrada: el alga seca prolongada se mantiene en riesgo bajo porque el recurso está estabilizado; en cambio, el alga húmeda retenida sin merma escala inmediatamente a severidad CRÍTICA por presunción de blanqueo o hidratación fraudulenta en ruta.',
+    metricaBase: 'Severidad Biológica: NEUTRA | ATENCION | CRITICA por lote.',
+    humedadFactor:
+      'Húmedo exige merma mínima de {{bio_humedo_merma_minima_pct:5.0}}% tras {{bio_humedo_dias_minimos_transito:3}} días de tránsito. Seco tolera variación máxima de {{bio_seco_merma_maxima_pct:3.0}}%.',
+    fuentesDatos:
+      'Trazabilidad de lotes en `ReportRepository` evaluando `severidadBiologica` gobernada por el switch `bio_perdida_activo`.',
+    periodoFechas: 'Lotes evaluados dentro del rango temporal seleccionado.',
+    formula:
+      'Si Húmedo y días >= {{bio_humedo_dias_minimos_transito:3}} y merma <= 0 => CRITICA. Si Húmedo y merma < {{bio_humedo_merma_minima_pct:5.0}}% => ATENCION. Si Seco y variación > {{bio_seco_merma_maxima_pct:3.0}}% => ATENCION. Resto => NEUTRA.',
+    criterioFiscalizacion:
+      'La severidad CRÍTICA es el modificador biológico que escala directamente el lote a ROJO en el Perfilador de Riesgo. Control desactivable mediante switch maestro `bio_perdida_activo` ({{bio_perdida_activo:true}}).'
+  },
+
   tiempoValidacion: {
     id: 'tiempoValidacion',
-    codigo: 'IND-08',
+    codigo: 'KPI-TIEMPO',
     nombre: 'Tiempo de Validación y Procesamiento',
     categoria: 'Eficiencia Operativa',
     subtitulo: 'Latencia entre emisión en costa y recepción visada',
@@ -426,7 +449,7 @@ export const INDICADORES_METADATA = {
 
   casosAbiertos: {
     id: 'casosAbiertos',
-    codigo: 'IND-09',
+    codigo: 'IND-CASOS',
     nombre: 'Casos Abiertos de Fiscalización (Detalle)',
     categoria: 'Auditoría Legal Sernapesca',
     subtitulo: 'Expedientes con medidas cautelares o controversias',
@@ -539,6 +562,7 @@ export const DEFAULT_CONFIG_VALUES = {
   veda_modo_operacion: 'BLOQUEO_ESTRICTO',
   veda_dias_aviso_previo: '7',
   variacion_peso_umbral_general_pct: '5.0',
+  variacion_peso_exige_voucher: 'true',
   retencion_bodega_activo: 'true',
   retencion_bodega_dias_amarilla: '3',
   retencion_bodega_dias_naranja: '5',
