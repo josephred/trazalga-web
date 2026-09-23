@@ -68,15 +68,10 @@ export default function MainLayout() {
     };
   }, []);
 
-  // Inicializa desde el día 1 del mes actual hasta hoy (en fecha local, no UTC)
-  const [dateRange, setDateRange] = useState(() => {
-    const formatoLocal = (d) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const hoy = new Date();
-    return {
-      startDate: formatoLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 1)),
-      endDate: formatoLocal(hoy)
-    };
+  // Inicializa por defecto en el mes de evaluación: 01-07-2026 a 31-07-2026
+  const [dateRange, setDateRange] = useState({
+    startDate: '2026-07-01',
+    endDate: '2026-07-31'
   });
 
   const handleStartDateChange = (e) => {
