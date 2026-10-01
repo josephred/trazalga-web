@@ -397,11 +397,15 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
               sx={{ borderRadius: 2, fontSize: '0.78rem', fontFamily: 'Inter' }}
             >
               <MenuItem value="">Todas las caletas</MenuItem>
-              {caletas.map((cal) => (
-                <MenuItem key={cal.id} value={cal.id}>
-                  {cal.nombre}
-                </MenuItem>
-              ))}
+              {caletas.map((cal) => {
+                const comunaNom = cal.comuna?.nombre || cal.comunaNombre || '';
+                const label = comunaNom ? `${cal.nombre} — ${comunaNom}` : cal.nombre;
+                return (
+                  <MenuItem key={cal.id} value={cal.id}>
+                    {label}
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
 
