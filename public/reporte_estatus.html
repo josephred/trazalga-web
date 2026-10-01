@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estatus Ejecutivo — Refinamiento de Indicadores y Avances TrazAlga</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0f172a;
+      --primary-light: #1e293b;
+      --accent: #0284c7;
+      --accent-hover: #0369a1;
+      --success: #059669;
+      --success-bg: #ecfdf5;
+      --warning: #d97706;
+      --warning-bg: #fffbeb;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --info: #4f46e5;
+      --info-bg: #eef2ff;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-900: #0f172a;
+      --border-radius: 12px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--slate-50);
+      color: var(--slate-900);
+      line-height: 1.5;
+      padding: 2.5rem 1.5rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 2.5rem;
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-card::before {
+      content: "";
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(2, 132, 199, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(2, 132, 199, 0.2);
+      border: 1px solid rgba(2, 132, 199, 0.4);
+      color: #38bdf8;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      margin-bottom: 1rem;
+    }
+
+    .header-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+
+    .header-subtitle {
+      color: var(--slate-300);
+      font-size: 1.05rem;
+      max-width: 820px;
+      font-weight: 400;
+    }
+
+    .header-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-top: 1.75rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.875rem;
+      color: var(--slate-300);
+    }
+
+    .header-meta span strong {
+      color: #ffffff;
+    }
+
+    /* Talking Points (Para la Reunión) */
+    .speech-box {
+      background: linear-gradient(to right, #eff6ff, #f8fafc);
+      border-left: 5px solid var(--accent);
+      border-radius: var(--border-radius);
+      padding: 1.75rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+      border-top: 1px solid var(--slate-200);
+      border-right: 1px solid var(--slate-200);
+      border-bottom: 1px solid var(--slate-200);
+    }
+
+    .speech-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .speech-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .speech-list li {
+      position: relative;
+      padding-left: 1.6rem;
+      font-size: 0.95rem;
+      color: var(--slate-700);
+      line-height: 1.45;
+    }
+
+    .speech-list li::before {
+      content: "✔";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    /* KPI Highlights */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.25rem;
+    }
+
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--border-radius);
+      padding: 1.35rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .kpi-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--slate-600);
+      margin-bottom: 0.35rem;
+    }
+
+    .kpi-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.1;
+      margin-bottom: 0.35rem;
+    }
+
+    .kpi-sub {
+      font-size: 0.82rem;
+      color: var(--slate-600);
+    }
+
+    /* Secciones */
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .section-title span {
+      background: var(--slate-200);
+      color: var(--slate-700);
+      font-size: 0.85rem;
+      padding: 0.15rem 0.6rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    /* Tabla de Indicadores y Refinamientos */
+    .table-container {
+      background: #ffffff;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+      margin-bottom: 2.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    thead {
+      background: var(--slate-100);
+      border-bottom: 1px solid var(--slate-200);
+    }
+
+    th {
+      padding: 0.95rem 1.15rem;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      color: var(--slate-700);
+      font-size: 0.825rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    td {
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--slate-200);
+      vertical-align: top;
+      color: var(--slate-700);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background-color: var(--slate-50);
+    }
+
+    .ind-badge {
+      display: inline-block;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      background: var(--slate-100);
+      color: var(--slate-700);
+      border: 1px solid var(--slate-300);
+      white-space: nowrap;
+    }
+
+    .ind-name {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 0.95rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Badges de Estado */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-success {
+      background-color: var(--success-bg);
+      color: var(--success);
+      border: 1px solid rgba(5, 150, 105, 0.25);
+    }
+
+    .badge-info {
+      background-color: var(--info-bg);
+      color: var(--info);
+      border: 1px solid rgba(79, 70, 229, 0.25);
+    }
+
+    .badge-warning {
+      background-color: var(--warning-bg);
+      color: var(--warning);
+      border: 1px solid rgba(217, 119, 6, 0.25);
+    }
+
+    /* Tarjetas de Hitos Clave */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .feature-card {
+      background: #ffffff;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .feature-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .feature-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+    }
+
+    .feature-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
+
+    .feature-desc {
+      font-size: 0.875rem;
+      color: var(--slate-600);
+      line-height: 1.5;
+    }
+
+    .feature-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 1rem;
+    }
+
+    .tag {
+      background: var(--slate-100);
+      color: var(--slate-700);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--slate-200);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding-top: 2rem;
+      border-top: 1px solid var(--slate-200);
+      color: var(--slate-600);
+      font-size: 0.825rem;
+    }
+
+    /* Print media */
+    @media print {
+      body {
+        padding: 0;
+        background: #ffffff;
+      }
+      .header-card {
+        box-shadow: none;
+        border: 1px solid #000;
+      }
+      .kpi-card, .table-container, .feature-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ENCABEZADO EJECUTIVO -->
+  <header class="header-card">
+    <div class="header-badge">Informe Oficial de Avance · Sistema TrazAlga</div>
+    <h1 class="header-title">Estatus de Refinamiento Normativo y Operativo</h1>
+    <p class="header-subtitle">
+      Cumplimiento de acuerdos técnicos del 11 de septiembre, evolución de los 9 indicadores de fiscalización Sernapesca, control de acceso por perfiles y centralización de hallazgos.
+    </p>
+    <div class="header-meta">
+      <span><strong>Fecha de Estado:</strong> 24 de Septiembre, 2026</span>
+      <span><strong>Destinatario:</strong> Reunión de Seguimiento Técnico / Sernapesca</span>
+      <span><strong>Versión Core:</strong> Backend Spring Boot 3.3 + Web React 19 (MUI v7)</span>
+      <span><strong>Estado General:</strong> <strong style="color: #4ade80;">94% Cumplido / Operativo</strong></span>
+    </div>
+  </header>
+
+  <!-- MINUTA DE 3 MINUTOS PARA LA REUNIÓN (TALKING POINTS) -->
+  <section class="speech-box">
+    <h2 class="speech-title">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      Minuta Ejecutiva para la Reunión (Puntos Clave para Mencionar)
+    </h2>
+    <ul class="speech-list">
+      <li><strong>Resolución de la Paradoja de Cuotas (Indicador 3):</strong> Se implementó la doble política configurable (<code>BLOQUEO_DECLARACION</code> para cuotas estrictas y <code>SOLO_ALERTA</code> para pesquerías históricas con déficit como La Higuera). Además, se separó estrictamente el cierre administrativo del cierre automático por agotamiento biológico.</li>
+      <li><strong>Curva de Humedad Oficial y Autoridad del Servidor (Indicador 2):</strong> Se homologaron los factores oficiales Sernapesca (1.13 Húmedo, 1.75 Semi-húmedo, 2.70 Semi-seco, 3.58 Seco). El backend ahora es la única autoridad de cálculo, congelando el factor con valor probatorio legal y advirtiendo cualquier incongruencia donde captura resulte menor al físico.</li>
+      <li><strong>Consola de Hallazgos Operativa (RX.1 / Alertas):</strong> Se centralizaron los 5 tipos de marcas formales (<code>EN_VEDA</code>, <code>LED_EXCEDIDO</code>, <code>DESEMBARQUE_ATIPICO</code>, <code>CUOTA_EXCEDIDA</code>, <code>POSTERIOR_CIERRE</code>). Los fiscalizadores cuentan con una bandeja de trabajo en <code>/alertas</code> con filtros dinámicos, exportación a CSV y botón «Resolver» que audita y archiva cada caso.</li>
+      <li><strong>Perfilador de Riesgo Nuevo (Indicador 9):</strong> Se construyó e integró desde cero el servicio y widget de la Matriz 3×3 que cruza severidad biológica con desvío de peso, incorporando las infracciones de Veda y LED como agravantes automáticos.</li>
+      <li><strong>Seguridad y Roles (RBAC):</strong> Se implementó autenticación JWT con separación de perfiles: <em>Administrador</em> (gestión total de maestros y umbrales), <em>Fiscalizador</em> (operación en terreno y resolución de hallazgos) y <em>Auditor</em> (acceso estricto de solo lectura).</li>
+      <li><strong>Catálogo Dinámico Anti-desincronización (RX.2):</strong> La ayuda de los 9 indicadores interpola en tiempo real los parámetros desde la base de datos (<code>{{clave}}</code>), eliminando discrepancias documentales entre la norma y el sistema.</li>
+    </ul>
+  </section>
+
+  <!-- RESUMEN DE CIFRAS (KPIS) -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Indicadores de Fiscalización</div>
+      <div class="kpi-value">9 / 9</div>
+      <div class="kpi-sub">Totalmente implementados en backend y panel web</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Marcas Normativas Formales</div>
+      <div class="kpi-value">5</div>
+      <div class="kpi-sub">Auditadas en tiempo real en la Consola RX.1</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Perfiles de Acceso (RBAC)</div>
+      <div class="kpi-value">3</div>
+      <div class="kpi-sub">Administrador, Fiscalizador y Auditor (Sólo Lectura)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Factores Oficiales Homologados</div>
+      <div class="kpi-value">4 Estados</div>
+      <div class="kpi-sub">Curva Sernapesca homologada en 64 combinaciones</div>
+    </div>
+  </div>
+
+  <!-- TABLA DETALLADA: REFINAMIENTOS DEL 11-SEP INDICADOR POR INDICADOR -->
+  <h2 class="section-title">
+    Estatus Detallado por Indicador <span>Acuerdos 11 de Septiembre</span>
+  </h2>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 18%;">Indicador</th>
+          <th style="width: 38%;">Acuerdo de Refinamiento (11-Sep)</th>
+          <th style="width: 30%;">Implementación Técnica Realizada</th>
+          <th style="width: 14%;">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <span class="ind-badge">Indicador 1</span>
+            <div class="ind-name">Desembarque Físico</div>
+          </td>
+          <td>
+            • Imputación a la <strong>caleta y comuna física</strong> del desembarque (independiente de la cuota).<br>
+            • Agrupación multidimensional (Macrozona, Caleta, Persona, Especie).<br>
+            • Detección automática de <code>DESEMBARQUE_ATIPICO</code> (&gt;5.000 kg).
+          </td>
+          <td>
+            • Switch de agrupación en <code>DesembarqueFisicoWidget.jsx</code>.<br>
+            • Detalle individual expandible para auditoría faena a faena.<br>
+            • Filtro territorial discriminado en <code>ReportRepository</code>.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+
+        <tr>
+          <td>
+            <span class="ind-badge">Indicador 2</span>
+            <div class="ind-name">Captura Biológica Corregida</div>
+          </td>
+          <td>
+            • Invariante mandatoria: <code>captura ≥ desembarque</code>.<br>
+            • Curva oficial de factores (1.13, 1.75, 2.70, 3.58).<br>
+            • Backend como única autoridad de cálculo (congelamiento legal del factor).
+          </td>
+          <td>
+            • Servicio <code>CapturaService.java</code> calcula en servidor.<br>
+            • Alerta visual en <code>CapturaCorregidaWidget</code> si factor &lt; 1,0x.<br>
+            • Endpoint de recálculo masivo habilitado con trazabilidad.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+
+        <tr>
+          <td>
+            <span class="ind-badge">Indicador 3</span>
+            <div class="ind-name">Control de Cuotas</div>
+          </td>
+          <td>
+            • Resolución de paradoja: modo <code>BLOQUEO_DECLARACION</code> vs <code>SOLO_ALERTA</code>.<br>
+            • Cierre por <code>AGOTAMIENTO</code> separado de cierre <code>ADMINISTRATIVO</code>.<br>
+            • Consumo medido sobre límite biológico efectivo.
+          </td>
+          <td>
+            • Campos y lógica en <code>CuotaExtraccionModel.java</code>.<br>
+            • Tarea diaria <code>AlertaProgramadaTask</code> evalúa ritmo y desvío de velocidad de consumo.<br>
+            • Imputación RPA a nivel comunal.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+
+        <tr>
+          <td>
+            <span class="ind-badge">Indicador 4</span>
+            <div class="ind-name">Límite Diario (LED)</div>
+          </td>
+          <td>
+            • Todo sobrepaso es hallazgo formal con marca <code>LED_EXCEDIDO</code>.<br>
+            • Modo configurable <code>ALERTA_FISCALIZACION</code> para no inducir pesca en negro.<br>
+            • Notificación push dirigida a fiscalizadores.
+          </td>
+          <td>
+            • Motor <code>LimiteExtraccionDiarioService.java</code>.<br>
+            • Registro en <code>declaracion_marca</code> con detalle nominal de exceso (kg).<br>
+            • Despacho push integrado en <code>AlertaTriggerService</code>.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+
+        <tr>
+          <td>
+            <span class="ind-badge">Indicador 5</span>
+            <div class="ind-name">Control de Vedas</div>
+          </td>
+          <td>
+            • Fórmula tetradimensional: Especie + Región + Arte/Método + Temporalidad.<br>
+            • Filtrado de método para no sancionar falsamente el alga de varado.<br>
+            • Marca normativa <code>EN_VEDA</code>.
+          </td>
+          <td>
+            • Motor <code>VedaEvaluadorService.java</code>.<br>
+            • Registro de intentos bloqueados (422) con <code>declaracion_id = null</code> para auditoría.<br>
+            • Avisos programados previos al inicio de veda.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+
+        <tr>
+          <td>
+            <span class="ind-badge">Indicador 6</span>
+            <div class="ind-name">Trazabilidad de Peso</div>
+          </td>
+          <td>
+            • Separación estricta entre pesaje físico en romana y conciliación documental.<br>
+            • Voucher de pesaje con carácter probatorio vinculante.
+          </td>
+          <td>
+            • Módulo <code>VariacionPesoWidget.jsx</code> con cálculo de mermas relativas y rangos tolerados de transporte.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+
+        <tr>
+          <td>
+            <span class="ind-badge">Indicador 7</span>
+            <div class="ind-name">Retención en Bodega</div>
+          </td>
+          <td>
+            • Monitoreo de días de acopio (tramos 3, 5 y 7 días).<br>
+            • Focalización de riesgo en alga húmeda.<br>
+            • 3 estados visuales explícitos.
+          </td>
+          <td>
+            • <code>RetencionBodegaWidget.jsx</code> muestra estado Normativamente Desactivado, Sin Lotes en Riesgo, o Semáforo de Lotes Críticos.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+
+        <tr>
+          <td>
+            <span class="ind-badge">Indicador 8</span>
+            <div class="ind-name">Severidad Biológica</div>
+          </td>
+          <td>
+            • Modulación de severidad según estado de humedad (Húmedo retenido sin merma escala a Crítico; seco permanece bajo).
+          </td>
+          <td>
+            • Servicio modular de severidad en backend.<br>
+            • Visualización en frontend y flag <code>bio_perdida_activo</code>.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+
+        <tr>
+          <td>
+            <span class="ind-badge">Indicador 9</span>
+            <div class="ind-name">Perfilador de Riesgo (Nuevo)</div>
+          </td>
+          <td>
+            • <strong>Indicador creado el 11 de septiembre:</strong> Matriz 3×3 (Severidad Biológica × Desvío de Peso).<br>
+            • Agravantes normativos automáticos por marcas <code>EN_VEDA</code> y <code>LED_EXCEDIDO</code>.
+          </td>
+          <td>
+            • <code>PerfiladorRiesgoService.java</code> (16.5 KB nuevo).<br>
+            • Endpoint <code>/api/perfilador-riesgo</code>.<br>
+            • Widget interactivo <code>PerfiladorRiesgoWidget.jsx</code> con semáforo y filtros.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+
+        <tr>
+          <td>
+            <span class="ind-badge">RX.1</span>
+            <div class="ind-name">Consola de Hallazgos</div>
+          </td>
+          <td>
+            • Bandeja unificada para el fiscalizador que consolida las 5 marcas normativas.<br>
+            • Capacidad de auditoría y acción de resolver.
+          </td>
+          <td>
+            • Vista montada en <code>/alertas</code> (<code>ConsolaHallazgos.jsx</code>).<br>
+            • Acción «Resolver» (marca <code>resuelta = true</code>) y reabrir.<br>
+            • Exportación a CSV y filtros por tipo y fecha.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+
+        <tr>
+          <td>
+            <span class="ind-badge">RX.2 & RX.3</span>
+            <div class="ind-name">Catálogo Parametrizado</div>
+          </td>
+          <td>
+            • Ayuda contextual que lee en tiempo real de <code>/api/configuracion-general</code>.<br>
+            • 21+ marcadores que impiden desincronización entre panel y documentación.
+          </td>
+          <td>
+            • <code>IndicadorHelpDialog.jsx</code> con interpolación <code>{{clave}}</code>.<br>
+            • Script de verificación y test unitario en backend y frontend.
+          </td>
+          <td><span class="badge badge-success">Entregado</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- AVANCES RECIENTES COMPLEMENTARIOS -->
+  <h2 class="section-title">
+    Avances Recientes de Alto Impacto <span>Seguridad & Operación</span>
+  </h2>
+
+  <div class="card-grid">
+    <div class="feature-card">
+      <div class="feature-header">
+        <div class="feature-icon" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;">🔒</div>
+        <div class="feature-title">Seguridad y Roles (RBAC)</div>
+      </div>
+      <p class="feature-desc">
+        Se completó el esquema de seguridad Spring Boot con JWT y control de acceso en React:
+      </p>
+      <ul style="margin: 0.6rem 0 0 1.2rem; font-size: 0.85rem; color: var(--slate-600);">
+        <li><strong>Administrador:</strong> Acceso irrestricto a sincronización, catálogos y mantenedores.</li>
+        <li><strong>Fiscalizador:</strong> Operación sobre dashboard, alertas y resolución de hallazgos.</li>
+        <li><strong>Auditor:</strong> Acceso estricto de solo lectura para fiscalía o contraloría.</li>
+      </ul>
+      <div class="feature-tags">
+        <span class="tag">JWT Auth</span>
+        <span class="tag">RutaConPerfil</span>
+        <span class="tag">Filtro de Menú</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-header">
+        <div class="feature-icon" style="background: rgba(5, 150, 105, 0.15); color: #059669;">⚖️</div>
+        <div class="feature-title">Gestión de Hallazgos en Terreno</div>
+      </div>
+      <p class="feature-desc">
+        La consola de fiscalización permite al funcionario auditar los hallazgos en caleta. Al presionar <strong>«Resolver»</strong>, el caso queda registrado como subsanado o sancionado formalmente, liberando la cola diaria de pendientes sin borrar el historial de auditoría legal.
+      </p>
+      <div class="feature-tags">
+        <span class="tag">Acción Resolver</span>
+        <span class="tag">Trazabilidad Legal</span>
+        <span class="tag">Descarga CSV</span>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-header">
+        <div class="feature-icon" style="background: rgba(79, 70, 229, 0.15); color: #4f46e5;">📊</div>
+        <div class="feature-title">Homologación Visual y Dashboard</div>
+      </div>
+      <p class="feature-desc">
+        Se normalizó el ancho de los widgets clave (Desembarque Físico, Captura Corregida, Control de Cuotas y Retención en Bodega), asegurando un estándar visual de 100% de ancho de contenedor, responsivo y adaptado para presentaciones y monitores de fiscalización.
+      </p>
+      <div class="feature-tags">
+        <span class="tag">MUI Grid v7</span>
+        <span class="tag">Ancho Completo</span>
+        <span class="tag">100% Responsive</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASOS SIGUIENTES / RECOMENDACIONES -->
+  <section class="speech-box" style="border-left-color: var(--success); background: linear-gradient(to right, #ecfdf5, #f8fafc);">
+    <h2 class="speech-title" style="color: var(--success);">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+      Siguientes Pasos Recomendados para el Cierre
+    </h2>
+    <ul class="speech-list">
+      <li><strong>Ejecutar llamada al endpoint de recálculo masivo:</strong> El motor está listo; realizar la invocación HTTP para recalcular los factores históricos de las declaraciones anteriores a septiembre.</li>
+      <li><strong>Definición final de cuotas en bloqueo vs alerta:</strong> Presentar a Sernapesca la matriz de configuración para que decidan formalmente cuáles cuotas territoriales operarán con bloqueo estricto (422) y cuáles en modo solo alerta.</li>
+      <li><strong>Validación en terreno con funcionarios de Coquimbo:</strong> Probar la consola de hallazgos directamente con las credenciales del perfil <code>FISCALIZADOR</code> en faenas reales de fiscalización.</li>
+    </ul>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>Proyecto TrazAlga · Sistema Integral de Trazabilidad y Fiscalización de Algas Pardas · Sernapesca</p>
+    <p style="margin-top: 0.35rem; font-size: 0.75rem;">Documento generado automáticamente para soporte de comités técnicos y reuniones de avance.</p>
+  </footer>
+
+</div>
+
+</body>
+</html>
