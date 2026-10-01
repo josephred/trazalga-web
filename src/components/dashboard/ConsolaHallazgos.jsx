@@ -23,6 +23,15 @@ import {
   CircularProgress,
   InputAdornment,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  FormControl,
+  FormLabel,
 } from '@mui/material';
 import {
   Gavel as GavelIcon,
@@ -148,16 +157,46 @@ export default function ConsolaHallazgos() {
     cargarDatos();
   }, [cargarDatos]);
 
-  const handleResolver = async (id) => {
+  const [dialogResolverOpen, setDialogResolverOpen] = useState(false);
+  const [marcaSeleccionada, setMarcaSeleccionada] = useState(null);
+  const [resolucionTipo, setResolucionTipo] = useState('LIBERADA');
+  const [observacionResolucion, setObservacionResolucion] = useState('');
+  const [resolviendoLoading, setResolviendoLoading] = useState(false);
+
+  const abrirDialogResolver = (marca) => {
+    setMarcaSeleccionada(marca);
+    setResolucionTipo('LIBERADA');
+    setObservacionResolucion('');
+    setDialogResolverOpen(true);
+  };
+
+  const handleConfirmarResolucion = async () => {
+    if (!observacionResolucion.trim()) {
+      setError('La observación es obligatoria para resolver el hallazgo.');
+      return;
+    }
     try {
-      await api.put(`/api/declaracion-marcas/${id}/resolver`);
-      setActionSuccess(`Hallazgo #${id} marcado como RESUELTO.`);
+      setResolviendoLoading(true);
+      await api.put(`/api/declaracion-marcas/${marcaSeleccionada.id}/resolver`, {
+        resolucionTipo,
+        observacion: observacionResolucion.trim(),
+      });
+      setActionSuccess(`Hallazgo #${marcaSeleccionada.id} resuelto como ${resolucionTipo}.`);
+      setDialogResolverOpen(false);
+      setMarcaSeleccionada(null);
+      setObservacionResolucion('');
       setTimeout(() => setActionSuccess(null), 3500);
       cargarDatos();
     } catch (err) {
       console.error('Error al resolver marca:', err);
-      setError('Error al actualizar el estado del hallazgo.');
+      setError(err.response?.data?.message || 'Error al actualizar el estado del hallazgo.');
+    } finally {
+      setResolviendoLoading(false);
     }
+  };
+
+  const handleResolver = (marca) => {
+    abrirDialogResolver(marca);
   };
 
   const handleReabrir = async (id) => {
@@ -536,12 +575,17 @@ export default function ConsolaHallazgos() {
                         {/* Estado */}
                         <TableCell>
                           <Chip
-                            label={h.resuelta ? 'RESUELTO' : 'PENDIENTE'}
+                            label={h.resuelta ? (h.resolucionTipo || 'RESUELTO') : 'PENDIENTE'}
                             size="small"
-                            color={h.resuelta ? 'success' : 'warning'}
+                            color={h.resuelta ? (['LIBERADA', 'DESCARTADA'].includes(h.resolucionTipo) ? 'success' : 'error') : 'warning'}
                             variant={h.resuelta ? 'filled' : 'outlined'}
                             sx={{ fontWeight: 700, fontSize: '0.68rem', height: 22 }}
                           />
+                          {h.observacionResolucion && (
+                            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.68rem', mt: 0.5, fontStyle: 'italic', maxWidth: 160 }}>
+                              "{h.observacionResolucion}"
+                            </Typography>
+                          )}
                         </TableCell>
 
                         {/* Marca */}
@@ -627,13 +671,13 @@ export default function ConsolaHallazgos() {
                         <TableCell align="center">
                           {puedeResolver ? (
                             !h.resuelta ? (
-                              <Tooltip title="Marcar como fiscalizado / resuelto">
+                              <Tooltip title="Resolver y gestionar hallazgo">
                                 <Button
                                   size="small"
                                   variant="contained"
                                   color="success"
                                   startIcon={<CheckCircleIcon sx={{ fontSize: 15 }} />}
-                                  onClick={() => handleResolver(h.id)}
+                                  onClick={() => handleResolver(h)}
                                   sx={{ textTransform: 'none', fontSize: '0.72rem', py: 0.3, px: 1.2, borderRadius: 2 }}
                                 >
                                   Resolver
@@ -675,6 +719,125 @@ export default function ConsolaHallazgos() {
           labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
         />
       </Card>
+
+      {/* Diálogo de Resolución de Hallazgo y Desbloqueo de Carga (T4.5) */}
+      <Dialog
+        open={dialogResolverOpen}
+        onClose={() => !resolviendoLoading && setDialogResolverOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+          Resolver Hallazgo #{marcaSeleccionada?.id} — {marcaSeleccionada?.marca}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+              <strong>Origen Faena:</strong> {marcaSeleccionada?.declaracionTipo} {marcaSeleccionada?.declaracionId ? `(#${marcaSeleccionada.declaracionId})` : ''}
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              <strong>Infracción / Hallazgo:</strong> {marcaSeleccionada?.detalle}
+            </Typography>
+          </Box>
+
+          <FormControl component="fieldset" sx={{ mb: 2.5, width: '100%' }}>
+            <FormLabel component="legend" sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>
+              Tipo de Resolución *
+            </FormLabel>
+            <RadioGroup
+              value={resolucionTipo}
+              onChange={(e) => setResolucionTipo(e.target.value)}
+            >
+              <FormControlLabel
+                value="LIBERADA"
+                control={<Radio color="success" size="small" />}
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
+                      LIBERADA (Desbloquear carga en bodega virtual)
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      Autoriza el despacho y comercialización tras verificación.
+                    </Typography>
+                  </Box>
+                }
+                sx={{ mb: 1, alignItems: 'flex-start' }}
+              />
+              <FormControlLabel
+                value="DECOMISO"
+                control={<Radio color="error" size="small" />}
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>
+                      DECOMISO (Mantiene carga bloqueada)
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      Carga incautada; no puede ser comercializada ni trasladada.
+                    </Typography>
+                  </Box>
+                }
+                sx={{ mb: 1, alignItems: 'flex-start' }}
+              />
+              <FormControlLabel
+                value="SANCION"
+                control={<Radio color="warning" size="small" />}
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'warning.main' }}>
+                      SANCIÓN (Mantiene carga bloqueada)
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      Infracción cursada en citación; carga retenida por fiscalización.
+                    </Typography>
+                  </Box>
+                }
+                sx={{ mb: 1, alignItems: 'flex-start' }}
+              />
+              <FormControlLabel
+                value="DESCARTADA"
+                control={<Radio size="small" />}
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      DESCARTADA (Desestimar hallazgo y liberar carga)
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      Hallazgo cerrado por justificación técnica válida o error material.
+                    </Typography>
+                  </Box>
+                }
+                sx={{ alignItems: 'flex-start' }}
+              />
+            </RadioGroup>
+          </FormControl>
+
+          <TextField
+            label="Observación Fiscalizadora *"
+            placeholder="Indique fundamentos, acta de fiscalización en terreno o kilos verificados..."
+            fullWidth
+            multiline
+            rows={3}
+            value={observacionResolucion}
+            onChange={(e) => setObservacionResolucion(e.target.value)}
+            required
+            helperText="La observación es obligatoria para garantizar auditoría normativa."
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setDialogResolverOpen(false)} disabled={resolviendoLoading} sx={{ textTransform: 'none' }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color={['LIBERADA', 'DESCARTADA'].includes(resolucionTipo) ? 'success' : 'error'}
+            onClick={handleConfirmarResolucion}
+            disabled={resolviendoLoading || !observacionResolucion.trim()}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            {resolviendoLoading ? <CircularProgress size={20} /> : 'Confirmar Resolución'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
