@@ -70,11 +70,11 @@ export default function CapturaCorregidaWidget({ dateRange }) {
 
   const factorPonderado = data?.factorPonderadoGlobal != null
     ? data.factorPonderadoGlobal
-    : (data?.factorPromedioGlobal != null ? data.factorPromedioGlobal : 1.0);
+    : (data?.factorPromedioGlobal != null ? data.factorPromedioGlobal : null);
 
   // Formateador con localización chilena (coma decimal) para evitar confundir decimal con miles (ej: 1,00x vs 1.000x)
   const formatFactor = (val) => {
-    if (val == null || isNaN(val)) return '-';
+    if (val == null || isNaN(val)) return '—';
     return Number(val).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 3 }) + 'x';
   };
 

@@ -17,32 +17,64 @@ export default function ControlCuotaDiaria({ dateRange }) {
   const [cuotas, setCuotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [periodo, setPeriodo] = useState('DIARIO');
-  const [perfil, setPerfil] = useState('RECOLECTOR');
+  const [comunaId, setComunaId] = useState('');
+  const [extraccionTipoId, setExtraccionTipoId] = useState('');
+  const [comunas, setComunas] = useState([]);
+  const [extraccionTipos, setExtraccionTipos] = useState([]);
 
+  // Cargar maestros de comunas y métodos de extracción para los filtros
+  useEffect(() => {
+    const fetchMaestros = async () => {
+      try {
+        const res = await api.get('/cuotas/maestros');
+        if (res.data) {
+          if (res.data.comunas) {
+            const sortedComunas = [...res.data.comunas].sort((a, b) => 
+              (a.nombre || '').localeCompare(b.nombre || '')
+            );
+            setComunas(sortedComunas);
+          }
+          if (res.data.extraccionTipos) {
+            setExtraccionTipos(res.data.extraccionTipos);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching maestros para cuotas:', err);
+      }
+    };
+    fetchMaestros();
+  }, []);
+
+  // Cargar cuotas de áreas libres según filtros
   useEffect(() => {
     const fetchCuotas = async () => {
       try {
+        setLoading(true);
         const params = new URLSearchParams();
         if (dateRange && dateRange.startDate && dateRange.endDate) {
           params.append('startDate', dateRange.startDate);
           params.append('endDate', dateRange.endDate);
         }
-        params.append('periodo', periodo);
-        params.append('perfil', perfil);
+        if (comunaId) {
+          params.append('comunaId', comunaId);
+        }
+        if (extraccionTipoId) {
+          params.append('extraccionTipoId', extraccionTipoId);
+        }
         
         const response = await api.get(`/cuotas/dashboard-diario?${params.toString()}`);
-        setCuotas(response.data);
+        setCuotas(response.data || []);
+        setError(null);
       } catch (err) {
         console.error('Error fetching cuotas:', err);
-        setError(err.message || 'Error desconocido');
+        setError(err.message || 'Error desconocido al cargar cuotas');
       } finally {
         setLoading(false);
       }
     };
 
     fetchCuotas();
-  }, [dateRange, periodo, perfil]);
+  }, [dateRange, comunaId, extraccionTipoId]);
 
   // Colores y fondos explícitos y refinados para las barras de progreso
   const getProgressColors = (porcentaje) => {
@@ -51,7 +83,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
     return { bar: 'success.main', bg: '#f0fdf4', label: '#047857' }; // Verde
   };
 
-  if (loading) {
+  if (loading && cuotas.length === 0) {
     return (
       <Card 
         elevation={0}
@@ -70,7 +102,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
     );
   }
 
-  if (error) {
+  if (error && cuotas.length === 0) {
     return (
       <Card 
         elevation={0}
@@ -82,7 +114,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
       >
         <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', mb: 2 }}>
-            Control Cuota Diaria
+            Control de Cuotas
           </Typography>
           <Typography color="error" sx={{ fontFamily: 'Inter', fontSize: '0.9rem' }}>{error}</Typography>
         </CardContent>
@@ -108,14 +140,21 @@ export default function ControlCuotaDiaria({ dateRange }) {
     >
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
-            Control de Cuotas
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
+              Control de Cuotas
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+              Áreas libres — Consumo combinado (Recolector + Armador)
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+            {/* Selector de Comuna */}
+            <FormControl size="small" sx={{ minWidth: 160 }}>
               <Select
-                value={perfil}
-                onChange={(e) => setPerfil(e.target.value)}
+                value={comunaId}
+                onChange={(e) => setComunaId(e.target.value)}
                 displayEmpty
                 slotProps={{
                   input: {
@@ -123,15 +162,20 @@ export default function ControlCuotaDiaria({ dateRange }) {
                   }
                 }}
               >
-                <MenuItem value="RECOLECTOR" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Recolector</MenuItem>
-                <MenuItem value="ARMADOR" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Armador</MenuItem>
-                <MenuItem value="AREA" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Área Manejo</MenuItem>
+                <MenuItem value="" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Todas las comunas</MenuItem>
+                {comunas.map((c) => (
+                  <MenuItem key={c.id} value={c.id} sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>
+                    {c.nombre}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: 100 }}>
+
+            {/* Selector de Método de Extracción */}
+            <FormControl size="small" sx={{ minWidth: 150 }}>
               <Select
-                value={periodo}
-                onChange={(e) => setPeriodo(e.target.value)}
+                value={extraccionTipoId}
+                onChange={(e) => setExtraccionTipoId(e.target.value)}
                 displayEmpty
                 slotProps={{
                   input: {
@@ -139,15 +183,18 @@ export default function ControlCuotaDiaria({ dateRange }) {
                   }
                 }}
               >
-                <MenuItem value="DIARIO" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Diario</MenuItem>
-                <MenuItem value="SEMANAL" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Semanal</MenuItem>
-                <MenuItem value="MENSUAL" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Mensual</MenuItem>
+                <MenuItem value="" sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>Todos los métodos</MenuItem>
+                {extraccionTipos.map((et) => (
+                  <MenuItem key={et.id} value={et.id} sx={{ fontFamily: 'Inter', fontSize: '0.85rem' }}>
+                    {et.nombre}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Box>
         </Box>
 
-        {/* Nota Normativa de Doble Imputación Territorial (R1.3) */}
+        {/* Nota Normativa de Consumo Combinado Áreas Libres (Punto 3 / R1.3) */}
         <Box
           sx={{
             display: 'flex',
@@ -163,7 +210,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
           }}
         >
           <Typography variant="caption" sx={{ fontFamily: 'Inter', color: 'text.secondary', fontSize: '0.74rem' }}>
-            <strong>Nota territorial:</strong> El consumo de cuota de recolectores se imputa a la comuna de inscripción (RPA). El desembarque físico se imputa a la caleta de descarga.
+            <strong>Nota territorial:</strong> El consumo suma recolectores (comuna de inscripción) y armadores (caleta de desembarque). Las AMERB se controlan en su propio módulo.
           </Typography>
         </Box>
 
@@ -172,7 +219,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
         {cuotas.length === 0 ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
             <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
-              No hay cuotas activas configuradas para este perfil/periodo.
+              No hay cuotas de área libre activas para los filtros seleccionados.
             </Typography>
           </Box>
         ) : (
@@ -183,12 +230,54 @@ export default function ControlCuotaDiaria({ dateRange }) {
             const colors = getProgressColors(cuota.porcentajeUso);
             
             return (
-              <Box key={index} sx={{ mb: 3, '&:last-child': { mb: 1 } }}>
+              <Box key={cuota.cuotaId || index} sx={{ mb: 3, '&:last-child': { mb: 1 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'baseline' }}>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0, flexWrap: 'wrap' }}>
                     <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
                       {cuota.especieNombre}
                     </Typography>
+
+                    {/* Badge de Período (propiedad intrínseca de la cuota) */}
+                    {cuota.periodo && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontFamily: 'Inter',
+                          color: '#7c3aed',
+                          bgcolor: 'rgba(124, 58, 237, 0.08)',
+                          border: 1, borderColor: 'rgba(124, 58, 237, 0.25)',
+                          borderRadius: 2,
+                          px: 0.8,
+                          py: 0.1,
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase'
+                        }}
+                      >
+                        {cuota.periodo}
+                      </Typography>
+                    )}
+
+                    {/* Badge de Método de Extracción */}
+                    {cuota.extraccionTipoNombre && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontFamily: 'Inter',
+                          color: 'text.secondary',
+                          bgcolor: 'action.hover',
+                          border: 1, borderColor: 'divider',
+                          borderRadius: 2,
+                          px: 0.8,
+                          py: 0.1,
+                          fontSize: '0.68rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        {cuota.extraccionTipoNombre}
+                      </Typography>
+                    )}
+
                     {cuota.humedadEstadoNombre && (
                       <Typography
                         variant="caption"
@@ -207,6 +296,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
                         {cuota.humedadEstadoNombre}
                       </Typography>
                     )}
+
                     {cuota.alcance && cuota.alcance !== 'Global' && (
                       <Typography
                         variant="caption"
