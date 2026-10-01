@@ -611,7 +611,9 @@ export const DEFAULT_CONFIG_VALUES = {
   origen_geo_distancia_max_km: '30',
   origen_geo_precision_max_m: '500',
   origen_geo_patron_pct: '50',
-  origen_geo_patron_min_decl: '3'
+  origen_geo_patron_min_decl: '3',
+  patente_vigencia_horas: '48',
+  patente_consulta_max_por_minuto: '20'
 };
 
 /**

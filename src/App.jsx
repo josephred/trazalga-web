@@ -10,6 +10,7 @@ import Reportes from './pages/Reportes';
 import Mapa from './pages/Mapa';
 import Administracion from './pages/Administracion';
 import Ayuda from './pages/Ayuda';
+import ConsultaPatentePublica from './pages/ConsultaPatentePublica';
 import MainLayout from './components/layout/MainLayout';
 
 import { useEffect } from 'react';
@@ -41,8 +42,9 @@ function App() {
     <ThemeContextProvider>
       <Router>
         <Routes>
-          {/* Ruta pública */}
+          {/* Rutas públicas */}
           <Route path="/login" element={<Login />} />
+          <Route path="/consulta-patente" element={<ConsultaPatentePublica />} />
 
           {/* Rutas protegidas con Layout Principal */}
           <Route 

@@ -49,6 +49,8 @@
     "origen_geo_distancia_max_km",
     "origen_geo_precision_max_m",
     "origen_geo_patron_pct",
-    "origen_geo_patron_min_decl"
+    "origen_geo_patron_min_decl",
+    "patente_vigencia_horas",
+    "patente_consulta_max_por_minuto"
   ]
 }

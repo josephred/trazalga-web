@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 import { useState } from 'react';
 import { Box, TextField, Button, Typography, InputAdornment, IconButton, Stack } from '@mui/material';
-import { Visibility, VisibilityOff, Lock, HelpOutline, MenuBook, Language, Warning, BarChart, CheckCircle, VerifiedUser, Security, Analytics } from '@mui/icons-material';
+import { Visibility, VisibilityOff, Lock, HelpOutline, MenuBook, Language, Warning, BarChart, CheckCircle, VerifiedUser, Security, Analytics, LocalShipping } from '@mui/icons-material';
 import api from '../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { validateRut } from '../utils/rutValidator';
@@ -498,6 +498,36 @@ export default function Login() {
                     </Button>
                   ))}
                 </Stack>
+              </Box>
+
+              {/* Enlace a Consulta Ciudadana de Patentes (T10.3) */}
+              <Box sx={{ mt: 2.5, pt: 2, borderTop: '1px dashed #cbd5e1', textAlign: 'center' }}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={() => navigate('/consulta-patente')}
+                  startIcon={<LocalShipping sx={{ color: '#16a34a' }} />}
+                  sx={{
+                    py: 1,
+                    textTransform: 'none',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    borderColor: '#86efac',
+                    bgcolor: '#f0fdf4',
+                    color: '#15803d',
+                    boxShadow: '0 1px 3px rgba(22, 163, 74, 0.08)',
+                    '&:hover': {
+                      borderColor: '#4ade80',
+                      bgcolor: '#dcfce7',
+                    },
+                  }}
+                >
+                  Consulta Pública de Patentes
+                </Button>
+                <Typography sx={{ fontSize: '0.68rem', color: '#64748b', mt: 0.5 }}>
+                  Verifique la vigencia de transporte de algas sin iniciar sesión
+                </Typography>
               </Box>
 
               {/* Footer notice */}
