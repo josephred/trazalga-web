@@ -29,13 +29,15 @@ import {
   CheckCircle as OkIcon,
   ReceiptLong as VoucherIcon,
   Description as DocumentIcon,
-  Biotech as BioIcon
+  Biotech as BioIcon,
+  AccountTree as ChainIcon
 } from '@mui/icons-material';
 import {
   getVariacionPeso,
   getVariacionPesoDetalle,
   getTrazabilidadLote,
-  getTrazabilidadLoteDetalle
+  getTrazabilidadLoteDetalle,
+  getCadenaOrigenPlanta
 } from '../../services/reportesService';
 
 export default function VariacionPesoWidget({ dateRange }) {
@@ -48,7 +50,9 @@ export default function VariacionPesoWidget({ dateRange }) {
     documentos: 0,
     pesaje: { total: 0, promedioVariacionPct: null, fueraUmbral: 0 },
     documental: { total: 0, promedioVariacionPct: null, fueraUmbral: 0 },
-    consolidado: { totalConciliaciones: 0, promedioVariacionPct: null, fueraUmbral: 0 }
+    consolidado: { totalConciliaciones: 0, promedioVariacionPct: null, fueraUmbral: 0 },
+    cadenaOrigenPlanta: [],
+    cadenaOrigenPlantaResumen: { total: 0, promedioVariacionPct: null, fueraUmbral: 0 }
   });
   const [loteMetrics, setLoteMetrics] = useState({});
   const [loading, setLoading] = useState(true);
@@ -59,6 +63,7 @@ export default function VariacionPesoWidget({ dateRange }) {
   const [filtroTipo, setFiltroTipo] = useState('TODOS'); // TODOS | PESAJE | DOCUMENTO
   const [conciliacionesDetalle, setConciliacionesDetalle] = useState([]);
   const [lotesDetalle, setLotesDetalle] = useState([]);
+  const [cadenaOrigenDetalle, setCadenaOrigenDetalle] = useState([]);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
 
   const parseDates = () => {
@@ -114,11 +119,20 @@ export default function VariacionPesoWidget({ dateRange }) {
           fueraUmbral: safePeso.fueraUmbral || 0
         };
 
+        const safeCadena = safePeso.cadenaOrigenPlanta || [];
+        const safeCadenaResumen = safePeso.cadenaOrigenPlantaResumen || {
+          total: safeCadena.length,
+          promedioVariacionPct: null,
+          fueraUmbral: 0
+        };
+
         setMetrics({
           ...safePeso,
           pesaje: safePesaje,
           documental: safeDocumental,
-          consolidado: safeConsolidado
+          consolidado: safeConsolidado,
+          cadenaOrigenPlanta: safeCadena,
+          cadenaOrigenPlantaResumen: safeCadenaResumen
         });
         setLoteMetrics(loteData || {});
         setError(null);
@@ -133,19 +147,23 @@ export default function VariacionPesoWidget({ dateRange }) {
     fetchMetrics();
   }, [dateRange]);
 
-  const hasAlertas = (metrics?.fueraUmbral || 0) > 0 || (metrics?.pesaje?.fueraUmbral || 0) > 0;
+  const hasAlertas = (metrics?.fueraUmbral || 0) > 0 ||
+                     (metrics?.pesaje?.fueraUmbral || 0) > 0 ||
+                     (metrics?.cadenaOrigenPlantaResumen?.fueraUmbral || 0) > 0;
 
   const handleOpenDetalle = async () => {
     setOpenModal(true);
     setLoadingDetalle(true);
     try {
       const filters = parseDates();
-      const [detallesPeso, detallesLotes] = await Promise.all([
+      const [detallesPeso, detallesLotes, cadenaOrigen] = await Promise.all([
         getVariacionPesoDetalle(filters),
-        getTrazabilidadLoteDetalle(filters)
+        getTrazabilidadLoteDetalle(filters),
+        getCadenaOrigenPlanta(filters)
       ]);
       setConciliacionesDetalle(detallesPeso || []);
       setLotesDetalle(detallesLotes || []);
+      setCadenaOrigenDetalle(cadenaOrigen || []);
     } catch (err) {
       console.error('Error fetching detalle conciliaciones:', err);
     } finally {
@@ -157,6 +175,8 @@ export default function VariacionPesoWidget({ dateRange }) {
     if (filtroTipo === 'TODOS') return true;
     return (row.tipoRegistro || '').toUpperCase() === filtroTipo;
   });
+
+  const listaCadena = cadenaOrigenDetalle.length > 0 ? cadenaOrigenDetalle : (metrics.cadenaOrigenPlanta || []);
 
   if (loading) {
     return (
@@ -247,7 +267,98 @@ export default function VariacionPesoWidget({ dateRange }) {
           </Typography>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
-            {/* Dos Poblaciones de Control R6.1 */}
+            {/* Bloque Primario T6.2: Cadena Origen -> Planta (Romana) */}
+            <Box
+              sx={{
+                mb: 2.5,
+                p: 2.2,
+                borderRadius: 3,
+                border: '2px solid',
+                borderColor: (metrics.cadenaOrigenPlantaResumen?.fueraUmbral || 0) > 0 ? 'error.light' : '#6366f1',
+                bgcolor: (metrics.cadenaOrigenPlantaResumen?.fueraUmbral || 0) > 0 ? 'rgba(239, 68, 68, 0.03)' : 'rgba(99, 102, 241, 0.04)',
+                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.08)'
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                  <ChainIcon sx={{ color: (metrics.cadenaOrigenPlantaResumen?.fueraUmbral || 0) > 0 ? 'error.main' : '#4f46e5', fontSize: 24 }} />
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary', lineHeight: 1.2 }}>
+                      Origen → Planta (Romana)
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                      Cadena de custodia vinculante: Desembarque en origen (Σ) vs Peso real en romana
+                    </Typography>
+                  </Box>
+                </Box>
+                <Chip
+                  label="VINCULANTE PRINCIPAL"
+                  size="small"
+                  color="primary"
+                  sx={{ fontWeight: 800, fontSize: '0.65rem', height: 22, bgcolor: '#4f46e5' }}
+                />
+              </Box>
+
+              <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
+                      Lotes Auditados con Romana
+                    </Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary', mt: 0.5 }}>
+                      {metrics.cadenaOrigenPlantaResumen?.total || metrics.cadenaOrigenPlanta?.length || 0}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
+                      Promedio Variación Origen → Planta
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      sx={{
+                        fontWeight: 800,
+                        fontFamily: 'Outfit',
+                        mt: 0.5,
+                        color: metrics.cadenaOrigenPlantaResumen?.promedioVariacionPct != null && Math.abs(metrics.cadenaOrigenPlantaResumen.promedioVariacionPct) > (metrics.umbralPct || 5.0)
+                          ? 'error.main'
+                          : 'text.primary'
+                      }}
+                    >
+                      {metrics.cadenaOrigenPlantaResumen?.promedioVariacionPct !== null && metrics.cadenaOrigenPlantaResumen?.promedioVariacionPct !== undefined
+                        ? `${metrics.cadenaOrigenPlantaResumen.promedioVariacionPct > 0 ? '+' : ''}${metrics.cadenaOrigenPlantaResumen.promedioVariacionPct}%`
+                        : '—'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
+                      Discrepancias Fuera de Umbral
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      sx={{
+                        fontWeight: 800,
+                        fontFamily: 'Outfit',
+                        mt: 0.5,
+                        color: (metrics.cadenaOrigenPlantaResumen?.fueraUmbral || 0) > 0 ? 'error.main' : 'success.main'
+                      }}
+                    >
+                      {metrics.cadenaOrigenPlantaResumen?.fueraUmbral || 0}
+                      <Typography component="span" variant="caption" sx={{ ml: 0.8, color: 'text.secondary', fontWeight: 600 }}>
+                        alertas (±{metrics.umbralPct || 5.0}%)
+                      </Typography>
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Dos Poblaciones de Control Secundarias R6.1 */}
             <Grid container spacing={2} sx={{ mb: 2 }}>
               {/* Población 1: Pesaje Físico en Romana */}
               <Grid item xs={12} sm={6}>
@@ -462,6 +573,7 @@ export default function VariacionPesoWidget({ dateRange }) {
 
           <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper', px: 3 }}>
             <Tabs value={tabModal} onChange={(_, val) => setTabModal(val)} sx={{ '& .MuiTab-root': { fontFamily: 'Outfit', fontWeight: 700, textTransform: 'none' } }}>
+              <Tab icon={<ChainIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={`Origen → Planta Romana (${listaCadena.length})`} />
               <Tab icon={<ScaleIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={`Conciliaciones de Peso (${conciliacionesDetalle.length})`} />
               <Tab icon={<BioIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={`Trazabilidad por Lote y Merma Biológica (${lotesDetalle.length})`} />
             </Tabs>
@@ -473,7 +585,165 @@ export default function VariacionPesoWidget({ dateRange }) {
                 <CircularProgress />
               </Box>
             ) : tabModal === 0 ? (
-              /* Pestaña 0: Conciliaciones de Peso (Pesaje vs Documental) */
+              /* Pestaña 0: Origen -> Planta (Romana) Vinculante */
+              <Box>
+                <Box sx={{ p: 1.5, px: 3, bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip label="TRAZABILIDAD VINCULANTE" size="small" color="primary" sx={{ fontWeight: 800, fontSize: '0.68rem', height: 22 }} />
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
+                      Contraste de pesaje físico en romana contra declaraciones biológicas de origen
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip
+                      label={`Total: ${listaCadena.length}`}
+                      size="small"
+                      sx={{ fontWeight: 700, fontSize: '0.72rem' }}
+                    />
+                    <Chip
+                      label={`Discrepancias: ${listaCadena.filter(r => r.fueraUmbral).length}`}
+                      size="small"
+                      color={listaCadena.filter(r => r.fueraUmbral).length > 0 ? 'error' : 'default'}
+                      variant={listaCadena.filter(r => r.fueraUmbral).length > 0 ? 'filled' : 'outlined'}
+                      sx={{ fontWeight: 700, fontSize: '0.72rem' }}
+                    />
+                  </Box>
+                </Box>
+
+                {listaCadena.length === 0 ? (
+                  <Typography sx={{ p: 4, color: 'text.secondary', fontFamily: 'Inter', textAlign: 'center' }}>
+                    No se encontraron recepciones en planta con pesaje de romana vinculadas a orígenes biológicos en este periodo.
+                  </Typography>
+                ) : (
+                  <TableContainer sx={{ maxHeight: 460 }}>
+                    <Table size="small" stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Folio Planta</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Voucher / Romana</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Fecha Pesaje</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Titular Planta</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Intermediario</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Orígenes Biológicos</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Origen</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Romana Planta</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Variación (%)</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Estado</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {listaCadena.map((row, idx) => (
+                          <TableRow key={idx} hover>
+                            <TableCell sx={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.8rem' }}>
+                              {row.folioPlanta || `#${row.declaracionPlantaId}`}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.8rem' }}>
+                              {row.voucherRomanaNumero ? (
+                                <Chip
+                                  icon={<VoucherIcon sx={{ fontSize: 13 }} />}
+                                  label={row.voucherRomanaNumero}
+                                  size="small"
+                                  color="primary"
+                                  variant="outlined"
+                                  sx={{ fontWeight: 700, fontSize: '0.7rem', height: 22 }}
+                                />
+                              ) : (
+                                <Chip label="S/Voucher" size="small" variant="outlined" sx={{ fontSize: '0.68rem', height: 20 }} />
+                              )}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+                              {row.fechaPesaje ? new Date(row.fechaPesaje).toLocaleDateString('es-CL') : '—'}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                              {row.titularPlanta || '—'}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.8rem' }}>
+                              {row.intermediario ? (
+                                <Box>
+                                  <Chip
+                                    size="small"
+                                    label={`${row.intermediario.tipo || 'COMERC.'}: ${row.intermediario.folio || ''}`}
+                                    sx={{ fontWeight: 600, fontSize: '0.7rem', bgcolor: 'warning.50', color: 'warning.dark', border: 1, borderColor: 'warning.200' }}
+                                  />
+                                  {row.intermediario.titular && (
+                                    <Typography variant="caption" sx={{ display: 'block', fontSize: '0.68rem', color: 'text.secondary' }}>
+                                      {row.intermediario.titular}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              ) : (
+                                <Chip size="small" label="Directo (Sin interm.)" variant="outlined" color="success" sx={{ fontSize: '0.68rem', fontWeight: 600, height: 20 }} />
+                              )}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.8rem' }}>
+                              {row.origenes && row.origenes.length > 0 ? (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.4 }}>
+                                  {row.origenes.map((orig, oIdx) => (
+                                    <Chip
+                                      key={oIdx}
+                                      size="small"
+                                      label={`${orig.tipo}: ${orig.folio || ('#' + orig.declaracionId)} (${orig.kg ? orig.kg.toLocaleString('es-CL') + ' kg' : '0 kg'})`}
+                                      sx={{
+                                        fontSize: '0.68rem',
+                                        fontWeight: 600,
+                                        bgcolor: orig.tipo === 'ARMADOR' ? 'info.50' : orig.tipo === 'RECOLECTOR' ? 'success.50' : 'secondary.50',
+                                        color: orig.tipo === 'ARMADOR' ? 'info.dark' : orig.tipo === 'RECOLECTOR' ? 'success.dark' : 'secondary.dark',
+                                        border: 1,
+                                        borderColor: orig.tipo === 'ARMADOR' ? 'info.200' : orig.tipo === 'RECOLECTOR' ? 'success.200' : 'secondary.200',
+                                        height: 20
+                                      }}
+                                    />
+                                  ))}
+                                </Box>
+                              ) : (
+                                <Typography variant="caption" sx={{ color: 'text.disabled' }}>No identificados</Typography>
+                              )}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.82rem', fontWeight: 600 }} align="right">
+                              {row.kgOrigenTotal ? row.kgOrigenTotal.toLocaleString('es-CL') : '0'}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.82rem', fontWeight: 800, color: 'primary.main' }} align="right">
+                              {row.kgPlanta ? row.kgPlanta.toLocaleString('es-CL') : (row.pesoRomanaKg ? row.pesoRomanaKg.toLocaleString('es-CL') : '0')}
+                            </TableCell>
+                            <TableCell
+                              sx={{
+                                fontSize: '0.85rem',
+                                fontWeight: 800,
+                                color: row.fueraUmbral ? 'error.main' : 'text.primary'
+                              }}
+                              align="right"
+                            >
+                              {row.variacionPct !== null && row.variacionPct !== undefined
+                                ? `${row.variacionPct > 0 ? '+' : ''}${row.variacionPct}%`
+                                : '0.0%'}
+                            </TableCell>
+                            <TableCell align="center">
+                              {row.fueraUmbral ? (
+                                <Chip
+                                  label={`ALERTA >${metrics.umbralPct || 5}%`}
+                                  size="small"
+                                  color="error"
+                                  sx={{ fontWeight: 800, fontSize: '0.65rem', height: 20 }}
+                                />
+                              ) : (
+                                <Chip
+                                  label="CONFORME"
+                                  size="small"
+                                  color="success"
+                                  variant="outlined"
+                                  sx={{ fontWeight: 700, fontSize: '0.65rem', height: 20 }}
+                                />
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Box>
+            ) : tabModal === 1 ? (
+              /* Pestaña 1: Conciliaciones de Peso (Pesaje vs Documental) */
               <Box>
                 <Box sx={{ p: 1.5, px: 3, bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
@@ -689,6 +959,8 @@ export default function VariacionPesoWidget({ dateRange }) {
           <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', pl: 1 }}>
               {tabModal === 0
+                ? `Mostrando ${listaCadena.length} recepciones en planta contrastadas con su origen biológico.`
+                : tabModal === 1
                 ? `Mostrando ${conciliacionesFiltradas.length} de ${conciliacionesDetalle.length} conciliaciones evaluadas.`
                 : `Mostrando ${lotesDetalle.length} lotes con trazabilidad de origen a destino.`}
             </Typography>
