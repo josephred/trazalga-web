@@ -55,10 +55,12 @@ import LimiteExtraccionDiarioMaestro from '../components/admin/LimiteExtraccionD
 import ParametrosGeneralesMaestro from '../components/admin/ParametrosGeneralesMaestro';
 import AmerbEspeciesMaestro from '../components/admin/AmerbEspeciesMaestro';
 import MacrozonasMaestro from '../components/admin/MacrozonasMaestro';
+import CaletasMaestro from '../components/admin/CaletasMaestro';
 import FactoryIcon from '@mui/icons-material/Factory';
 import ScaleIcon from '@mui/icons-material/Scale';
 import BlockIcon from '@mui/icons-material/Block';
 import ScienceIcon from '@mui/icons-material/Science';
+import AnchorIcon from '@mui/icons-material/Anchor';
 import Divider from '@mui/material/Divider';
 
 // Categorías temáticas para el Centro de Control (Patrón C)
@@ -183,6 +185,17 @@ export const ADMIN_MODULES = [
     badge: 'Sernapesca',
     color: '#a855f7',
     icon: <CloudSyncIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'caletas',
+    tabIndex: 9,
+    categoria: 'territorio',
+    titulo: 'Caletas y Coordenadas Maestras',
+    nombreCorto: 'Caletas y GPS',
+    descripcion: 'Mantenedor de caletas de desembarque, asignación de varaderos y carga/edición manual de coordenadas oficiales (T9.1).',
+    badge: 'Coordenadas',
+    color: '#0284c7',
+    icon: <AnchorIcon sx={{ fontSize: 26 }} />,
   }
 ];
 
@@ -190,7 +203,7 @@ export const ADMIN_MODULES = [
 export const resolveAdminTab = (param) => {
   if (!param || param === 'hub') return 'hub';
   const num = parseInt(param, 10);
-  if (!isNaN(num) && num >= 0 && num <= 8) return num;
+  if (!isNaN(num) && num >= 0 && num <= 9) return num;
   const mod = ADMIN_MODULES.find(m => m.id === param);
   if (mod) return mod.tabIndex;
   return 'hub';
@@ -1692,6 +1705,9 @@ export default function Administracion() {
             )}
           </Box>
         )}
+
+        {/* Renderizado de Pestaña 9: Mantenedor de Caletas y Coordenadas Maestras (T9.1) */}
+        {activeTab === 9 && <CaletasMaestro />}
 
       </Box>
   );

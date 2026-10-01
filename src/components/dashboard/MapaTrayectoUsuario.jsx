@@ -86,6 +86,63 @@ export default function MapaTrayectoUsuario({ hallazgo = null }) {
     );
   }
 
+  if (hallazgo && hallazgo.refLatitud && hallazgo.gpsLatitud) {
+    const ref = { lat: hallazgo.refLatitud, lon: hallazgo.refLongitud, nombre: hallazgo.refNombre, tipo: hallazgo.refTipo };
+    const gps = { lat: hallazgo.gpsLatitud, lon: hallazgo.gpsLongitud, precision: hallazgo.precisionGpsM, offline: hallazgo.envioOffline };
+    const center = [(ref.lat + gps.lat) / 2, (ref.lon + gps.lon) / 2];
+
+    return (
+      <Box sx={{ width: '100%' }}>
+        <Alert severity={hallazgo.precisionAceptable ? "error" : "warning"} sx={{ mb: 2, borderRadius: 3, fontFamily: 'Inter' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+            Inconsistencia Origen vs GPS: {hallazgo.usuarioNombre || 'Usuario'} ({hallazgo.usuarioRut || 'RUT N/D'})
+          </Typography>
+          <Typography variant="body2" sx={{ fontFamily: 'Inter' }}>
+            GPS capturado a <strong>{hallazgo.distanciaKm} km</strong> de {ref.nombre || 'origen'} ({ref.tipo || 'Referencia'}). 
+            Precisión GPS: <strong>{gps.precision != null ? `${gps.precision} m` : 'N/D'}</strong> | Modo Offline: <strong>{gps.offline ? 'Sí' : 'No'}</strong>.
+            {hallazgo.marcaGenerada && <span> | Marca: <strong>{hallazgo.marcaGenerada}</strong></span>}
+          </Typography>
+        </Alert>
+
+        <Box sx={{ height: 420, width: '100%', borderRadius: 3, overflow: 'hidden', border: 1, borderColor: 'divider', position: 'relative' }}>
+          <MapContainer center={center} zoom={8} style={{ height: '100%', width: '100%', zIndex: 1 }}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            />
+            <Polyline positions={[[ref.lat, ref.lon], [gps.lat, gps.lon]]} color="#06b6d4" weight={4} dashArray="6, 8" opacity={0.9} />
+            <Marker position={[ref.lat, ref.lon]}>
+              <Popup>
+                <Box sx={{ p: 0.5, fontFamily: 'Inter' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                    Origen Declarado ({ref.tipo})
+                  </Typography>
+                  <Typography variant="caption" display="block"><strong>Lugar:</strong> {ref.nombre}</Typography>
+                  <Typography variant="caption" display="block"><strong>Coord:</strong> ({ref.lat?.toFixed(4)}, {ref.lon?.toFixed(4)})</Typography>
+                </Box>
+              </Popup>
+            </Marker>
+            <Marker position={[gps.lat, gps.lon]}>
+              <Popup>
+                <Box sx={{ p: 0.5, fontFamily: 'Inter' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'error.main' }}>
+                    GPS Capturado por Dispositivo
+                  </Typography>
+                  <Typography variant="caption" display="block"><strong>Folio:</strong> {hallazgo.folio}</Typography>
+                  <Typography variant="caption" display="block"><strong>Hora:</strong> {hallazgo.hora} ({hallazgo.fechaDeclaracion})</Typography>
+                  <Typography variant="caption" display="block"><strong>Distancia:</strong> {hallazgo.distanciaKm} km</Typography>
+                  <Typography variant="caption" display="block"><strong>Precisión:</strong> {gps.precision != null ? `${gps.precision} m` : 'N/D'}</Typography>
+                  <Typography variant="caption" display="block"><strong>Offline:</strong> {gps.offline ? 'Sí' : 'No'}</Typography>
+                  <Typography variant="caption" display="block"><strong>Coord:</strong> ({gps.lat?.toFixed(4)}, {gps.lon?.toFixed(4)})</Typography>
+                </Box>
+              </Popup>
+            </Marker>
+          </MapContainer>
+        </Box>
+      </Box>
+    );
+  }
+
   const [usuarios, setUsuarios] = useState([]);
   const [selectedUsuario, setSelectedUsuario] = useState('');
   

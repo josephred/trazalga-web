@@ -23,7 +23,8 @@ const VALID_MARCAS = new Set([
   'DESEMBARQUE_ATIPICO',
   'CUOTA_EXCEDIDA',
   'POSTERIOR_CIERRE',
-  'DOBLE_OPERACION'
+  'DOBLE_OPERACION',
+  'ORIGEN_GEO_INCONSISTENTE'
 ]);
 
 // 2. Términos expresamente prohibidos / obsoletos según plan RX.3

@@ -58,9 +58,50 @@ export default function AmerbEspeciesMaestro() {
   const [formResolucion, setFormResolucion] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Modal para editar centroide / coordenadas GPS
+  const [modalCoordOpen, setModalCoordOpen] = useState(false);
+  const [coordLat, setCoordLat] = useState('');
+  const [coordLon, setCoordLon] = useState('');
+  const [savingCoord, setSavingCoord] = useState(false);
+
   useEffect(() => {
     cargarDatosIniciales();
   }, []);
+
+  const handleOpenCoordModal = () => {
+    if (!selectedAmerb) return;
+    setCoordLat(selectedAmerb.latitud != null ? String(selectedAmerb.latitud) : '');
+    setCoordLon(selectedAmerb.longitud != null ? String(selectedAmerb.longitud) : '');
+    setModalCoordOpen(true);
+  };
+
+  const handleGuardarCoordenadas = async () => {
+    if (!selectedAmerb) return;
+    setSavingCoord(true);
+    try {
+      const latNum = coordLat.trim() !== '' ? parseFloat(coordLat.replace(',', '.')) : null;
+      const lonNum = coordLon.trim() !== '' ? parseFloat(coordLon.replace(',', '.')) : null;
+
+      const payload = {
+        ...selectedAmerb,
+        latitud: latNum,
+        longitud: lonNum
+      };
+
+      const res = await api.post('/api/amerbs', payload);
+      const updated = res.data || payload;
+
+      setSelectedAmerb(updated);
+      setAmerbs(prev => prev.map(a => a.id === updated.id ? updated : a));
+      setMensaje({ type: 'success', text: `Coordenadas de centroide actualizadas para ${updated.nombre}.` });
+      setModalCoordOpen(false);
+    } catch (err) {
+      console.error('Error al actualizar coordenadas AMERB:', err);
+      setMensaje({ type: 'error', text: 'Error al guardar las coordenadas del AMERB.' });
+    } finally {
+      setSavingCoord(false);
+    }
+  };
 
   const cargarDatosIniciales = async () => {
     setLoading(true);
@@ -295,22 +336,41 @@ export default function AmerbEspeciesMaestro() {
                         Código Oficial: <strong>{selectedAmerb.codigoSernapesca || 'Sin código'}</strong>
                       </Typography>
                     </Box>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<AddIcon />}
-                      onClick={handleOpenModal}
-                      sx={{
-                        bgcolor: '#ec4899',
-                        '&:hover': { bgcolor: '#db2777' },
-                        borderRadius: 2.5,
-                        textTransform: 'none',
-                        fontFamily: 'Outfit',
-                        fontWeight: 600
-                      }}
-                    >
-                      Habilitar Especie
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<LocationOnIcon />}
+                        onClick={handleOpenCoordModal}
+                        sx={{
+                          borderColor: '#ec4899',
+                          color: '#ec4899',
+                          '&:hover': { borderColor: '#db2777', bgcolor: 'rgba(236,72,153,0.06)' },
+                          borderRadius: 2.5,
+                          textTransform: 'none',
+                          fontFamily: 'Outfit',
+                          fontWeight: 600
+                        }}
+                      >
+                        Centroide GPS
+                      </Button>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={handleOpenModal}
+                        sx={{
+                          bgcolor: '#ec4899',
+                          '&:hover': { bgcolor: '#db2777' },
+                          borderRadius: 2.5,
+                          textTransform: 'none',
+                          fontFamily: 'Outfit',
+                          fontWeight: 600
+                        }}
+                      >
+                        Habilitar Especie
+                      </Button>
+                    </Box>
                   </Box>
 
                   <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -334,6 +394,15 @@ export default function AmerbEspeciesMaestro() {
                         color={selectedAmerb.estado === 'CADUCADA' ? 'error' : 'success'}
                         sx={{ fontSize: '0.7rem', height: 22, fontWeight: 700 }}
                       />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Centroide Geográfico Oficial (GPS)</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: selectedAmerb.latitud != null ? 'text.primary' : 'warning.main', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <LocationOnIcon sx={{ fontSize: 16, color: selectedAmerb.latitud != null ? 'success.main' : 'warning.main' }} />
+                        {selectedAmerb.latitud != null && selectedAmerb.longitud != null
+                          ? `(${selectedAmerb.latitud.toFixed(4)}, ${selectedAmerb.longitud.toFixed(4)})`
+                          : 'Sin coordenadas (Modo degradado: informa sin referencia)'}
+                      </Typography>
                     </Grid>
                   </Grid>
                 </Box>
@@ -487,6 +556,56 @@ export default function AmerbEspeciesMaestro() {
             }}
           >
             {saving ? <CircularProgress size={20} /> : 'Guardar Autorización'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal para Editar Coordenadas Centroide */}
+      <Dialog open={modalCoordOpen} onClose={() => !savingCoord && setModalCoordOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
+          Centroide GPS de {selectedAmerb?.nombre}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontSize: '0.85rem' }}>
+            Ingrese las coordenadas geográficas oficiales (formato decimal WGS84) del centroide del polígono AMERB para contraste contra GPS móvil (Indicador 9).
+          </Typography>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Latitud (°)"
+              placeholder="Ej: -29.9533"
+              value={coordLat}
+              onChange={(e) => setCoordLat(e.target.value)}
+              helperText="Formato decimal (ej: -29.9533)"
+            />
+            <TextField
+              fullWidth
+              size="small"
+              label="Longitud (°)"
+              placeholder="Ej: -71.3395"
+              value={coordLon}
+              onChange={(e) => setCoordLon(e.target.value)}
+              helperText="Formato decimal (ej: -71.3395)"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={() => setModalCoordOpen(false)} disabled={savingCoord} sx={{ fontFamily: 'Inter' }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleGuardarCoordenadas}
+            disabled={savingCoord}
+            sx={{
+              bgcolor: '#ec4899',
+              '&:hover': { bgcolor: '#db2777' },
+              fontFamily: 'Outfit',
+              fontWeight: 600
+            }}
+          >
+            {savingCoord ? <CircularProgress size={20} /> : 'Guardar Coordenadas'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -18,6 +18,7 @@ import VariacionPesoWidget from '../components/dashboard/VariacionPesoWidget';
 import RetencionBodegaWidget from '../components/dashboard/RetencionBodegaWidget';
 import PerfiladorRiesgoWidget from '../components/dashboard/PerfiladorRiesgoWidget';
 import DobleOperacionWidget from '../components/dashboard/DobleOperacionWidget';
+import OrigenGeoWidget from '../components/dashboard/OrigenGeoWidget';
 import TiempoValidacionWidget from '../components/dashboard/TiempoValidacionWidget';
 import CasosAbiertosWidget from '../components/dashboard/CasosAbiertosWidget';
 import CurvaSnakeWidget from '../components/dashboard/CurvaSnakeWidget';
@@ -288,6 +289,14 @@ export default function Dashboard() {
             <Box sx={{ position: 'relative', height: '100%' }}>
               <DobleOperacionWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="dobleOperacion" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
+          </Grid>
+
+          {/* Indicador 9: Origen Real vs Geolocalización GPS */}
+          <Grid item xs={12} md={6}>
+            <Box sx={{ position: 'relative', height: '100%' }}>
+              <OrigenGeoWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="origenGeo" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 

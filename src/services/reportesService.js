@@ -143,3 +143,8 @@ export const getDobleOperacionGeo = async (filters) => {
   return response.data;
 };
 
+export const getOrigenGeo = async (filters) => {
+  const response = await api.get('/reportes/origen-geo', { params: formatParams(filters) });
+  return response.data;
+};
+

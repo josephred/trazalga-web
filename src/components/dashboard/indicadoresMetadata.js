@@ -485,6 +485,25 @@ export const INDICADORES_METADATA = {
       'Genera marca oficial `DOBLE_OPERACION` de fiscalización al momento de ingresar la declaración y expone los trayectos en mapa para auditoría. Gobernado por el interruptor maestro `doble_op_activo` ({{doble_op_activo:true}}).'
   },
 
+  origenGeo: {
+    id: 'origenGeo',
+    codigo: 'IND-12',
+    nombre: 'Indicador 9: Origen Real vs Geolocalización GPS',
+    categoria: 'Georreferenciación e Integridad',
+    subtitulo: 'Detección de presencialidad y posible uso de claves por terceros',
+    icono: 'LocationOn',
+    color: '#06b6d4',
+    resumenNegocio:
+      'Compara el punto GPS capturado por el dispositivo móvil al momento de enviar el formulario con la ubicación geográfica de referencia (centroide de AMERB, caleta o varadero asociado). Si la distancia supera {{origen_geo_distancia_max_km:30}} km (`origen_geo_distancia_max_km`) con una precisión GPS aceptable de hasta {{origen_geo_precision_max_m:500}} m (`origen_geo_precision_max_m`), se genera la marca oficial ORIGEN_GEO_INCONSISTENTE. Asimismo, analiza patrones de usuario: si un usuario concentra más del {{origen_geo_patron_pct:50}}% (`origen_geo_patron_pct`) de declaraciones lejanas en al menos {{origen_geo_patron_min_decl:3}} (`origen_geo_patron_min_decl`) operaciones, se rotula como patrón sospechoso por posible uso de clave por terceros.',
+    metricaBase: 'Distancia esférica Haversine en km entre coordenadas GPS capturadas y coordenadas de origen declarado.',
+    humedadFactor: 'No aplica.',
+    fuentesDatos: 'Coordenadas de `declaracion_recolector`, `declaracion_armador` y `declaracion_area` contrastadas con `amerb`, `caleta` y `varadero`.',
+    periodoFechas: 'Declaraciones registradas dentro del rango temporal seleccionado.',
+    formula: 'distanciaKm(GPS, Referencia) > {{origen_geo_distancia_max_km:30}} km AND precisionGpsM <= {{origen_geo_precision_max_m:500}} m',
+    criterioFiscalizacion:
+      'Genera la marca oficial `ORIGEN_GEO_INCONSISTENTE` no bloqueante. Las declaraciones con precisión deficiente (> 500 m) se informan para auditoría sin marcar. Si la caleta o AMERB carece de coordenadas registradas, el sistema opera en modo degradado informando sin referencia. Gobernado por `origen_geo_activo` ({{origen_geo_activo:true}}).'
+  },
+
   curvaSnake: {
     id: 'curvaSnake',
     codigo: 'IND-11',
@@ -587,7 +606,12 @@ export const DEFAULT_CONFIG_VALUES = {
   doble_op_activo: 'true',
   doble_op_distancia_min_km: '5',
   doble_op_velocidad_max_kmh: '80',
-  doble_op_ventana_min_minutos: '30'
+  doble_op_ventana_min_minutos: '30',
+  origen_geo_activo: 'true',
+  origen_geo_distancia_max_km: '30',
+  origen_geo_precision_max_m: '500',
+  origen_geo_patron_pct: '50',
+  origen_geo_patron_min_decl: '3'
 };
 
 /**

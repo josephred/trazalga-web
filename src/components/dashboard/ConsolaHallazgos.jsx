@@ -109,6 +109,15 @@ const MARCA_CONFIG = {
     indicador: 'Indicador 8',
     descripcion: 'Inconsistencia geotemporal en declaraciones consecutivas del mismo usuario',
   },
+  ORIGEN_GEO_INCONSISTENTE: {
+    label: 'Origen vs GPS Inconsistente',
+    color: '#06b6d4',
+    bg: 'rgba(6, 182, 212, 0.1)',
+    border: 'rgba(6, 182, 212, 0.3)',
+    icon: WarningIcon,
+    indicador: 'Indicador 9',
+    descripcion: 'Distancia entre coordenadas GPS capturadas y origen declarado excede el umbral tolerable',
+  },
 };
 
 export default function ConsolaHallazgos() {
