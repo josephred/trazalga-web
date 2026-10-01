@@ -98,8 +98,8 @@ export const getLimiteExtraccionDiario = async (fecha) => {
   return response.data;
 };
 
-export const getRetencionBodega = async () => {
-  const response = await api.get('/reportes/retencion-bodega');
+export const getRetencionBodega = async (filters) => {
+  const response = await api.get('/reportes/retencion-bodega', { params: formatParams(filters) });
   return response.data;
 };
 

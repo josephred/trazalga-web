@@ -391,18 +391,18 @@ export const INDICADORES_METADATA = {
     codigo: 'IND-07',
     nombre: 'Retención en Bodega Virtual',
     categoria: 'Inventario y Almacenamiento',
-    subtitulo: 'Antigüedad de stock acopiado sin movimiento comercial',
+    subtitulo: 'Tramos por estado de humedad (Res. 3602) y semáforo de antigüedad',
     icono: 'Inventory2',
     color: '#8b5cf6',
     resumenNegocio:
-      'Controla los tiempos de permanencia de lotes de alga en bodegas intermedias de comercializadores o plantas procesadoras, evitando el acopio clandestino o la acumulación especulativa.',
-    metricaBase: 'Días transcurridos desde el ingreso del lote a bodega: `DATEDIFF(HOY, fecha_ingreso)`.',
-    humedadFactor: 'Relevante para evaluar la merma progresiva por secado prolongado en canchas.',
-    fuentesDatos: 'Registros de inventario de `declaracion_comercializador` y plantas de abastecimiento.',
-    periodoFechas: 'Lotes con saldo disponible en inventario a la fecha actual.',
-    formula: 'Días Retención = CURRENT_DATE - fecha_ingreso_bodega',
+      'Controla los tiempos máximos de permanencia de lotes de alga en bodegas intermedias sin destino, conforme a los tramos de humedad de la Res. Ex. 3602/2017 de Sernapesca, evitando el acopio clandestino o la acumulación especulativa.',
+    metricaBase: 'Horas transcurridas desde el desembarque en origen hasta el destino o fecha actual.',
+    humedadFactor: 'Tramos normativos (Res. 3602): Húmedo (≤ {{retencion_humedo_max_horas:24}} h), Semihúmedo (≤ {{retencion_semihumedo_max_horas:72}} h), Semiseco (≤ {{retencion_semiseco_max_horas:216}} h) y Seco (sin límite).',
+    fuentesDatos: 'Registros de inventario de `declaracion_comercializador` y `declaracion_planta_abastecimiento`.',
+    periodoFechas: 'Lotes en bodega virtual y lotes con trazabilidad en el período.',
+    formula: 'Horas = TIMESTAMPDIFF(HOUR, fecha_origen, COALESCE(fecha_destino, NOW())), comparado contra plazoMaxHoras según humedad.',
     criterioFiscalizacion:
-      'El control es de tres niveles y sus umbrales se configuran en Administración → Configuración General → Cadena de Custodia: alerta amarilla preventiva a los {{retencion_bodega_dias_amarilla:3}} días (`retencion_bodega_dias_amarilla`), naranja crítica a los {{retencion_bodega_dias_naranja:5}} días (`retencion_bodega_dias_naranja`) y roja al superar el plazo máximo recomendado de {{retencion_bodega_dias_roja:7}} días (`retencion_bodega_dias_roja`). Aplica a los estados de humedad indicados en `retencion_bodega_estados_sujetos` (por defecto, sólo {{retencion_bodega_estados_sujetos:HUMEDO}}), gobernado por el switch maestro `retencion_bodega_activo`.'
+      'Aplica los tramos de la Res. 3602: plazo máximo de {{retencion_humedo_max_horas:24}} h para húmedo (`retencion_humedo_max_horas`), {{retencion_semihumedo_max_horas:72}} h para semihúmedo (`retencion_semihumedo_max_horas`) y {{retencion_semiseco_max_horas:216}} h para semiseco (`retencion_semiseco_max_horas`); el recurso seco no tiene límite temporal. El semáforo preventivo pasa a amarillo a partir del {{retencion_preaviso_pct:80}}% del plazo máximo (`retencion_preaviso_pct`) y a rojo al superarlo. Superar el plazo máximo extingue la validez del estado de humedad declarado y la captura biológica calculada con su factor. Gobernado por el interruptor maestro `retencion_bodega_activo` ({{retencion_bodega_activo:true}}).'
   },
 
   integracionHumedadTiempo: {
@@ -564,6 +564,10 @@ export const DEFAULT_CONFIG_VALUES = {
   variacion_peso_umbral_general_pct: '5.0',
   variacion_peso_exige_voucher: 'true',
   retencion_bodega_activo: 'true',
+  retencion_humedo_max_horas: '24',
+  retencion_semihumedo_max_horas: '72',
+  retencion_semiseco_max_horas: '216',
+  retencion_preaviso_pct: '80',
   retencion_bodega_dias_amarilla: '3',
   retencion_bodega_dias_naranja: '5',
   retencion_bodega_dias_roja: '7',
