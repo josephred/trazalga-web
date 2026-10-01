@@ -4,9 +4,9 @@ import { HelpOutline as HelpIcon } from '@mui/icons-material';
 import { getIndicadorMetadata } from './indicadoresMetadata';
 import IndicadorHelpDialog from './IndicadorHelpDialog';
 
-export default function IndicadorHelpButton({ helpKey, dateRange, sx = {} }) {
+export default function IndicadorHelpButton({ helpKey, indicadorId, dateRange, sx = {} }) {
   const [open, setOpen] = useState(false);
-  const metadata = getIndicadorMetadata(helpKey);
+  const metadata = getIndicadorMetadata(helpKey || indicadorId);
 
   if (!metadata) return null;
 

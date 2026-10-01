@@ -665,17 +665,19 @@ export function interpolateMetadata(metaObj, configMap = {}) {
  * utiliza los valores oficiales normativos por defecto.
  */
 export function getIndicadorMetadata(keyOrTitle, configMap = null) {
-  if (!keyOrTitle) return null;
+  if (keyOrTitle === null || keyOrTitle === undefined || keyOrTitle === '') return null;
   let rawItem = INDICADORES_METADATA[keyOrTitle];
 
   if (!rawItem) {
-    const normalized = keyOrTitle.toLowerCase().trim();
+    const str = String(keyOrTitle).toLowerCase().trim();
     const foundKey = Object.keys(INDICADORES_METADATA).find((k) => {
       const item = INDICADORES_METADATA[k];
       return (
-        item.nombre.toLowerCase().includes(normalized) ||
-        item.id.toLowerCase() === normalized ||
-        normalized.includes(item.id.toLowerCase())
+        String(item.numero) === str ||
+        item.codigo?.toLowerCase() === str ||
+        item.nombre?.toLowerCase().includes(str) ||
+        item.id?.toLowerCase() === str ||
+        str.includes(item.id?.toLowerCase())
       );
     });
     if (foundKey) {

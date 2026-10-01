@@ -268,6 +268,7 @@ export default function Dashboard() {
           <Grid item xs={12}>
             <Box sx={{ position: 'relative', height: '100%' }}>
               <PerfiladorRiesgoWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="perfiladorRiesgo" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 

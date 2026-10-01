@@ -174,7 +174,7 @@ export default function PerfiladorRiesgoWidget({ dateRange }) {
                 <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: 800, color: 'text.primary', lineHeight: 1.2 }}>
                   Perfilador de Riesgo de Fiscalización (Indicador 9)
                 </Typography>
-                <IndicadorHelpButton indicadorId={9} />
+                <IndicadorHelpButton helpKey="perfiladorRiesgo" dateRange={dateRange} sx={{ position: 'static' }} />
               </Box>
               <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
                 Matriz de correlación Variación &times; Retención · Modulador biológico · Agravantes Veda/LED
