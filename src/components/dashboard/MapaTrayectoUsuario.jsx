@@ -31,8 +31,61 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-export default function MapaTrayectoUsuario() {
+export default function MapaTrayectoUsuario({ hallazgo = null }) {
   const theme = useTheme();
+
+  if (hallazgo && hallazgo.declaracionA && hallazgo.declaracionB) {
+    const a = hallazgo.declaracionA;
+    const b = hallazgo.declaracionB;
+    const center = [(a.latitud + b.latitud) / 2, (a.longitud + b.longitud) / 2];
+
+    return (
+      <Box sx={{ width: '100%' }}>
+        <Alert severity="warning" sx={{ mb: 2, borderRadius: 3, fontFamily: 'Inter' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+            Inconsistencia Geotemporal: {hallazgo.usuarioNombre || 'Usuario'} ({hallazgo.usuarioRut || 'RUT N/D'})
+          </Typography>
+          <Typography variant="body2" sx={{ fontFamily: 'Inter' }}>
+            Distancia de <strong>{hallazgo.distanciaKm} km</strong> en <strong>{hallazgo.tiempoMinutos} min</strong> ({hallazgo.tiempoHoras} h). 
+            Velocidad implícita: <strong>{hallazgo.velocidadKmh} km/h</strong>.
+          </Typography>
+        </Alert>
+
+        <Box sx={{ height: 420, width: '100%', borderRadius: 3, overflow: 'hidden', border: 1, borderColor: 'divider', position: 'relative' }}>
+          <MapContainer center={center} zoom={9} style={{ height: '100%', width: '100%', zIndex: 1 }}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            />
+            <Polyline positions={[[a.latitud, a.longitud], [b.latitud, b.longitud]]} color="#ef4444" weight={4} dashArray="6, 8" opacity={0.9} />
+            <Marker position={[a.latitud, a.longitud]}>
+              <Popup>
+                <Box sx={{ p: 0.5, fontFamily: 'Inter' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.main' }}>Declaración A</Typography>
+                  <Typography variant="caption" display="block"><strong>Folio:</strong> {a.folio}</Typography>
+                  <Typography variant="caption" display="block"><strong>Tipo:</strong> {a.tipo}</Typography>
+                  <Typography variant="caption" display="block"><strong>Hora:</strong> {a.hora} ({a.fecha})</Typography>
+                  <Typography variant="caption" display="block"><strong>Coord:</strong> ({a.latitud?.toFixed(4)}, {a.longitud?.toFixed(4)})</Typography>
+                </Box>
+              </Popup>
+            </Marker>
+            <Marker position={[b.latitud, b.longitud]}>
+              <Popup>
+                <Box sx={{ p: 0.5, fontFamily: 'Inter' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'error.main' }}>Declaración B</Typography>
+                  <Typography variant="caption" display="block"><strong>Folio:</strong> {b.folio}</Typography>
+                  <Typography variant="caption" display="block"><strong>Tipo:</strong> {b.tipo}</Typography>
+                  <Typography variant="caption" display="block"><strong>Hora:</strong> {b.hora} ({b.fecha})</Typography>
+                  <Typography variant="caption" display="block"><strong>Coord:</strong> ({b.latitud?.toFixed(4)}, {b.longitud?.toFixed(4)})</Typography>
+                </Box>
+              </Popup>
+            </Marker>
+          </MapContainer>
+        </Box>
+      </Box>
+    );
+  }
+
   const [usuarios, setUsuarios] = useState([]);
   const [selectedUsuario, setSelectedUsuario] = useState('');
   

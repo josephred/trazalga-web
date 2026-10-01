@@ -100,6 +100,15 @@ const MARCA_CONFIG = {
     indicador: 'Indicador 3',
     descripcion: 'Declaración ingresada con fecha posterior al cierre de cuota',
   },
+  DOBLE_OPERACION: {
+    label: 'Doble Operación',
+    color: '#f97316',
+    bg: 'rgba(249, 115, 22, 0.1)',
+    border: 'rgba(249, 115, 22, 0.3)',
+    icon: WarningIcon,
+    indicador: 'Indicador 8',
+    descripcion: 'Inconsistencia geotemporal en declaraciones consecutivas del mismo usuario',
+  },
 };
 
 export default function ConsolaHallazgos() {

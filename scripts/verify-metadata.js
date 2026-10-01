@@ -22,7 +22,8 @@ const VALID_MARCAS = new Set([
   'LED_EXCEDIDO',
   'DESEMBARQUE_ATIPICO',
   'CUOTA_EXCEDIDA',
-  'POSTERIOR_CIERRE'
+  'POSTERIOR_CIERRE',
+  'DOBLE_OPERACION'
 ]);
 
 // 2. Términos expresamente prohibidos / obsoletos según plan RX.3

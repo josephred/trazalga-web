@@ -469,20 +469,20 @@ export const INDICADORES_METADATA = {
   dobleOperacion: {
     id: 'dobleOperacion',
     codigo: 'IND-10',
-    nombre: 'Control de Doble Operación / Superposición',
+    nombre: 'Control de Doble Operación / Inconsistencia Geotemporal',
     categoria: 'Georreferenciación y Presencialidad',
-    subtitulo: 'Detección de faenas incompatibles en el mismo día',
+    subtitulo: 'Detección de faenas incompatibles en distancia y tiempo',
     icono: 'MergeType',
     color: '#ef4444',
     resumenNegocio:
-      'Identifica anomalías donde un mismo recolector o embarcación artesanal declara haber operado simultáneamente en caletas geográficamente distantes el mismo día, o emite declaraciones consecutivas con tiempos de navegación físicamente imposibles.',
-    metricaBase: 'Detección de colisiones espaciotemporales de un mismo actor en la misma fecha.',
+      'Detecta automáticamente inconsistencias cuando un mismo actor emite declaraciones consecutivas en puntos geográficos distintos con tiempos de desplazamiento o velocidades físicamente inverosímiles, presumiendo uso o arriendo de claves por terceros. Evalúa pares consecutivos con distancia >= {{doble_op_distancia_min_km:5}} km (`doble_op_distancia_min_km`) donde la velocidad implícita supere {{doble_op_velocidad_max_kmh:80}} km/h (`doble_op_velocidad_max_kmh`) o el intervalo temporal sea menor a {{doble_op_ventana_min_minutos:30}} min (`doble_op_ventana_min_minutos`). Conserva también la detección de doble imputación ALA/AMERB en el mismo día.',
+    metricaBase: 'Detección de colisiones geotemporales consecutivas por usuario.',
     humedadFactor: 'No aplica.',
-    fuentesDatos: 'Cruce cruzado de `declaracion_recolector` y `declaracion_armador` por `usuario_id` y `fecha_declaracion`.',
+    fuentesDatos: 'Unión de coordenadas de `declaracion_recolector`, `declaracion_armador`, `declaracion_area` y `declaracion_comercializador`.',
     periodoFechas: 'Declaraciones registradas dentro del rango temporal seleccionado.',
-    formula: 'COUNT(*) WHERE usuario_id = :id AND fecha = :f AND COUNT(DISTINCT comuna_id) > 1',
+    formula: 'd >= {{doble_op_distancia_min_km:5}} km AND (v > {{doble_op_velocidad_max_kmh:80}} km/h OR Δt < {{doble_op_ventana_min_minutos:30}} min)',
     criterioFiscalizacion:
-      'Previene el préstamo de RUT o la falsificación de declaraciones para blanquear algas de origen ilícito.'
+      'Genera marca oficial `DOBLE_OPERACION` de fiscalización al momento de ingresar la declaración y expone los trayectos en mapa para auditoría. Gobernado por el interruptor maestro `doble_op_activo` ({{doble_op_activo:true}}).'
   },
 
   curvaSnake: {
@@ -583,7 +583,11 @@ export const DEFAULT_CONFIG_VALUES = {
   riesgo_dias_rojo: '7',
   riesgo_escala_humedo_sin_merma: 'ROJO',
   riesgo_agravante_veda_niveles: '1',
-  riesgo_agravante_led_niveles: '1'
+  riesgo_agravante_led_niveles: '1',
+  doble_op_activo: 'true',
+  doble_op_distancia_min_km: '5',
+  doble_op_velocidad_max_kmh: '80',
+  doble_op_ventana_min_minutos: '30'
 };
 
 /**

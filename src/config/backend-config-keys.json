@@ -40,6 +40,10 @@
     "riesgo_dias_rojo",
     "riesgo_escala_humedo_sin_merma",
     "riesgo_agravante_veda_niveles",
-    "riesgo_agravante_led_niveles"
+    "riesgo_agravante_led_niveles",
+    "doble_op_activo",
+    "doble_op_distancia_min_km",
+    "doble_op_velocidad_max_kmh",
+    "doble_op_ventana_min_minutos"
   ]
 }

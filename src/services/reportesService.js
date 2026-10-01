@@ -133,3 +133,13 @@ export const getPerfiladorRiesgo = async (filters) => {
   return response.data;
 };
 
+export const getDobleOperacion = async (filters) => {
+  const response = await api.get('/reportes/doble-operacion', { params: formatParams(filters) });
+  return response.data;
+};
+
+export const getDobleOperacionGeo = async (filters) => {
+  const response = await api.get('/reportes/doble-operacion-geo', { params: formatParams(filters) });
+  return response.data;
+};
+
