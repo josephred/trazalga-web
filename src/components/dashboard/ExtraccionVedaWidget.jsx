@@ -17,10 +17,14 @@ import {
   TableRow,
   Card,
   CardContent,
-  Chip
+  Chip,
+  TextField,
+  Alert,
+  Tooltip
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import DownloadIcon from '@mui/icons-material/FileDownload';
+import GavelIcon from '@mui/icons-material/Gavel';
 import api from '../../api/axiosConfig';
 
 export default function ExtraccionVedaWidget({ dateRange }) {
@@ -31,6 +35,47 @@ export default function ExtraccionVedaWidget({ dateRange }) {
   const [openModal, setOpenModal] = useState(false);
   const [detalle, setDetalle] = useState([]);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
+
+  // Estados para derivar a citación (T5.1)
+  const [citacionModalOpen, setCitacionModalOpen] = useState(false);
+  const [itemParaCitar, setItemParaCitar] = useState(null);
+  const [numeroCitacion, setNumeroCitacion] = useState('');
+  const [citando, setCitando] = useState(false);
+  const [mensajeAccion, setMensajeAccion] = useState(null);
+
+  const handleOpenCitar = (item) => {
+    setItemParaCitar(item);
+    setNumeroCitacion('');
+    setCitacionModalOpen(true);
+  };
+
+  const handleConfirmarCitar = async () => {
+    if (!numeroCitacion.trim()) return;
+    try {
+      setCitando(true);
+      const tipo = itemParaCitar.tipoDeclaracion || itemParaCitar.perfil || 'RECOLECTOR';
+      const id = itemParaCitar.id;
+      await api.put(`/api/declaracion-marcas/declaracion/${tipo}/${id}/derivar-citacion`, {
+        numeroCitacion: numeroCitacion.trim()
+      });
+      setMensajeAccion(`Faena ${itemParaCitar.folio || id} derivada a Citación N° ${numeroCitacion.trim()}`);
+      setCitacionModalOpen(false);
+      setItemParaCitar(null);
+      setNumeroCitacion('');
+      setTimeout(() => setMensajeAccion(null), 4000);
+      let queryParams = '';
+      if (dateRange && dateRange.startDate && dateRange.endDate) {
+        queryParams = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+      }
+      const res = await api.get(`/reportes/extraccion-veda-detalle${queryParams}`);
+      setDetalle(res.data || []);
+    } catch (err) {
+      console.error('Error derivando a citación:', err);
+      alert(err.response?.data?.message || 'Error al derivar a citación.');
+    } finally {
+      setCitando(false);
+    }
+  };
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -312,6 +357,7 @@ export default function ExtraccionVedaWidget({ dateRange }) {
                       <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }}>Fecha Faena</TableCell>
                       <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }} align="right">Desembarque (Kg)</TableCell>
                       <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }}>Resolución</TableCell>
+                      <TableCell sx={{ fontWeight: 700, bgcolor: 'background.default', fontFamily: 'Outfit' }} align="center">Fiscalización</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -371,6 +417,43 @@ export default function ExtraccionVedaWidget({ dateRange }) {
                         <TableCell sx={{ py: 1.2, fontFamily: 'Inter', fontSize: '0.75rem', color: 'text.secondary' }}>
                           {row.resolucion || 'Subpesca'}
                         </TableCell>
+                        <TableCell sx={{ py: 1.2 }} align="center">
+                          {row.estadoGestion === 'DERIVADA_CITACION' ? (
+                            <Tooltip title={row.observacionGestion || 'Faena con citación cursada'}>
+                              <Chip 
+                                label="En Citación" 
+                                size="small" 
+                                variant="outlined"
+                                sx={{ 
+                                  fontSize: '0.68rem', 
+                                  height: 22,
+                                  color: '#8b5cf6',
+                                  borderColor: '#8b5cf6',
+                                  bgcolor: 'rgba(139, 92, 246, 0.12)',
+                                  fontWeight: 700
+                                }} 
+                              />
+                            </Tooltip>
+                          ) : row.estadoGestion === 'RESUELTA' ? (
+                            <Chip 
+                              label="Resuelta" 
+                              size="small" 
+                              color="success"
+                              sx={{ fontSize: '0.68rem', height: 22, fontWeight: 700 }} 
+                            />
+                          ) : (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="secondary"
+                              startIcon={<GavelIcon sx={{ fontSize: 13 }} />}
+                              onClick={() => handleOpenCitar(row)}
+                              sx={{ textTransform: 'none', fontSize: '0.7rem', py: 0.2, px: 1, borderRadius: 2 }}
+                            >
+                              Citar
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -389,6 +472,63 @@ export default function ExtraccionVedaWidget({ dateRange }) {
               }}
             >
               Cerrar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Diálogo Derivar a Citación desde Modal Veda (T5.1) */}
+        <Dialog
+          open={citacionModalOpen}
+          onClose={() => !citando && setCitacionModalOpen(false)}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3 } }}
+        >
+          <DialogTitle sx={{ fontWeight: 800, fontFamily: 'Outfit', pb: 1 }}>
+            Derivar Faena a Citación
+          </DialogTitle>
+          <DialogContent dividers sx={{ py: 2 }}>
+            {itemParaCitar && (
+              <Box sx={{ mb: 2, p: 1.5, bgcolor: 'background.default', borderRadius: 2, border: 1, borderColor: 'divider' }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                  {itemParaCitar.tipoDeclaracion || itemParaCitar.perfil} — Folio: {itemParaCitar.folio}
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {itemParaCitar.nombreDeclarante} ({itemParaCitar.rut})
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'error.main', fontWeight: 600, display: 'block', mt: 0.5 }}>
+                  {itemParaCitar.especie} — {(itemParaCitar.kilos || itemParaCitar.kg || 0).toLocaleString('es-CL')} Kg ({itemParaCitar.metodo})
+                </Typography>
+              </Box>
+            )}
+
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontSize: '0.85rem' }}>
+              La derivación registrará la marca oficial <strong>EN_VEDA</strong> en estado <strong>EN CITACIÓN</strong> para que la jefatura de fiscalización y los juzgados prosigan con las actas normativas.
+            </Typography>
+
+            <TextField
+              label="Número de Citación *"
+              placeholder="Ej: CIT-2026-0042 o Rol JPL 128..."
+              fullWidth
+              size="small"
+              value={numeroCitacion}
+              onChange={(e) => setNumeroCitacion(e.target.value)}
+              required
+              helperText="Ingrese el folio oficial de la citación."
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button onClick={() => setCitacionModalOpen(false)} disabled={citando} sx={{ textTransform: 'none' }}>
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleConfirmarCitar}
+              disabled={citando || !numeroCitacion.trim()}
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            >
+              {citando ? <CircularProgress size={20} /> : 'Confirmar Citación'}
             </Button>
           </DialogActions>
         </Dialog>

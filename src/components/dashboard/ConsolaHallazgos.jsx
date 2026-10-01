@@ -130,8 +130,9 @@ export default function ConsolaHallazgos() {
     try {
       const params = {};
       if (filtroMarca) params.marca = filtroMarca;
-      if (filtroEstado === 'pendientes') params.soloPendientes = true;
-      else if (filtroEstado === 'resueltas') params.resuelta = true;
+      if (filtroEstado === 'pendientes') params.estadoGestion = 'PENDIENTE';
+      else if (filtroEstado === 'en_citacion') params.estadoGestion = 'DERIVADA_CITACION';
+      else if (filtroEstado === 'resueltas') params.estadoGestion = 'RESUELTA';
       if (filtroTipo) params.tipo = filtroTipo;
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
@@ -163,11 +164,46 @@ export default function ConsolaHallazgos() {
   const [observacionResolucion, setObservacionResolucion] = useState('');
   const [resolviendoLoading, setResolviendoLoading] = useState(false);
 
+  // Estados para derivar a citación (T5.1)
+  const [dialogCitacionOpen, setDialogCitacionOpen] = useState(false);
+  const [numeroCitacion, setNumeroCitacion] = useState('');
+  const [citandoLoading, setCitandoLoading] = useState(false);
+
   const abrirDialogResolver = (marca) => {
     setMarcaSeleccionada(marca);
     setResolucionTipo('LIBERADA');
     setObservacionResolucion('');
     setDialogResolverOpen(true);
+  };
+
+  const abrirDialogCitacion = (marca) => {
+    setMarcaSeleccionada(marca);
+    setNumeroCitacion('');
+    setDialogCitacionOpen(true);
+  };
+
+  const handleConfirmarCitacion = async () => {
+    if (!numeroCitacion.trim()) {
+      setError('El número de citación es obligatorio.');
+      return;
+    }
+    try {
+      setCitandoLoading(true);
+      await api.put(`/api/declaracion-marcas/${marcaSeleccionada.id}/derivar-citacion`, {
+        numeroCitacion: numeroCitacion.trim(),
+      });
+      setActionSuccess(`Hallazgo #${marcaSeleccionada.id} derivado formalmente a Citación N° ${numeroCitacion.trim()}.`);
+      setDialogCitacionOpen(false);
+      setMarcaSeleccionada(null);
+      setNumeroCitacion('');
+      setTimeout(() => setActionSuccess(null), 3500);
+      cargarDatos();
+    } catch (err) {
+      console.error('Error al derivar citación:', err);
+      setError(err.response?.data?.message || 'Error al derivar a citación.');
+    } finally {
+      setCitandoLoading(false);
+    }
   };
 
   const handleConfirmarResolucion = async () => {
@@ -431,12 +467,13 @@ export default function ConsolaHallazgos() {
               select
               fullWidth
               size="small"
-              label="Estado"
+              label="Estado de Gestión"
               value={filtroEstado}
               onChange={(e) => setFiltroEstado(e.target.value)}
             >
-              <MenuItem value="pendientes">Solo Pendientes</MenuItem>
-              <MenuItem value="resueltas">Solo Resueltas</MenuItem>
+              <MenuItem value="pendientes">Pendientes</MenuItem>
+              <MenuItem value="en_citacion">En Citación</MenuItem>
+              <MenuItem value="resueltas">Resueltas</MenuItem>
               <MenuItem value="todas">Todas</MenuItem>
             </TextField>
           </Grid>
@@ -574,13 +611,29 @@ export default function ConsolaHallazgos() {
                       <TableRow key={h.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                         {/* Estado */}
                         <TableCell>
-                          <Chip
-                            label={h.resuelta ? (h.resolucionTipo || 'RESUELTO') : 'PENDIENTE'}
-                            size="small"
-                            color={h.resuelta ? (['LIBERADA', 'DESCARTADA'].includes(h.resolucionTipo) ? 'success' : 'error') : 'warning'}
-                            variant={h.resuelta ? 'filled' : 'outlined'}
-                            sx={{ fontWeight: 700, fontSize: '0.68rem', height: 22 }}
-                          />
+                          {h.estadoGestion === 'DERIVADA_CITACION' ? (
+                            <Chip
+                              label="EN CITACIÓN"
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: '0.68rem',
+                                height: 22,
+                                color: '#8b5cf6',
+                                borderColor: '#8b5cf6',
+                                bgcolor: 'rgba(139, 92, 246, 0.12)',
+                              }}
+                            />
+                          ) : (
+                            <Chip
+                              label={h.resuelta ? (h.resolucionTipo || 'RESUELTO') : 'PENDIENTE'}
+                              size="small"
+                              color={h.resuelta ? (['LIBERADA', 'DESCARTADA'].includes(h.resolucionTipo) ? 'success' : 'error') : 'warning'}
+                              variant={h.resuelta ? 'filled' : 'outlined'}
+                              sx={{ fontWeight: 700, fontSize: '0.68rem', height: 22 }}
+                            />
+                          )}
                           {h.observacionResolucion && (
                             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.68rem', mt: 0.5, fontStyle: 'italic', maxWidth: 160 }}>
                               "{h.observacionResolucion}"
@@ -670,8 +723,8 @@ export default function ConsolaHallazgos() {
                         {/* Acción */}
                         <TableCell align="center">
                           {puedeResolver ? (
-                            !h.resuelta ? (
-                              <Tooltip title="Resolver y gestionar hallazgo">
+                            h.estadoGestion === 'DERIVADA_CITACION' ? (
+                              <Tooltip title="Resolver definitivamente el hallazgo citado">
                                 <Button
                                   size="small"
                                   variant="contained"
@@ -683,6 +736,33 @@ export default function ConsolaHallazgos() {
                                   Resolver
                                 </Button>
                               </Tooltip>
+                            ) : !h.resuelta ? (
+                              <Stack direction="row" spacing={0.8} justifyContent="center">
+                                <Tooltip title="Derivar formalmente a citación">
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="secondary"
+                                    startIcon={<GavelIcon sx={{ fontSize: 14 }} />}
+                                    onClick={() => abrirDialogCitacion(h)}
+                                    sx={{ textTransform: 'none', fontSize: '0.7rem', py: 0.25, px: 1.0, borderRadius: 2 }}
+                                  >
+                                    Citar
+                                  </Button>
+                                </Tooltip>
+                                <Tooltip title="Resolver y gestionar hallazgo">
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    color="success"
+                                    startIcon={<CheckCircleIcon sx={{ fontSize: 14 }} />}
+                                    onClick={() => handleResolver(h)}
+                                    sx={{ textTransform: 'none', fontSize: '0.7rem', py: 0.25, px: 1.0, borderRadius: 2 }}
+                                  >
+                                    Resolver
+                                  </Button>
+                                </Tooltip>
+                              </Stack>
                             ) : (
                               <Tooltip title="Reabrir hallazgo">
                                 <IconButton size="small" color="default" onClick={() => handleReabrir(h.id)}>
@@ -835,6 +915,60 @@ export default function ConsolaHallazgos() {
             sx={{ textTransform: 'none', fontWeight: 600 }}
           >
             {resolviendoLoading ? <CircularProgress size={20} /> : 'Confirmar Resolución'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo de Derivación a Citación (T5.1) */}
+      <Dialog
+        open={dialogCitacionOpen}
+        onClose={() => !citandoLoading && setDialogCitacionOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 800, fontFamily: 'Outfit', pb: 1 }}>
+          Derivar a Citación y Fiscalización
+        </DialogTitle>
+        <DialogContent dividers sx={{ py: 2 }}>
+          {marcaSeleccionada && (
+            <Box sx={{ mb: 2, p: 1.5, bgcolor: 'background.default', borderRadius: 2, border: 1, borderColor: 'divider' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                Hallazgo #{marcaSeleccionada.id} — {marcaSeleccionada.marca} ({marcaSeleccionada.declaracionTipo} #{marcaSeleccionada.declaracionId})
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>
+                {marcaSeleccionada.detalle}
+              </Typography>
+            </Box>
+          )}
+
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, fontSize: '0.85rem' }}>
+            La derivación a citación registrará formalmente el hallazgo en estado <strong>EN CITACIÓN</strong> con trazabilidad completa. El hallazgo no se cerrará hasta su resolución judicial o administrativa definitiva.
+          </Typography>
+
+          <TextField
+            label="Número de Citación *"
+            placeholder="Ej: CIT-2026-0042 o Folio JPL 128..."
+            fullWidth
+            size="small"
+            value={numeroCitacion}
+            onChange={(e) => setNumeroCitacion(e.target.value)}
+            required
+            helperText="Ingrese el folio o identificación del proceso de citación."
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setDialogCitacionOpen(false)} disabled={citandoLoading} sx={{ textTransform: 'none' }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleConfirmarCitacion}
+            disabled={citandoLoading || !numeroCitacion.trim()}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            {citandoLoading ? <CircularProgress size={20} /> : 'Confirmar Citación'}
           </Button>
         </DialogActions>
       </Dialog>
