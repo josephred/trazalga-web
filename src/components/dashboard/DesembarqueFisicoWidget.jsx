@@ -351,63 +351,66 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
             </Select>
           </FormControl>
 
-          {/* Provincia (encadenada a región) */}
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <Select
-              value={provinciaId}
-              onChange={(e) => setProvinciaId(e.target.value)}
-              displayEmpty
-              disabled={!regionId || provincias.length === 0}
-              sx={{ borderRadius: 2, fontSize: '0.78rem', fontFamily: 'Inter' }}
-            >
-              <MenuItem value="">Todas las provincias</MenuItem>
-              {provincias.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Comuna (encadenada) */}
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <Select
-              value={comunaId}
-              onChange={(e) => setComunaId(e.target.value)}
-              displayEmpty
-              disabled={comunas.length === 0}
-              sx={{ borderRadius: 2, fontSize: '0.78rem', fontFamily: 'Inter' }}
-            >
-              <MenuItem value="">Todas las comunas</MenuItem>
-              {comunas.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Caleta (encadenada) */}
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <Select
-              value={caletaId}
-              onChange={(e) => setCaletaId(e.target.value)}
-              displayEmpty
-              disabled={caletas.length === 0}
-              sx={{ borderRadius: 2, fontSize: '0.78rem', fontFamily: 'Inter' }}
-            >
-              <MenuItem value="">Todas las caletas</MenuItem>
-              {caletas.map((cal) => {
-                const comunaNom = cal.comuna?.nombre || cal.comunaNombre || '';
-                const label = comunaNom ? `${cal.nombre} — ${comunaNom}` : cal.nombre;
-                return (
-                  <MenuItem key={cal.id} value={cal.id}>
-                    {label}
+          {/* Provincia (encadenada a región) - oculta si no está habilitada */}
+          {Boolean(regionId && provincias.length > 0) && (
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={provinciaId}
+                onChange={(e) => setProvinciaId(e.target.value)}
+                displayEmpty
+                sx={{ borderRadius: 2, fontSize: '0.78rem', fontFamily: 'Inter' }}
+              >
+                <MenuItem value="">Todas las provincias</MenuItem>
+                {provincias.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.nombre}
                   </MenuItem>
-                );
-              })}
-            </Select>
-          </FormControl>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {/* Comuna (encadenada) - oculta si no está habilitada */}
+          {Boolean(comunas.length > 0) && (
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={comunaId}
+                onChange={(e) => setComunaId(e.target.value)}
+                displayEmpty
+                sx={{ borderRadius: 2, fontSize: '0.78rem', fontFamily: 'Inter' }}
+              >
+                <MenuItem value="">Todas las comunas</MenuItem>
+                {comunas.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {/* Caleta (encadenada) - oculta si no está habilitada */}
+          {Boolean(caletas.length > 0) && (
+            <FormControl size="small" sx={{ minWidth: 130 }}>
+              <Select
+                value={caletaId}
+                onChange={(e) => setCaletaId(e.target.value)}
+                displayEmpty
+                sx={{ borderRadius: 2, fontSize: '0.78rem', fontFamily: 'Inter' }}
+              >
+                <MenuItem value="">Todas las caletas</MenuItem>
+                {caletas.map((cal) => {
+                  const comunaNom = cal.comuna?.nombre || cal.comunaNombre || '';
+                  const label = comunaNom ? `${cal.nombre} — ${comunaNom}` : cal.nombre;
+                  return (
+                    <MenuItem key={cal.id} value={cal.id}>
+                      {label}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+          )}
 
           {/* Persona / Recolector */}
           <FormControl size="small" sx={{ minWidth: 140 }}>
