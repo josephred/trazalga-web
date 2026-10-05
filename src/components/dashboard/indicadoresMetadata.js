@@ -321,7 +321,8 @@ export const INDICADORES_METADATA = {
       'Si la cuota evalúa Captura, se descuenta el equivalente biológico corregido por el factor de humedad de cada especie (seco = 3,58, húmedo = 1,0). Si el límite nominal de la cuota se fijó en peso seco, el sistema calcula el límite efectivo multiplicándolo por el factor correspondiente.',
     fuentesDatos:
       'Tabla `cuota_extraccion`, cruzada con las declaraciones de extracción y la tabla de membresía multirregional `macrozona_region`.',
-    periodoFechas: 'Período legal de la cuota (Diario, Mensual, Anual) confrontado con el rango activo.',
+    periodoFechas:
+      'Período legal de la cuota (Diario, Mensual, Anual) confrontado con el rango activo. El consumo se imputa según la fecha configurada en {{cuota_fecha_imputacion:EXTRACCION}} (`cuota_fecha_imputacion`: `EXTRACCION` por defecto o `DECLARACION`). Las declaraciones de recolector con período de extracción (`periodo_extraccion_inicio` y `_fin`) se imputan por `fecha_extraccion`, sin prorratear.',
     formula: 'Consumo Acumulado = SUM(captura_o_desembarque) imputado territorialmente vs Límite Efectivo de Cuota (kg)',
     criterioFiscalizacion:
       'La cuota con mayor porcentaje de uso define el "cuello de botella". El sistema emite alerta preventiva cuando el saldo restante es inferior al {{cuota_umbral_restante_pct:10.0}}% (`cuota_umbral_restante_pct`), alerta de velocidad si el ritmo de consumo supera en más de {{cuota_desvio_velocidad_pct:25.0}}% (`cuota_desvio_velocidad_pct`) el tiempo transcurrido, y aviso de expiración a los {{cuota_dias_previos_expiracion:5}} días previos al fin de vigencia. Si alguna cuota aplicable se agota o está CERRADA y tiene política BLOQUEO_DECLARACION, el sistema rechaza la declaración con código HTTP 422, informando la cuota rectora causante del bloqueo.'
@@ -573,6 +574,7 @@ export const DEFAULT_CONFIG_VALUES = {
   desembarque_fuente_area_activa: 'true',
   captura_politica_sin_factor: 'USAR_DEFAULT',
   captura_factor_default: '1.0000',
+  cuota_fecha_imputacion: 'EXTRACCION',
   cuota_umbral_restante_pct: '10.0',
   cuota_desvio_velocidad_pct: '25.0',
   cuota_dias_previos_expiracion: '5',
