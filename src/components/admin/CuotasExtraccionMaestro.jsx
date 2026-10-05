@@ -243,8 +243,8 @@ export default function CuotasExtraccionMaestro() {
       metrica: form.metrica,
       periodo: form.periodo,
       limiteKg: lim,
-      fechaInicio: form.fechaInicio ? `${form.fechaInicio}T00:00:00.000Z` : null,
-      fechaFin: form.fechaFin ? `${form.fechaFin}T23:59:59.000Z` : null,
+      fechaInicio: form.fechaInicio ? form.fechaInicio.slice(0, 10) : null,
+      fechaFin: form.fechaFin ? form.fechaFin.slice(0, 10) : null,
       resolucion: form.resolucion?.trim() || null,
       estado: form.estado,
       activo: Boolean(form.activo),
@@ -290,7 +290,9 @@ export default function CuotasExtraccionMaestro() {
 
   const toggleActivo = async (c) => {
     try {
-      await api.put(`/api/cuotas/${c.id}`, { ...c, activo: !c.activo });
+      const fechaIni = c.fechaInicio ? String(c.fechaInicio).slice(0, 10) : null;
+      const fechaF = c.fechaFin ? String(c.fechaFin).slice(0, 10) : null;
+      await api.put(`/api/cuotas/${c.id}`, { ...c, fechaInicio: fechaIni, fechaFin: fechaF, activo: !c.activo });
       await cargar();
     } catch (error) {
       setMensaje({ type: 'error', text: 'No se pudo cambiar el estado de la cuota.' });
