@@ -237,8 +237,25 @@ export default function ControlCuotaDiaria({ dateRange }) {
                       {cuota.especieNombre}
                     </Typography>
 
-                    {/* Badge de Período (propiedad intrínseca de la cuota) */}
-                    {cuota.periodo && (
+                    {/* Badge de Vigencia Temporal (T1.7) */}
+                    {cuota.vigenciaFormateada ? (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontFamily: 'Inter',
+                          color: '#0284c7',
+                          bgcolor: 'rgba(2, 132, 199, 0.08)',
+                          border: 1, borderColor: 'rgba(2, 132, 199, 0.25)',
+                          borderRadius: 2,
+                          px: 0.8,
+                          py: 0.1,
+                          fontSize: '0.68rem',
+                          fontWeight: 700
+                        }}
+                      >
+                        📅 {cuota.vigenciaFormateada}
+                      </Typography>
+                    ) : cuota.periodo && (
                       <Typography
                         variant="caption"
                         sx={{
@@ -278,6 +295,27 @@ export default function ControlCuotaDiaria({ dateRange }) {
                       </Typography>
                     )}
 
+                    {/* Badge de Comunas (T1.7) */}
+                    {(cuota.comunasNombre || cuota.comunaNombre) && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontFamily: 'Inter',
+                          color: 'text.secondary',
+                          bgcolor: 'action.hover',
+                          border: 1, borderColor: 'divider',
+                          borderRadius: 2,
+                          px: 0.8,
+                          py: 0.1,
+                          fontSize: '0.68rem',
+                          fontWeight: 600
+                        }}
+                        title={cuota.comunasNombre || cuota.comunaNombre}
+                      >
+                        📍 {cuota.comunasNombre || cuota.comunaNombre}
+                      </Typography>
+                    )}
+
                     {cuota.humedadEstadoNombre && (
                       <Typography
                         variant="caption"
@@ -297,7 +335,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
                       </Typography>
                     )}
 
-                    {cuota.alcance && cuota.alcance !== 'Global' && (
+                    {cuota.alcance && cuota.alcance !== 'Global' && !cuota.alcance.startsWith('Comuna') && !cuota.comunasNombre && (
                       <Typography
                         variant="caption"
                         sx={{
