@@ -44,6 +44,8 @@ import {
   ExpandMore as ExpandMoreIcon,
   History as HistoryIcon,
   Terrain as TerrainIcon,
+  CalendarMonth as CalendarMonthIcon,
+  AutoAwesome as AutoAwesomeIcon,
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 
@@ -130,6 +132,26 @@ export default function CuotasExtraccionMaestro() {
   const [saving, setSaving] = useState(false);
   const [porEliminar, setPorEliminar] = useState(null);
   const [cuotaPorCerrar, setCuotaPorCerrar] = useState(null);
+
+  // Dialog Alta Anual (T1.8)
+  const [dialogAnualOpen, setDialogAnualOpen] = useState(false);
+  const [formAnual, setFormAnual] = useState({
+    anio: ANIO_ACTUAL,
+    ambito: 'AREA_LIBRE',
+    nivelAgregacion: 'COMUNA',
+    region: null,
+    comunas: [],
+    especie: null,
+    extraccionTipo: null,
+    metrica: 'CAPTURA',
+    humedadEstado: null,
+    modoAccion: 'SOLO_ALERTA',
+    resolucion: '',
+    cantidadGeneral: 100000,
+    meses: MESES.map((m) => ({ mes: m.id, nombre: m.nombre, limiteKg: 100000, activo: true })),
+  });
+  const [formAnualError, setFormAnualError] = useState(null);
+  const [savingAnual, setSavingAnual] = useState(false);
 
   useEffect(() => {
     cargarMaestros();
@@ -364,6 +386,131 @@ export default function CuotasExtraccionMaestro() {
     }
   };
 
+  const abrirAltaAnual = () => {
+    setFormAnual({
+      anio: filtroAnio || ANIO_ACTUAL,
+      ambito: 'AREA_LIBRE',
+      nivelAgregacion: 'COMUNA',
+      region: maestros.regiones?.[0] || null,
+      comunas: [],
+      especie: maestros.especies?.[0] || null,
+      extraccionTipo: maestros.extraccionTipos?.[0] || null,
+      metrica: 'CAPTURA',
+      humedadEstado: null,
+      modoAccion: 'SOLO_ALERTA',
+      resolucion: '',
+      cantidadGeneral: 100000,
+      meses: MESES.map((m) => ({ mes: m.id, nombre: m.nombre, limiteKg: 100000, activo: true })),
+    });
+    setFormAnualError(null);
+    setDialogAnualOpen(true);
+  };
+
+  const aplicarCantidadATodosLosMeses = () => {
+    const val = parseFloat(formAnual.cantidadGeneral);
+    if (isNaN(val) || val <= 0) return;
+    setFormAnual((prev) => ({
+      ...prev,
+      meses: prev.meses.map((m) => ({ ...m, limiteKg: val })),
+    }));
+  };
+
+  const handleCambioLimiteMes = (mesId, valor) => {
+    setFormAnual((prev) => ({
+      ...prev,
+      meses: prev.meses.map((m) => (m.mes === mesId ? { ...m, limiteKg: valor } : m)),
+    }));
+  };
+
+  const handleToggleMesActivo = (mesId, activo) => {
+    setFormAnual((prev) => ({
+      ...prev,
+      meses: prev.meses.map((m) => (m.mes === mesId ? { ...m, activo } : m)),
+    }));
+  };
+
+  const comunasFiltradasAnual = useMemo(() => {
+    if (!formAnual.region?.id) return maestros.comunas || [];
+    return (maestros.comunas || []).filter(
+      (c) => c.region?.id === formAnual.region.id || c.regionId === formAnual.region.id
+    );
+  }, [maestros.comunas, formAnual.region]);
+
+  const handleGuardarAltaAnual = async () => {
+    if (!formAnual.anio) {
+      setFormAnualError('El año de vigencia es obligatorio.');
+      return;
+    }
+    if (formAnual.nivelAgregacion === 'COMUNA' && (!formAnual.comunas || formAnual.comunas.length === 0)) {
+      setFormAnualError('Debe seleccionar al menos una comuna.');
+      return;
+    }
+    if (formAnual.nivelAgregacion === 'REGION' && !formAnual.region) {
+      setFormAnualError('Debe seleccionar una región.');
+      return;
+    }
+    if (!formAnual.especie) {
+      setFormAnualError('La especie objetivo es obligatoria.');
+      return;
+    }
+    if (!formAnual.extraccionTipo) {
+      setFormAnualError('El método de extracción es obligatorio.');
+      return;
+    }
+    if (formAnual.metrica === 'DESEMBARQUE' && !formAnual.resolucion?.trim()) {
+      setFormAnualError(
+        'La métrica DESEMBARQUE sólo se permite si la resolución técnica de Subpesca lo especifica expresamente (campo resolución obligatorio).'
+      );
+      return;
+    }
+
+    const payload = {
+      anio: Number(formAnual.anio),
+      ambito: 'AREA_LIBRE',
+      nivelAgregacion: formAnual.nivelAgregacion,
+      regionId: formAnual.region?.id || null,
+      comunaIds: formAnual.nivelAgregacion === 'COMUNA' ? formAnual.comunas.map((c) => c.id) : [],
+      especieId: formAnual.especie.id,
+      extraccionTipoId: formAnual.extraccionTipo.id,
+      humedadEstadoId: formAnual.humedadEstado?.id || null,
+      metrica: formAnual.metrica || 'CAPTURA',
+      modoAccion: formAnual.modoAccion || 'SOLO_ALERTA',
+      resolucion: formAnual.resolucion?.trim() || null,
+      meses: formAnual.meses.map((m) => ({
+        mes: m.mes,
+        limiteKg: parseFloat(m.limiteKg) || 0,
+        activo: Boolean(m.activo),
+      })),
+    };
+
+    for (const item of payload.meses) {
+      if (item.activo && item.limiteKg <= 0) {
+        const nomMes = MESES.find((m) => m.id === item.mes)?.nombre || item.mes;
+        setFormAnualError(`El límite para el mes ${nomMes} debe ser mayor que cero.`);
+        return;
+      }
+    }
+
+    try {
+      setSavingAnual(true);
+      setFormAnualError(null);
+      await api.post('/api/cuotas/lote', payload);
+      setDialogAnualOpen(false);
+      setMensaje({
+        type: 'success',
+        text: `Se generaron exitosamente las 12 cuotas mensuales consecutivas para el año ${formAnual.anio}.`,
+      });
+      setTimeout(() => setMensaje(null), 5000);
+      await cargarListado();
+    } catch (err) {
+      console.error('Error al guardar alta anual:', err);
+      const msg = err.response?.data?.message || err.response?.data?.error || 'Error al guardar el lote anual de cuotas.';
+      setFormAnualError(msg);
+    } finally {
+      setSavingAnual(false);
+    }
+  };
+
   const handleCerrarCuota = async () => {
     if (!cuotaPorCerrar) return;
     try {
@@ -587,21 +734,39 @@ export default function CuotasExtraccionMaestro() {
           />
         </Box>
 
-        <Button
-          variant="contained"
-          color="secondary"
-          startIcon={<AddIcon />}
-          onClick={abrirNueva}
-          sx={{
-            borderRadius: 2.5,
-            textTransform: 'none',
-            fontFamily: 'Outfit',
-            fontWeight: 600,
-            px: 2.5,
-          }}
-        >
-          Nueva Cuota
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<CalendarMonthIcon />}
+            onClick={abrirAltaAnual}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: 'none',
+              fontFamily: 'Outfit',
+              fontWeight: 600,
+              px: 2,
+            }}
+          >
+            Alta por año
+          </Button>
+
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<AddIcon />}
+            onClick={abrirNueva}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: 'none',
+              fontFamily: 'Outfit',
+              fontWeight: 600,
+              px: 2.5,
+            }}
+          >
+            Nueva Cuota
+          </Button>
+        </Box>
       </Box>
 
       {/* Tabla de cuotas */}
@@ -1134,6 +1299,329 @@ export default function CuotasExtraccionMaestro() {
           </Button>
           <Button onClick={handleGuardar} variant="contained" color="secondary" disabled={saving}>
             {saving ? <CircularProgress size={24} /> : form.id ? 'Guardar Cambios' : 'Crear Cuota'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog Alta Anual (T1.8) */}
+      <Dialog
+        open={dialogAnualOpen}
+        onClose={() => !savingAnual && setDialogAnualOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700, pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <CalendarMonthIcon color="primary" />
+            <Box>
+              <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
+                Alta por Año — Cuotas Oficiales
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                Genera en un solo paso las 12 cuotas mensuales consecutivas para el año seleccionado sin solapes territoriales.
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          {formAnualError && (
+            <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
+              {formAnualError}
+            </Alert>
+          )}
+
+          {/* Configuración Común */}
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit', mb: 1.5, color: 'primary.main' }}>
+            1. Ámbito Territorial y Clasificación
+          </Typography>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 2.5 }}>
+            {/* Año */}
+            <TextField
+              select
+              size="small"
+              label="Año de Vigencia"
+              value={formAnual.anio}
+              onChange={(e) => {
+                const y = Number(e.target.value);
+                setFormAnual((p) => ({ ...p, anio: y }));
+              }}
+              required
+            >
+              {[ANIO_ACTUAL - 1, ANIO_ACTUAL, ANIO_ACTUAL + 1, ANIO_ACTUAL + 2].map((y) => (
+                <MenuItem key={y} value={y}>
+                  {y}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            {/* Nivel Agregación */}
+            <TextField
+              select
+              size="small"
+              label="Nivel de Agregación"
+              value={formAnual.nivelAgregacion}
+              onChange={(e) => setFormAnual((p) => ({ ...p, nivelAgregacion: e.target.value }))}
+            >
+              <MenuItem value="COMUNA">Comunal</MenuItem>
+              <MenuItem value="REGION">Regional</MenuItem>
+            </TextField>
+
+            {/* Región */}
+            <TextField
+              select
+              size="small"
+              label="Región"
+              value={formAnual.region?.id || ''}
+              onChange={(e) => {
+                const r = (maestros.regiones || []).find((reg) => reg.id === e.target.value);
+                setFormAnual((p) => ({ ...p, region: r || null, comunas: [] }));
+              }}
+              required={formAnual.nivelAgregacion === 'REGION'}
+            >
+              {(maestros.regiones || []).map((r) => (
+                <MenuItem key={r.id} value={r.id}>
+                  {r.nombre}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+
+          {/* Selector de Comunas (si es Comunal) */}
+          {formAnual.nivelAgregacion === 'COMUNA' && (
+            <Box sx={{ mb: 2.5 }}>
+              <Autocomplete
+                multiple
+                size="small"
+                options={comunasFiltradasAnual}
+                getOptionLabel={(option) => option.nombre || ''}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                value={formAnual.comunas}
+                onChange={(_, newValue) => setFormAnual((p) => ({ ...p, comunas: newValue }))}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      key={option.id}
+                      label={option.nombre}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      sx={{ borderRadius: 1.5, fontWeight: 600 }}
+                      {...getTagProps({ index })}
+                    />
+                  ))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Comunas comprendidas"
+                    placeholder="Seleccionar una o más comunas…"
+                    helperText="La cuota aplicará de manera agrupada al total extraído en estas comunas."
+                  />
+                )}
+              />
+            </Box>
+          )}
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 3 }}>
+            {/* Especie */}
+            <TextField
+              select
+              size="small"
+              label="Especie Objetivo"
+              value={formAnual.especie?.id || ''}
+              onChange={(e) => {
+                const esp = (maestros.especies || []).find((es) => es.id === e.target.value);
+                setFormAnual((p) => ({ ...p, especie: esp || null }));
+              }}
+              required
+            >
+              {(maestros.especies || []).map((esp) => (
+                <MenuItem key={esp.id} value={esp.id}>
+                  {esp.nombre}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            {/* Método */}
+            <TextField
+              select
+              size="small"
+              label="Método de Extracción"
+              value={formAnual.extraccionTipo?.id || ''}
+              onChange={(e) => {
+                const et = (maestros.extraccionTipos || []).find((m) => m.id === e.target.value);
+                setFormAnual((p) => ({ ...p, extraccionTipo: et || null }));
+              }}
+              required
+            >
+              {(maestros.extraccionTipos || []).map((et) => (
+                <MenuItem key={et.id} value={et.id}>
+                  {et.nombre}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+
+          {/* Grilla de 12 Meses */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'primary.main' }}>
+              2. Cantidad Mensual Decretada ({formAnual.anio})
+            </Typography>
+
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                type="number"
+                label="Monto base (kg)"
+                value={formAnual.cantidadGeneral}
+                onChange={(e) => setFormAnual((p) => ({ ...p, cantidadGeneral: e.target.value }))}
+                sx={{ width: 140 }}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<AutoAwesomeIcon />}
+                onClick={aplicarCantidadATodosLosMeses}
+                sx={{ textTransform: 'none', fontFamily: 'Outfit', fontWeight: 600 }}
+              >
+                Copiar a los 12 meses
+              </Button>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
+              gap: 1.5,
+              mb: 3,
+            }}
+          >
+            {formAnual.meses.map((m) => (
+              <Box
+                key={m.mes}
+                sx={{
+                  p: 1.5,
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor: m.activo ? 'divider' : 'action.disabledBackground',
+                  bgcolor: (t) =>
+                    !m.activo
+                      ? t.palette.action.hover
+                      : t.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.02)'
+                      : 'rgba(0,0,0,0.01)',
+                  opacity: m.activo ? 1 : 0.6,
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+                    {m.mes}. {m.nombre}
+                  </Typography>
+                  <Switch
+                    size="small"
+                    checked={m.activo}
+                    onChange={(e) => handleToggleMesActivo(m.mes, e.target.checked)}
+                    color="secondary"
+                  />
+                </Box>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  disabled={!m.activo}
+                  value={m.limiteKg}
+                  onChange={(e) => handleCambioLimiteMes(m.mes, e.target.value)}
+                  label="Límite (kg)"
+                  helperText={fmtTon(m.limiteKg)}
+                />
+              </Box>
+            ))}
+          </Box>
+
+          {/* Opciones Avanzadas Colapsadas */}
+          <Accordion elevation={0} sx={{ border: 1, borderColor: 'divider', borderRadius: 2 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TuneIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Opciones avanzadas: Métrica ({formAnual.metrica}), Acción ({formAnual.modoAccion})
+                </Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 2 }}>
+                <TextField
+                  select
+                  size="small"
+                  label="Métrica de Control"
+                  value={formAnual.metrica}
+                  onChange={(e) => setFormAnual((p) => ({ ...p, metrica: e.target.value }))}
+                >
+                  <MenuItem value="CAPTURA">CAPTURA (Biológica corregida)</MenuItem>
+                  <MenuItem value="DESEMBARQUE">DESEMBARQUE (Físico declarado)</MenuItem>
+                </TextField>
+
+                <TextField
+                  size="small"
+                  label="Nº Resolución Técnica Subpesca"
+                  placeholder="Ej: Res. Ex. N° 456/2026"
+                  value={formAnual.resolucion}
+                  onChange={(e) => setFormAnual((p) => ({ ...p, resolucion: e.target.value }))}
+                  required={formAnual.metrica === 'DESEMBARQUE'}
+                  helperText={formAnual.metrica === 'DESEMBARQUE' ? 'Obligatoria para métrica DESEMBARQUE' : 'Opcional'}
+                />
+              </Box>
+
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  select
+                  size="small"
+                  label="Estado de Humedad Expresado"
+                  value={formAnual.humedadEstado?.id || ''}
+                  onChange={(e) => {
+                    const h = (maestros.humedadEstados || []).find((item) => item.id === e.target.value);
+                    setFormAnual((p) => ({ ...p, humedadEstado: h || null }));
+                  }}
+                  helperText="Opcional. Estado nominal decretado si aplica."
+                >
+                  <MenuItem value="">Sin especificar (Captura bruta)</MenuItem>
+                  {(maestros.humedadEstados || []).map((h) => (
+                    <MenuItem key={h.id} value={h.id}>
+                      {h.nombre}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  size="small"
+                  label="Modo de Acción ante Agotamiento"
+                  value={formAnual.modoAccion}
+                  onChange={(e) => setFormAnual((p) => ({ ...p, modoAccion: e.target.value }))}
+                >
+                  <MenuItem value="SOLO_ALERTA">SOLO_ALERTA (Notificar sin bloquear)</MenuItem>
+                  <MenuItem value="BLOQUEO_DECLARACION">BLOQUEO_DECLARACION (Bloquear declaraciones)</MenuItem>
+                </TextField>
+              </Box>
+            </AccordionDetails>
+          </Accordion>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={() => setDialogAnualOpen(false)} disabled={savingAnual} color="inherit">
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleGuardarAltaAnual}
+            variant="contained"
+            color="primary"
+            disabled={savingAnual}
+            startIcon={savingAnual ? <CircularProgress size={18} color="inherit" /> : <CalendarMonthIcon />}
+          >
+            {savingAnual ? 'Guardando Año...' : `Guardar Año Completo (${formAnual.anio})`}
           </Button>
         </DialogActions>
       </Dialog>
