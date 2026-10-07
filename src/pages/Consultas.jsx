@@ -161,11 +161,11 @@ export default function Consultas() {
             <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" sx={{ mb: 1 }}>
               <FindIcon sx={{ fontSize: { xs: '2rem', sm: '2.5rem' }, color: 'primary.main' }} />
               <Typography variant="h4" sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '2.2rem' } }}>
-                Búsqueda de Trazabilidad
+                Consultas: Búsqueda Puntual
               </Typography>
             </Stack>
             <Typography variant="body1" sx={{ color: 'text.secondary', px: 2, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-              Ingresa un folio de recolección, bote o comercializador, patente de camión o número de guía de despacho.
+              Búsqueda puntual en terreno por folio de recolección, bote, comercializador, patente o guía de despacho. Para descargas masivas en planilla, utilice el módulo Reportes.
             </Typography>
           </Box>
 

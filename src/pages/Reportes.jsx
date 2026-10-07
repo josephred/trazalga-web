@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Typography, Container, Grid, Box, CircularProgress, Alert } from '@mui/material';
-import { Assessment as AssessmentIcon } from '@mui/icons-material';
+import { Typography, Container, Grid, Box, CircularProgress, Alert, Button } from '@mui/material';
+import { Assessment as AssessmentIcon, FileDownload as DownloadIcon } from '@mui/icons-material';
 import { getReportes } from '../services/reportesService';
 import DataTable from '../components/dashboard/DataTable';
 import ReportFilter from '../components/dashboard/ReportFilter';
 import TrazabilidadDialog from '../components/dashboard/TrazabilidadDialog';
+import exportarCsv from '../utils/exportarCsv';
 
 
 export default function Reportes() {
@@ -14,6 +15,65 @@ export default function Reportes() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+
+  const handleDescargarCsv = () => {
+    if (!reportData || reportData.length === 0) return;
+
+    const hasExtended = reportData.some(
+      (r) => r.plantaAbastecimiento || r.fechaComercializador || r.plantaProduccion || r.fechaPlantaAbastecimiento
+    );
+
+    const headers = [
+      'ID',
+      'Folio',
+      'Fecha de Emisión',
+      'Hora',
+      'Emisor',
+      'RUT Emisor',
+      'Comerciante / Destinatario',
+      'RUT Comerciante',
+      'Especie Declarada',
+      'Cantidad (kg)',
+      ...(hasExtended
+        ? [
+            'Planta Abastecimiento',
+            'Fecha Comercializador',
+            'Planta Producción',
+            'Fecha Planta Destino'
+          ]
+        : []),
+      'Tipo Reporte'
+    ];
+
+    const rows = reportData.map((row) => [
+      row.id ?? '',
+      row.folio ?? '',
+      row.fecha ? (typeof row.fecha === 'string' ? row.fecha : new Date(row.fecha).toLocaleDateString('es-CL')) : '',
+      row.hora ?? '',
+      row.emisorNombre ?? row.actor ?? '',
+      row.emisorRut ?? row.rut ?? '',
+      row.receptorNombre ?? row.usuarioDestinatario ?? '',
+      row.receptorRut ?? row.rutDestinatario ?? '',
+      row.especie ?? '',
+      Number(row.cantidad) || 0,
+      ...(hasExtended
+        ? [
+            row.plantaAbastecimiento || '-',
+            row.fechaComercializador ? new Date(row.fechaComercializador).toLocaleDateString('es-CL') : '-',
+            row.plantaProduccion || '-',
+            row.fechaPlantaAbastecimiento ? new Date(row.fechaPlantaAbastecimiento).toLocaleDateString('es-CL') : '-'
+          ]
+        : []),
+      row.tipoReporte ?? ''
+    ]);
+
+    const fechaStr = new Date().toISOString().slice(0, 10);
+    exportarCsv({
+      filename: `planilla_transacciones_trazalga_${fechaStr}.csv`,
+      headers,
+      rows
+    });
+  };
 
   const handleGenerateReport = async (filters) => {
     setLoading(true);
@@ -91,11 +151,11 @@ export default function Reportes() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
               <AssessmentIcon sx={{ fontSize: 36, color: 'secondary.main' }} />
               <Typography variant="h5" sx={{ fontWeight: 800, fontFamily: 'Outfit', m: 0 }}>
-                Módulo de Reportes y Trazabilidad
+                Reportes: Planillas Masivas
               </Typography>
             </Box>
-            <Typography variant="body2" sx={{ opacity: 0.8, maxWidth: 650, fontFamily: 'Inter', lineHeight: 1.6 }}>
-              Consulta, analiza y fiscaliza las transacciones declaradas de algas pardas. Filtra por fechas y actores de la cadena para auditar el origen y destino del recurso.
+            <Typography variant="body2" sx={{ opacity: 0.85, maxWidth: 650, fontFamily: 'Inter', lineHeight: 1.6 }}>
+              Extracción y descarga de planillas masivas de transacciones declaradas para fiscalización y conciliación tributaria y pesquera. Para búsqueda puntual en terreno por folio o patente, utilice el módulo Consultas.
             </Typography>
           </Box>
 
@@ -177,7 +237,31 @@ export default function Reportes() {
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Box sx={{ width: '100%', '& .MuiCard-root': { width: '100%' } }}>
-                  <DataTable title="Resultados del Reporte de Trazabilidad" data={reportData} onRowClick={handleRowClick} />
+                  <DataTable
+                    title="Resultados del Reporte de Trazabilidad"
+                    data={reportData}
+                    onRowClick={handleRowClick}
+                    actions={
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<DownloadIcon />}
+                        onClick={handleDescargarCsv}
+                        disabled={reportData.length === 0 || loading}
+                        sx={{
+                          borderRadius: 2.5,
+                          fontWeight: 700,
+                          textTransform: 'none',
+                          fontFamily: 'Outfit',
+                          px: 2.5,
+                          py: 1,
+                          boxShadow: '0 4px 14px rgba(14, 165, 233, 0.25)',
+                        }}
+                      >
+                        Descargar planilla (CSV)
+                      </Button>
+                    }
+                  />
                 </Box>
               </Grid>
             </Grid>

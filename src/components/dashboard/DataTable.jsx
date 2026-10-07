@@ -17,7 +17,7 @@ import {
     InboxOutlined as EmptyIcon
 } from '@mui/icons-material';
 
-const DataTable = ({ title, data = [], onRowClick }) => {
+const DataTable = ({ title, data = [], onRowClick, actions }) => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -61,14 +61,30 @@ const DataTable = ({ title, data = [], onRowClick }) => {
         >
             <Box
                 sx={{
-                    p: 3,
+                    p: { xs: 2, sm: 2.5 },
+                    px: { xs: 2.5, sm: 3 },
                     borderBottom: 1, borderColor: 'divider',
                     bgcolor: 'background.default',
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    gap: 2,
                 }}
             >
-                <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
-                    {title}
-                </Typography>
+                <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
+                        {title}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                        Planilla masiva ({data.length.toLocaleString('es-CL')} {data.length === 1 ? 'registro' : 'registros'})
+                    </Typography>
+                </Box>
+                {actions && (
+                    <Box sx={{ alignSelf: { xs: 'stretch', sm: 'auto' } }}>
+                        {actions}
+                    </Box>
+                )}
             </Box>
 
             <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>

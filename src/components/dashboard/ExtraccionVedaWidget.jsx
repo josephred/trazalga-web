@@ -26,6 +26,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import DownloadIcon from '@mui/icons-material/FileDownload';
 import GavelIcon from '@mui/icons-material/Gavel';
 import api from '../../api/axiosConfig';
+import exportarCsv from '../../utils/exportarCsv';
 
 export default function ExtraccionVedaWidget({ dateRange }) {
   const [metrics, setMetrics] = useState({ declaracionesVeda: 0, totalKgVeda: 0 });
@@ -120,30 +121,39 @@ export default function ExtraccionVedaWidget({ dateRange }) {
 
   const exportarCSV = () => {
     if (!detalle || detalle.length === 0) return;
-    const headers = ['Folio', 'Tipo Declaracion', 'Declarante', 'RUT', 'Caleta', 'Comuna', 'Region', 'Especie', 'Metodo', 'Fecha Extraccion', 'Kilos', 'Resolucion Infringida'];
+    const headers = [
+      'Folio',
+      'Tipo Declaración',
+      'Declarante',
+      'RUT',
+      'Caleta',
+      'Comuna',
+      'Región',
+      'Especie',
+      'Método',
+      'Fecha Extracción',
+      'Kilos',
+      'Resolución Infringida'
+    ];
     const rows = detalle.map(d => [
-      `"${d.folio || ('FAENA-' + d.id)}"`,
-      `"${d.tipoDeclaracion || d.perfil || ''}"`,
-      `"${d.nombreDeclarante || d.actor || ''}"`,
-      `"${d.rut || ''}"`,
-      `"${d.caleta || ''}"`,
-      `"${d.comuna || ''}"`,
-      `"${d.region || ''}"`,
-      `"${d.especie || ''}"`,
-      `"${d.metodo || ''}"`,
-      `"${d.fechaExtraccion ? new Date(d.fechaExtraccion).toLocaleDateString('es-CL') : (d.fecha ? new Date(d.fecha).toLocaleDateString('es-CL') : '')}"`,
+      d.folio || ('FAENA-' + d.id),
+      d.tipoDeclaracion || d.perfil || '',
+      d.nombreDeclarante || d.actor || '',
+      d.rut || '',
+      d.caleta || '',
+      d.comuna || '',
+      d.region || '',
+      d.especie || '',
+      d.metodo || '',
+      d.fechaExtraccion ? new Date(d.fechaExtraccion).toLocaleDateString('es-CL') : (d.fecha ? new Date(d.fecha).toLocaleDateString('es-CL') : ''),
       d.kilos || d.kg || 0,
-      `"${d.resolucion || ''}"`
+      d.resolucion || ''
     ]);
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `extraccion_veda_detalle_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    exportarCsv({
+      filename: `extraccion_veda_detalle_${new Date().toISOString().slice(0, 10)}.csv`,
+      headers,
+      rows
+    });
   };
 
   if (loading) {

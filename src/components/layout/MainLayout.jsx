@@ -123,10 +123,10 @@ export default function MainLayout() {
   const getCurrentPageTitle = () => {
     switch (location.pathname) {
       case '/dashboard': return { title: 'Dashboard Ejecutivo', subtitle: 'Resumen general de indicadores y alertas' };
-      case '/consultas': return { title: 'Consultas', subtitle: 'Búsqueda de información en el sistema' };
+      case '/consultas': return { title: 'Consultas', subtitle: 'Búsqueda puntual en terreno por folio o patente' };
       case '/alertas': return { title: 'Alertas', subtitle: 'Gestión y monitoreo de alertas' };
       case '/casos': return { title: 'Casos', subtitle: 'Seguimiento de casos registrados' };
-      case '/reportes': return { title: 'Reportes y Trazabilidad', subtitle: 'Consulta de transacciones históricas' };
+      case '/reportes': return { title: 'Reportes', subtitle: 'Planillas masivas de transacciones para fiscalización' };
       case '/mapa': return { title: 'Mapa SIG', subtitle: 'Distribución geográfica del recurso' };
       case '/administracion': return { title: 'Configuración de Parámetros', subtitle: 'Ajustes globales de alertas y rastreo móvil' };
       case '/ayuda': return { title: 'Ayuda', subtitle: 'Documentación y soporte técnico' };
