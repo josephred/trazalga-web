@@ -58,6 +58,7 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<RutaConPerfil ruta="/dashboard"><Dashboard /></RutaConPerfil>} />
             <Route path="consultas" element={<RutaConPerfil ruta="/consultas"><Consultas /></RutaConPerfil>} />
+            <Route path="consultas/:tipo/:id" element={<RutaConPerfil ruta="/consultas"><Consultas /></RutaConPerfil>} />
             <Route path="alertas" element={<RutaConPerfil ruta="/alertas"><Alertas /></RutaConPerfil>} />
             <Route path="casos" element={<RutaConPerfil ruta="/casos"><Casos /></RutaConPerfil>} />
             <Route path="reportes" element={<RutaConPerfil ruta="/reportes"><Reportes /></RutaConPerfil>} />

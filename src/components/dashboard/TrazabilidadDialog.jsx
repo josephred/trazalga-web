@@ -58,7 +58,7 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
     if (t.includes('armador')) return 2;
     if (t.includes('area') || t.includes('área')) return 3;
     if (t.includes('comercializador')) return 4;
-    if (t.includes('abastecimiento')) return 5;
+    if (t.includes('abastecimiento') || t.includes('planta')) return 5;
     if (t.includes('produccion') || t.includes('producción')) return 6;
     if (t.includes('destino')) return 7;
     return 1;
