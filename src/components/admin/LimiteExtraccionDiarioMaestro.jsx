@@ -477,10 +477,10 @@ export default function LimiteExtraccionDiarioMaestro() {
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700, pb: 1 }}>
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700, pb: 1.5 }}>
           {formData.id ? 'Editar Regla de Límite Diario (LED)' : 'Nueva Regla de Límite Diario (LED)'}
         </DialogTitle>
-        <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <DialogContent dividers sx={{ pt: '24px !important', pb: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {errorMsg && (
             <Alert severity="error" sx={{ borderRadius: 2 }}>
               {errorMsg}
@@ -488,6 +488,7 @@ export default function LimiteExtraccionDiarioMaestro() {
           )}
 
           <TextField
+            sx={{ mt: 0.5 }}
             label="Nombre de la Regla *"
             placeholder="Ej. LED Oficial Huiro Palo Barreteado"
             value={formData.nombreRegla}

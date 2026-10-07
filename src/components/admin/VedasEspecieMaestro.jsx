@@ -555,10 +555,10 @@ export default function VedasEspecieMaestro() {
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700, pb: 1.5 }}>
           {form.id ? 'Editar Veda de Especie' : 'Nueva Veda de Especie'}
         </DialogTitle>
-        <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <DialogContent dividers sx={{ pt: '24px !important', pb: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {formError && (
             <Alert severity="error" sx={{ borderRadius: 2 }}>
               {formError}
@@ -566,7 +566,7 @@ export default function VedasEspecieMaestro() {
           )}
 
           {/* Especie, Método y Región */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2, mt: 0.5 }}>
             <Autocomplete
               options={maestros.especies || []}
               getOptionLabel={(e) => e.nombre || `ID ${e.id}`}

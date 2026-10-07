@@ -557,11 +557,11 @@ export default function MacrozonasMaestro() {
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 800, pb: 1 }}>
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 800, pb: 1.5 }}>
           {form.id ? 'Editar Macrozona' : 'Nueva Macrozona'}
         </DialogTitle>
 
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 2 }}>
+        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '24px !important', pb: 3 }}>
           {formError && (
             <Alert severity="error" sx={{ borderRadius: 2 }}>
               {formError}
@@ -569,7 +569,7 @@ export default function MacrozonasMaestro() {
           )}
 
           {/* Fila 1: Nombre, Código y Switches */}
-          <Grid container spacing={2}>
+          <Grid container spacing={2} sx={{ mt: 0.2 }}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth

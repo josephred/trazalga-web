@@ -689,10 +689,10 @@ export default function FactoresConversionMaestro() {
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700, pb: 1 }}>
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700, pb: 1.5 }}>
           {formData.id ? 'Editar Factor de Conversión' : 'Nuevo Factor de Conversión'}
         </DialogTitle>
-        <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <DialogContent dividers sx={{ pt: '24px !important', pb: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {errorMsg && (
             <Alert severity="error" sx={{ borderRadius: 2 }}>
               {errorMsg}
@@ -700,6 +700,7 @@ export default function FactoresConversionMaestro() {
           )}
 
           <Autocomplete
+            sx={{ mt: 0.5 }}
             options={especies}
             getOptionLabel={(opt) => opt.nombre || `ID ${opt.id}`}
             value={formData.especie}

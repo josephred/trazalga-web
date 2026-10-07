@@ -1003,10 +1003,10 @@ export default function CuotasExtraccionMaestro() {
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700 }}>
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700, pb: 1.5 }}>
           {form.id ? 'Editar Cuota Comunal / Regional' : 'Nueva Cuota de Área Libre'}
         </DialogTitle>
-        <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <DialogContent dividers sx={{ pt: '24px !important', pb: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {formError && (
             <Alert severity="error" sx={{ borderRadius: 2 }}>
               {formError}
@@ -1014,7 +1014,7 @@ export default function CuotasExtraccionMaestro() {
           )}
 
           {/* Fila 1: Nivel de Agregación y Región */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mt: 0.5 }}>
             <TextField
               select
               label="Nivel de Agregación *"
