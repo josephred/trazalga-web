@@ -578,39 +578,118 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                     )}
                   </Paper>
 
-                  {/* Variación contra el Origen */}
-                  {planta.variacionPct !== null && planta.variacionPct !== undefined && (
+                    {/* Estados de Humedad: Origen vs Recepción (T3.3) */}
                     <Paper
                       elevation={0}
                       sx={{
                         p: 1.5,
                         borderRadius: 2,
-                        bgcolor: planta.variacionPct < -5.0 ? '#fef2f2' : (t) => t.palette.mode === 'light' ? '#f0fdf4' : '#064e3b',
+                        bgcolor: (t) => t.palette.mode === 'light' ? '#f8fafc' : '#1e293b',
                         border: '1px solid',
-                        borderColor: planta.variacionPct < -5.0 ? '#fecaca' : '#bbf7d0',
+                        borderColor: 'divider',
                       }}
                     >
-                      <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Box>
-                          <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', color: 'text.primary' }}>
-                            {planta.rotuloVariacion || 'Variación de la recepción completa'}
+                      <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', color: 'text.secondary', display: 'block', mb: 0.5 }}>
+                        Estado de Humedad (T3.3)
+                      </Typography>
+                      <Grid container spacing={1}>
+                        <Grid item xs={6}>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                            Declarado en Origen:
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            vs. {formatKg(ficha.totalKgOrigen)} de origen
+                          <Chip
+                            label={planta.humedadEstadoOrigen || ficha.humedadPredominante || 'No declarado'}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontWeight: 700, fontSize: '0.72rem', height: 22, mt: 0.3 }}
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                            Al Recibir Camión:
                           </Typography>
-                        </Box>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontWeight: 800,
-                            color: planta.variacionPct < -5.0 ? '#dc2626' : '#16a34a',
-                          }}
-                        >
-                          {planta.variacionPct > 0 ? `+${planta.variacionPct.toFixed(1)}%` : `${planta.variacionPct.toFixed(1)}%`}
+                          <Chip
+                            label={planta.humedadEstadoRecepcion || 'Sin registrar'}
+                            size="small"
+                            color={planta.humedadEstadoRecepcion && planta.humedadEstadoOrigen && planta.humedadEstadoRecepcion !== planta.humedadEstadoOrigen ? 'warning' : 'primary'}
+                            sx={{ fontWeight: 700, fontSize: '0.72rem', height: 22, mt: 0.3 }}
+                          />
+                        </Grid>
+                      </Grid>
+                      {planta.humedadHigrometro != null && (
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.8 }}>
+                          Higrómetro en planta: <strong>{planta.humedadHigrometro}%</strong>
                         </Typography>
-                      </Stack>
+                      )}
                     </Paper>
-                  )}
+
+                    {/* Variación Física contra el Origen */}
+                    {planta.variacionPct !== null && planta.variacionPct !== undefined && (
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: Math.abs(planta.variacionPct) > 5.0 ? '#fef2f2' : (t) => t.palette.mode === 'light' ? '#f0fdf4' : '#064e3b',
+                          border: '1px solid',
+                          borderColor: Math.abs(planta.variacionPct) > 5.0 ? '#fecaca' : '#bbf7d0',
+                        }}
+                      >
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', color: 'text.primary' }}>
+                              Variación Física de Recepción
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              {planta.conRomana ? formatKg(planta.pesoRomanaKg) : formatKg(planta.cantidadDeclarada)} vs. {formatKg(ficha.totalKgOrigen)} origen
+                            </Typography>
+                          </Box>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 800,
+                              color: Math.abs(planta.variacionPct) > 5.0 ? '#dc2626' : '#16a34a',
+                            }}
+                          >
+                            {planta.variacionPct > 0 ? `+${planta.variacionPct.toFixed(1)}%` : `${planta.variacionPct.toFixed(1)}%`}
+                          </Typography>
+                        </Stack>
+                      </Paper>
+                    )}
+
+                    {/* Variación Equivalente en Captura (T3.2 / T3.3) */}
+                    {planta.variacionEqPct !== null && planta.variacionEqPct !== undefined && (
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: Math.abs(planta.variacionEqPct) > 5.0 ? '#fef2f2' : (t) => t.palette.mode === 'light' ? '#eff6ff' : '#1e3a8a',
+                          border: '1px solid',
+                          borderColor: Math.abs(planta.variacionEqPct) > 5.0 ? '#fecaca' : '#bfdbfe',
+                        }}
+                      >
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', color: 'text.primary' }}>
+                              Variación Equivalente en Captura
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              {formatKg(planta.capturaPlantaTotal)} vs. {formatKg(planta.capturaOrigenTotal)} captura origen
+                            </Typography>
+                          </Box>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 800,
+                              color: Math.abs(planta.variacionEqPct) > 5.0 ? '#dc2626' : '#2563eb',
+                            }}
+                          >
+                            {planta.variacionEqPct > 0 ? `+${planta.variacionEqPct.toFixed(1)}%` : `${planta.variacionEqPct.toFixed(1)}%`}
+                          </Typography>
+                        </Stack>
+                      </Paper>
+                    )}
 
                   {/* Documentos y Folios */}
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>

@@ -625,14 +625,18 @@ export default function VariacionPesoWidget({ dateRange }) {
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Titular Planta</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Intermediario</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Orígenes Biológicos</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Humedad (Origen → Planta)</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Origen</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Romana Planta</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Variación (%)</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Var. Física (%)</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Var. Eq. (%)</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Estado</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {listaCadena.map((row, idx) => (
+                        {listaCadena.map((row, idx) => {
+                          const cambioHumedad = row.humedadRecepcion && row.humedadOrigen && row.humedadRecepcion !== row.humedadOrigen;
+                          return (
                           <TableRow key={idx} hover>
                             <TableCell sx={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.8rem' }}>
                               {row.folioPlanta || `#${row.declaracionPlantaId}`}
@@ -699,23 +703,60 @@ export default function VariacionPesoWidget({ dateRange }) {
                                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>No identificados</Typography>
                               )}
                             </TableCell>
+                            {/* Humedad Origen vs Recepción (T3.2) */}
+                            <TableCell sx={{ fontSize: '0.8rem' }}>
+                              {cambioHumedad ? (
+                                <Tooltip title="Estado de humedad cambió durante el traslado">
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <Chip label={row.humedadOrigen || 'S/D'} size="small" variant="outlined" sx={{ fontSize: '0.68rem', height: 20 }} />
+                                    <Typography variant="caption" sx={{ fontWeight: 700 }}>→</Typography>
+                                    <Chip label={row.humedadRecepcion} size="small" color="warning" sx={{ fontSize: '0.68rem', height: 20, fontWeight: 700 }} />
+                                  </Box>
+                                </Tooltip>
+                              ) : (
+                                <Chip
+                                  label={row.humedadRecepcion || row.humedadOrigen || '—'}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ fontSize: '0.68rem', height: 20 }}
+                                />
+                              )}
+                            </TableCell>
                             <TableCell sx={{ fontSize: '0.82rem', fontWeight: 600 }} align="right">
-                              {row.kgOrigenTotal ? row.kgOrigenTotal.toLocaleString('es-CL') : '0'}
+                              {row.kgOrigen ? row.kgOrigen.toLocaleString('es-CL') : (row.kgOrigenTotal ? row.kgOrigenTotal.toLocaleString('es-CL') : '0')}
                             </TableCell>
                             <TableCell sx={{ fontSize: '0.82rem', fontWeight: 800, color: 'primary.main' }} align="right">
                               {row.kgPlanta ? row.kgPlanta.toLocaleString('es-CL') : (row.pesoRomanaKg ? row.pesoRomanaKg.toLocaleString('es-CL') : '0')}
                             </TableCell>
+                            {/* Variación Física */}
                             <TableCell
                               sx={{
                                 fontSize: '0.85rem',
                                 fontWeight: 800,
-                                color: row.fueraUmbral ? 'error.main' : 'text.primary'
+                                color: (!row.alertaEquivalente && row.fueraUmbral) ? 'error.main' : 'text.primary'
                               }}
                               align="right"
                             >
                               {row.variacionPct !== null && row.variacionPct !== undefined
                                 ? `${row.variacionPct > 0 ? '+' : ''}${row.variacionPct}%`
                                 : '0.0%'}
+                            </TableCell>
+                            {/* Variación Equivalente en Captura */}
+                            <TableCell
+                              sx={{
+                                fontSize: '0.85rem',
+                                fontWeight: 800,
+                                color: (row.alertaEquivalente && row.fueraUmbral) ? 'error.main' : 'primary.main'
+                              }}
+                              align="right"
+                            >
+                              {row.variacionEqPct !== null && row.variacionEqPct !== undefined ? (
+                                <Tooltip title={`Captura planta: ${row.capturaPlanta?.toLocaleString('es-CL') || '0'} kg vs Captura origen: ${row.capturaOrigen?.toLocaleString('es-CL') || '0'} kg (Factor recepción: ${row.factorRecepcion || 1.0})`}>
+                                  <span>{row.variacionEqPct > 0 ? `+${row.variacionEqPct}%` : `${row.variacionEqPct}%`}</span>
+                                </Tooltip>
+                              ) : (
+                                <Typography variant="caption" sx={{ color: 'text.disabled' }}>—</Typography>
+                              )}
                             </TableCell>
                             <TableCell align="center">
                               {row.fueraUmbral ? (
@@ -736,7 +777,8 @@ export default function VariacionPesoWidget({ dateRange }) {
                               )}
                             </TableCell>
                           </TableRow>
-                        ))}
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </TableContainer>
