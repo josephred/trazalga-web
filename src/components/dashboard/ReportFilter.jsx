@@ -1,57 +1,49 @@
 import { useState, useEffect, useRef } from 'react';
 import {
     Card, CardContent, Typography, Box, TextField, MenuItem,
-    Button, Stack, Divider, Chip, InputAdornment, IconButton, Grid
+    Button, Stack, Divider, Chip, InputAdornment, IconButton, Grid,
+    Autocomplete, CircularProgress, createFilterOptions
 } from '@mui/material';
 import {
     FilterList as FilterIcon,
     CalendarMonth as CalendarIcon,
     Search as SearchIcon
 } from '@mui/icons-material';
+import { getUsuarios, getPlantas } from '../../services/usuarioService';
 
 // ── Tipos de Reporte ──────────────────────────────────────────────
 const REPORT_TYPES = [
-    { id: 1, label: 'Recolector', endpoint: '/recolectores' },
-    { id: 2, label: 'Armador', endpoint: '/armadores' },
-    { id: 3, label: 'Área de Manejo', endpoint: '/areas-manejo' },
-    { id: 4, label: 'Comercializador', endpoint: '/comercializadores' },
-    { id: 5, label: 'Planta Abastecimiento', endpoint: '/plantas-abastecimiento' },
-    { id: 6, label: 'Planta Producción', endpoint: '/plantas-produccion' },
-    { id: 7, label: 'Planta Destino', endpoint: '/plantas-destino' },
+    { id: 1, label: 'Recolector', perfilIds: [1, 8, 9, 10, 11] },
+    { id: 2, label: 'Armador', perfilIds: [2, 10] },
+    { id: 3, label: 'Área de Manejo', perfilIds: [3, 11] },
+    { id: 4, label: 'Comercializador', perfilIds: [4, 12, 13] },
+    { id: 5, label: 'Planta Abastecimiento', perfilIds: [5, 12, 13], isPlanta: true },
+    { id: 6, label: 'Planta Producción', perfilIds: [6, 13], isPlanta: true },
+    { id: 7, label: 'Planta Destino', perfilIds: [7], isPlanta: true },
 ];
 
-// ── Datos mock por tipo (se reemplazarán por llamadas a la API) ──
-const MOCK_SUB_OPTIONS = {
-    1: [
-        { id: 101, nombre: 'Recolector Juan Pérez' },
-        { id: 102, nombre: 'Recolector María López' },
-        { id: 103, nombre: 'Recolector Carlos Díaz' },
-    ],
-    2: [
-        { id: 201, nombre: 'Armador Norte' },
-        { id: 202, nombre: 'Armador Sur' },
-    ],
-    3: [
-        { id: 301, nombre: 'Área Caleta Chica' },
-        { id: 302, nombre: 'Área Bahía Grande' },
-    ],
-    4: [
-        { id: 401, nombre: 'Comercializador Algas Chile' },
-        { id: 402, nombre: 'Comercializador Pacific Trade' },
-    ],
-    5: [
-        { id: 501, nombre: 'Planta Abast. Valparaíso' },
-        { id: 502, nombre: 'Planta Abast. Coquimbo' },
-    ],
-    6: [
-        { id: 601, nombre: 'Planta Prod. Los Andes' },
-        { id: 602, nombre: 'Planta Prod. Santiago' },
-    ],
-    7: [
-        { id: 701, nombre: 'Planta Dest. Antofagasta' },
-        { id: 702, nombre: 'Planta Dest. Iquique' },
-    ],
+const PERFIL_LABELS = {
+    1: 'Recolector',
+    2: 'Armador',
+    3: 'Área de Manejo',
+    4: 'Comercializador',
+    5: 'Planta Abastecimiento',
+    6: 'Planta Producción',
+    7: 'Planta Destino',
+    8: 'Buzo',
+    9: 'Buzo / Recolector',
+    10: 'Buzo / Recolector / Armador',
+    11: 'Recolector / AMERB',
+    12: 'Comercializador / P. Abast.',
+    13: 'Comercializador / P. Abast. / P. Prod.',
 };
+
+// Filtro rápido con límite de 100 items mostrados para máximo rendimiento de renderizado
+const customFilterOptions = createFilterOptions({
+    limit: 100,
+    matchFrom: 'any',
+    stringify: (option) => `${option.nombre} ${option.rut} ${option.perfilNombre || ''}`,
+});
 
 // ── Helper: fecha local en formato YYYY-MM-DD ─────────────────────
 const formatDate = (date) => {
@@ -72,9 +64,11 @@ const ReportFilter = ({ onGenerate }) => {
     const [fechaInicio, setFechaInicio] = useState(thirtyDaysAgo());
     const [fechaFin, setFechaFin] = useState(today());
     const [tipoReporte, setTipoReporte] = useState('');
-    const [subSeleccion, setSubSeleccion] = useState('');
+    const [selectedActor, setSelectedActor] = useState(null);
     const [subOptions, setSubOptions] = useState([]);
     const [loadingSub, setLoadingSub] = useState(false);
+    const [allUsers, setAllUsers] = useState(null);
+    const [allPlantas, setAllPlantas] = useState(null);
 
     // Referencias para los inputs ocultos de fecha
     const inputInicioRef = useRef(null);
@@ -89,25 +83,101 @@ const ReportFilter = ({ onGenerate }) => {
         }
     };
 
-    // Cuando cambia el tipo de reporte, carga las opciones del sub-selector
+    // Precargar usuarios y plantas al montar el componente
+    useEffect(() => {
+        let isMounted = true;
+        const loadInitialData = async () => {
+            try {
+                const [usersData, plantasData] = await Promise.all([
+                    getUsuarios(),
+                    getPlantas()
+                ]);
+                if (isMounted) {
+                    setAllUsers(usersData || []);
+                    setAllPlantas(plantasData || []);
+                }
+            } catch (err) {
+                console.error('Error cargando actores para filtros:', err);
+                if (isMounted) {
+                    setAllUsers([]);
+                    setAllPlantas([]);
+                }
+            }
+        };
+        loadInitialData();
+        return () => { isMounted = false; };
+    }, []);
+
+    // Cuando cambia el tipo de reporte o los datos maestros se cargan
     useEffect(() => {
         if (!tipoReporte) {
             setSubOptions([]);
-            setSubSeleccion('');
+            setSelectedActor(null);
+            setLoadingSub(false);
+            return;
+        }
+
+        setSelectedActor(null);
+
+        // Si aún no se cargan los datos maestros, indicar estado de carga
+        if (!allUsers) {
+            setLoadingSub(true);
             return;
         }
 
         setLoadingSub(true);
-        setSubSeleccion('');
 
-        const timeout = setTimeout(() => {
-            const options = MOCK_SUB_OPTIONS[tipoReporte] || [];
-            setSubOptions(options);
-            setLoadingSub(false);
-        }, 300);
+        const currentTypeConfig = REPORT_TYPES.find(t => t.id === tipoReporte);
+        const pids = currentTypeConfig?.perfilIds || [];
+        const isPlantaType = !!currentTypeConfig?.isPlanta;
 
-        return () => clearTimeout(timeout);
-    }, [tipoReporte]);
+        // Filtrar usuarios del perfil correspondiente
+        const filteredUsers = allUsers.filter(u => {
+            const pid = u.perfil?.id;
+            const pnom = (u.perfil?.nombre || '').toUpperCase();
+            return pids.includes(pid) || (
+                tipoReporte === 1 ? (pnom.includes('RECOLECTOR') || pnom.includes('BUZO')) :
+                tipoReporte === 2 ? pnom.includes('ARMADOR') :
+                tipoReporte === 3 ? (pnom.includes('AMERB') || pnom.includes('AREA') || pnom.includes('ÁREA')) :
+                tipoReporte === 4 ? pnom.includes('COMER') :
+                pnom.includes('PLANTA')
+            );
+        });
+
+        const options = filteredUsers.map(u => {
+            const nombreCompleto = [u.nombres, u.apellidop, u.apellidom].filter(Boolean).join(' ').trim() || 'Sin Nombre';
+            return {
+                id: u.id,
+                rut: u.rut || '',
+                nombre: nombreCompleto,
+                perfilId: u.perfil?.id,
+                perfilNombre: u.perfil?.nombre || PERFIL_LABELS[u.perfil?.id] || currentTypeConfig?.label || 'Actor'
+            };
+        });
+
+        // Si es tipo de planta, enriquecer con plantas maestras registradas
+        if (isPlantaType && allPlantas && allPlantas.length > 0) {
+            const existingRuts = new Set(options.map(o => o.rut?.toLowerCase().trim()));
+            allPlantas.forEach(p => {
+                const pRut = p.rut ? p.rut.trim() : '';
+                if (pRut && !existingRuts.has(pRut.toLowerCase())) {
+                    options.push({
+                        id: `planta-${p.id}`,
+                        rut: pRut,
+                        nombre: p.nombre || 'Planta',
+                        perfilNombre: 'Planta Registrada'
+                    });
+                    existingRuts.add(pRut.toLowerCase());
+                }
+            });
+        }
+
+        // Ordenar alfabéticamente por nombre
+        options.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+
+        setSubOptions(options);
+        setLoadingSub(false);
+    }, [tipoReporte, allUsers, allPlantas]);
 
     const handleGenerar = () => {
         if (onGenerate) {
@@ -115,12 +185,15 @@ const ReportFilter = ({ onGenerate }) => {
                 fechaInicio,
                 fechaFin,
                 tipoReporte,
-                subSeleccion,
+                subSeleccion: selectedActor ? selectedActor.id : '',
+                rut: selectedActor ? selectedActor.rut : '',
+                actorNombre: selectedActor ? selectedActor.nombre : '',
             });
         }
     };
 
     const selectedType = REPORT_TYPES.find(t => t.id === tipoReporte);
+    const actorLabel = selectedType ? selectedType.label : 'Actor / Entidad';
     const isFormValid = fechaInicio && fechaFin && tipoReporte;
 
     return (
@@ -170,9 +243,21 @@ const ReportFilter = ({ onGenerate }) => {
                     min={fechaInicio}
                 />
 
-                <Grid container spacing={2.5} alignItems="flex-end">
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                            xs: '1fr',
+                            sm: '1fr 1fr',
+                            md: 'repeat(2, 1fr)',
+                            lg: '1fr 1fr 1.15fr 1.35fr auto',
+                        },
+                        gap: 2,
+                        alignItems: 'center',
+                    }}
+                >
                     {/* Fecha Inicio */}
-                    <Grid item xs={12} sm={6} md={3} lg={2.5}>
+                    <Box>
                         <TextField
                             id="filter-fecha-inicio"
                             label="Fecha Inicio"
@@ -198,10 +283,10 @@ const ReportFilter = ({ onGenerate }) => {
                             fullWidth
                             size="small"
                         />
-                    </Grid>
+                    </Box>
 
                     {/* Fecha Fin */}
-                    <Grid item xs={12} sm={6} md={3} lg={2.5}>
+                    <Box>
                         <TextField
                             id="filter-fecha-fin"
                             label="Fecha Fin"
@@ -227,10 +312,10 @@ const ReportFilter = ({ onGenerate }) => {
                             fullWidth
                             size="small"
                         />
-                    </Grid>
+                    </Box>
 
                     {/* Tipo de Reporte */}
-                    <Grid item xs={12} sm={6} md={3} lg={2.5}>
+                    <Box>
                         <TextField
                             id="filter-tipo-reporte"
                             select
@@ -247,7 +332,6 @@ const ReportFilter = ({ onGenerate }) => {
                                     sx: { fontFamily: 'Inter' }
                                 }
                             }}
-                            sx={{ minWidth: { lg: 200 } }}
                         >
                             {REPORT_TYPES.map((type) => (
                                 <MenuItem key={type.id} value={type.id} sx={{ fontFamily: 'Inter' }}>
@@ -270,48 +354,157 @@ const ReportFilter = ({ onGenerate }) => {
                                 </MenuItem>
                             ))}
                         </TextField>
-                    </Grid>
+                    </Box>
 
-                    {/* Sub-Seleccion (Solo si hay tipo seleccionado) */}
-                    <Grid item xs={12} sm={6} md={3} lg={2.5}>
-                        <TextField
+                    {/* Sub-Seleccion (Actor / Entidad con Buscador en tiempo real y Notched Label idéntico) */}
+                    <Box>
+                        <Autocomplete
                             id="filter-sub-seleccion"
-                            select
-                            label={loadingSub ? 'Cargando...' : `Seleccionar ${selectedType?.label || ''}`}
-                            value={subSeleccion}
-                            onChange={(e) => setSubSeleccion(e.target.value)}
-                            fullWidth
                             size="small"
-                            disabled={!tipoReporte || loadingSub || subOptions.length === 0}
+                            fullWidth
+                            disabled={!tipoReporte || loadingSub}
+                            options={subOptions}
+                            value={selectedActor}
+                            onChange={(event, newValue) => setSelectedActor(newValue)}
+                            getOptionLabel={(option) => {
+                                if (!option) return '';
+                                if (typeof option === 'string') return option;
+                                return `${option.nombre} (${option.rut})`;
+                            }}
+                            isOptionEqualToValue={(option, value) => {
+                                if (!option || !value) return false;
+                                return option.rut === value.rut || option.id === value.id;
+                            }}
+                            filterOptions={customFilterOptions}
+                            loading={loadingSub}
+                            loadingText="Cargando listado..."
+                            noOptionsText={loadingSub ? "Cargando..." : "Sin coincidencias"}
+                            clearOnEscape
                             slotProps={{
-                                input: {
-                                    sx: { borderRadius: 3, fontFamily: 'Inter' }
-                                },
-                                inputLabel: {
-                                    sx: { fontFamily: 'Inter' }
+                                paper: {
+                                    elevation: 6,
+                                    sx: {
+                                        borderRadius: 3,
+                                        mt: 1,
+                                        border: 1,
+                                        borderColor: 'divider',
+                                        minWidth: { xs: '100%', sm: 300, md: 340 },
+                                        maxHeight: 320,
+                                    }
                                 }
                             }}
-                            sx={{ minWidth: { lg: 200 } }}
-                        >
-                            {subOptions.map((opt) => (
-                                <MenuItem key={opt.id} value={opt.id} sx={{ fontFamily: 'Inter', fontSize: '0.9rem' }}>
-                                    {opt.nombre}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-                    </Grid>
+                            renderOption={(props, option) => {
+                                const { key, ...otherProps } = props;
+                                return (
+                                    <Box
+                                        component="li"
+                                        key={key || `${option.id}-${option.rut}`}
+                                        {...otherProps}
+                                        sx={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'flex-start !important',
+                                            py: 1,
+                                            px: 1.75,
+                                            borderBottom: '1px solid',
+                                            borderColor: 'divider',
+                                            '&:last-child': { borderBottom: 'none' },
+                                            '&:hover': { bgcolor: 'action.hover' },
+                                        }}
+                                    >
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                fontWeight: 600,
+                                                color: 'text.primary',
+                                                fontFamily: 'Inter',
+                                                fontSize: '0.85rem',
+                                                lineHeight: 1.3
+                                            }}
+                                        >
+                                            {option.nombre}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                            <Chip
+                                                label={`RUT: ${option.rut}`}
+                                                size="small"
+                                                sx={{
+                                                    height: 18,
+                                                    fontSize: '0.65rem',
+                                                    fontWeight: 700,
+                                                    fontFamily: 'Inter',
+                                                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#f1f5f9',
+                                                    color: 'text.primary',
+                                                    borderRadius: 1,
+                                                }}
+                                            />
+                                            {option.perfilNombre && (
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{
+                                                        color: 'text.secondary',
+                                                        fontSize: '0.72rem',
+                                                        fontFamily: 'Inter',
+                                                    }}
+                                                >
+                                                    {option.perfilNombre}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </Box>
+                                );
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    id="filter-sub-seleccion"
+                                    label={actorLabel}
+                                    placeholder={
+                                        !tipoReporte
+                                            ? "Seleccione tipo primero"
+                                            : loadingSub
+                                            ? "Cargando..."
+                                            : "Todos o escribir para buscar..."
+                                    }
+                                    fullWidth
+                                    size="small"
+                                    InputLabelProps={{
+                                        ...params.InputLabelProps,
+                                        shrink: true,
+                                        sx: { fontFamily: 'Inter' }
+                                    }}
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        sx: {
+                                            ...params.InputProps?.sx,
+                                            borderRadius: 3,
+                                            fontFamily: 'Inter',
+                                            fontSize: '0.875rem',
+                                        },
+                                        endAdornment: (
+                                            <>
+                                                {loadingSub ? <CircularProgress color="inherit" size={16} sx={{ mr: 1 }} /> : null}
+                                                {params.InputProps?.endAdornment}
+                                            </>
+                                        )
+                                    }}
+                                />
+                            )}
+                        />
+                    </Box>
 
                     {/* Botón Generar */}
-                    <Grid item xs={12} md={12} lg={2}>
+                    <Box sx={{ display: 'flex', justifyContent: 'stretch' }}>
                         <Button
                             id="btn-generar-reporte"
                             variant="contained"
-                            fullWidth
                             disabled={!isFormValid}
                             onClick={handleGenerar}
                             startIcon={<SearchIcon />}
                             sx={{
-                                height: '40px', // Alineado con TextField size="small"
+                                height: '40px',
+                                px: 3,
+                                minWidth: 120,
                                 borderRadius: 3,
                                 textTransform: 'none',
                                 fontWeight: 700,
@@ -322,12 +515,13 @@ const ReportFilter = ({ onGenerate }) => {
                                 },
                                 boxShadow: 'none',
                                 transition: 'all 0.2s ease',
+                                whiteSpace: 'nowrap',
                             }}
                         >
                             Buscar
                         </Button>
-                    </Grid>
-                </Grid>
+                    </Box>
+                </Box>
             </CardContent>
         </Card>
     );

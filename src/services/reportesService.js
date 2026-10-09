@@ -4,14 +4,16 @@ import api from '../api/axiosConfig';
  * Obtiene el listado de reportes aplicando filtros de fecha y tipo.
  */
 export const getReportes = async (filters) => {
-  const { fechaInicio, fechaFin, tipoReporte } = filters;
-  const response = await api.get('/reportes', {
-    params: {
-      fechaInicio,
-      fechaFin,
-      tipoReporte
-    }
-  });
+  const { fechaInicio, fechaFin, tipoReporte, rut } = filters;
+  const params = {
+    fechaInicio,
+    fechaFin,
+    tipoReporte,
+  };
+  if (rut) {
+    params.rut = rut;
+  }
+  const response = await api.get('/reportes', { params });
   return response.data;
 };
 
