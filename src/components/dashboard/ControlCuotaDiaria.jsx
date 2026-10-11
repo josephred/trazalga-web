@@ -1,19 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Card, 
   CardContent, 
   Typography, 
   Box, 
   LinearProgress, 
-  CircularProgress,
-  Divider,
-  FormControl,
-  Select,
-  MenuItem
+  CircularProgress, 
+  Divider, 
+  FormControl, 
+  Select, 
+  MenuItem,
+  Tabs,
+  Tab,
+  Chip,
+  Button,
+  Tooltip,
+  Collapse,
+  Alert
 } from '@mui/material';
+import {
+  KeyboardArrowDown as DownIcon,
+  KeyboardArrowUp as UpIcon,
+  WarningAmber as WarningIcon,
+  Person as PersonIcon,
+  CheckCircleOutline as CheckIcon
+} from '@mui/icons-material';
 import api from '../../api/axiosConfig';
+import { getCuotasSobrepasos, getCuotaPersonas } from '../../services/reportesService';
+import TablaDetalleHallazgos from './comun/TablaDetalleHallazgos';
 
 export default function ControlCuotaDiaria({ dateRange }) {
+  const navigate = useNavigate();
   const [cuotas, setCuotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,6 +39,38 @@ export default function ControlCuotaDiaria({ dateRange }) {
   const [extraccionTipoId, setExtraccionTipoId] = useState('');
   const [comunas, setComunas] = useState([]);
   const [extraccionTipos, setExtraccionTipos] = useState([]);
+
+  // Cuota seleccionada por clic en tarjeta (TQ.2)
+  const [cuotaSeleccionadaId, setCuotaSeleccionadaId] = useState(null);
+
+  // Desplegable de auditoría y sobrepasos (TQ.2)
+  const [showSobrepasos, setShowSobrepasos] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0); // 0: Declaraciones sobre límite, 1: Personas sobre tope
+  const [filtroMarca, setFiltroMarca] = useState('TODAS'); // TODAS | CUOTA_EXCEDIDA | POSTERIOR_CIERRE | DECLARACION_EXTEMPORANEA
+
+  // Tab 2: Personas por cuota individual (TM.2 / TQ.1 / TQ.2)
+  const [soloSobreLimite, setSoloSobreLimite] = useState(true);
+  const [cuotaPersonasId, setCuotaPersonasId] = useState('');
+  const [personasData, setPersonasData] = useState([]);
+  const [loadingPersonas, setLoadingPersonas] = useState(false);
+  const [errorPersonas, setErrorPersonas] = useState(null);
+
+  // TC.8: Parámetro de imputación territorial de armadores
+  const [imputacionArmador, setImputacionArmador] = useState('INSCRIPCION');
+
+  // Cargar configuración general para nota territorial (TC.8)
+  useEffect(() => {
+    api.get('/api/configuracion-general')
+      .then((res) => {
+        if (Array.isArray(res.data)) {
+          const param = res.data.find((c) => c.clave === 'cuota_imputacion_armador');
+          if (param && param.valor) {
+            setImputacionArmador(param.valor.trim().toUpperCase());
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Cargar maestros de comunas y métodos de extracción para los filtros
   useEffect(() => {
@@ -76,12 +126,322 @@ export default function ControlCuotaDiaria({ dateRange }) {
     fetchCuotas();
   }, [dateRange, comunaId, extraccionTipoId]);
 
-  // Colores y fondos explícitos y refinados para las barras de progreso
+  // Sincronizar cuotaPersonasId con selección o primera cuota disponible
+  useEffect(() => {
+    if (cuotaSeleccionadaId) {
+      setCuotaPersonasId(cuotaSeleccionadaId);
+    } else if (!cuotaPersonasId && cuotas.length > 0) {
+      const candidata = cuotas.find((c) => c.esPlantilla || c.ambito === 'INDIVIDUAL') || cuotas[0];
+      if (candidata) setCuotaPersonasId(candidata.cuotaId);
+    }
+  }, [cuotaSeleccionadaId, cuotas, cuotaPersonasId]);
+
+  // Cargar desglose de personas para Tab 2 cuando está visible
+  useEffect(() => {
+    if (!showSobrepasos || tabIndex !== 1 || !cuotaPersonasId) return;
+
+    let isMounted = true;
+    setLoadingPersonas(true);
+    setErrorPersonas(null);
+
+    getCuotaPersonas(cuotaPersonasId, soloSobreLimite)
+      .then((data) => {
+        if (isMounted) {
+          setPersonasData(Array.isArray(data) ? data : []);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error('Error cargando personas de cuota:', err);
+          setErrorPersonas(err.message || 'Error al cargar el desglose por personas');
+          setPersonasData([]);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoadingPersonas(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [showSobrepasos, tabIndex, cuotaPersonasId, soloSobreLimite]);
+
+  // Colores y fondos para las barras de progreso
   const getProgressColors = (porcentaje) => {
     if (porcentaje >= 100) return { bar: 'error.main', bg: '#fef2f2', label: '#b91c1c' }; // Rojo
     if (porcentaje >= 80) return { bar: 'warning.main', bg: '#fffbeb', label: '#b45309' }; // Naranja/Amber
     return { bar: 'success.main', bg: '#f0fdf4', label: '#047857' }; // Verde
   };
+
+  // Manejador de clic en tarjeta de cuota (TQ.2)
+  const handleToggleCardSelection = (id) => {
+    if (cuotaSeleccionadaId === id) {
+      setCuotaSeleccionadaId(null);
+    } else {
+      setCuotaSeleccionadaId(id);
+      setShowSobrepasos(true);
+    }
+  };
+
+  // Fetcher para Tab 1: Declaraciones sobre el límite (TQ.1)
+  const fetcherSobrepasos = useCallback(
+    async (params) => {
+      const query = {
+        startDate: dateRange?.startDate,
+        endDate: dateRange?.endDate,
+        comunaId: comunaId || undefined,
+        extraccionTipoId: extraccionTipoId || undefined,
+        cuotaId: cuotaSeleccionadaId || undefined,
+        marcas: filtroMarca === 'TODAS' ? undefined : filtroMarca,
+        ...params
+      };
+      return await getCuotasSobrepasos(query);
+    },
+    [dateRange, comunaId, extraccionTipoId, cuotaSeleccionadaId, filtroMarca]
+  );
+
+  // Columnas para Tab 1: Declaraciones sobre el límite (TQ.2)
+  const columnasSobrepasos = useMemo(() => [
+    {
+      id: 'folio',
+      label: 'Folio',
+      mono: true,
+      render: (r) => r.folio || (r.declaracionId ? `ID-${r.declaracionId}` : '—')
+    },
+    {
+      id: 'actor',
+      label: 'Agente / Perfil',
+      render: (r) => (
+        <Box>
+          <Typography variant="body2" sx={{ fontSize: '0.78rem', fontWeight: 700 }}>
+            {r.actorNombre || '—'}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {r.actorRut || ''}
+            {r.actorPerfil && (
+              <Chip label={r.actorPerfil} size="small" sx={{ fontSize: '0.62rem', height: 16 }} />
+            )}
+          </Typography>
+        </Box>
+      )
+    },
+    {
+      id: 'embarcacion',
+      label: 'Embarcación',
+      render: (r) => (
+        <Typography variant="body2" sx={{ fontSize: '0.78rem' }}>
+          {r.embarcacionNombre ? `${r.embarcacionNombre}${r.embarcacionCodigo ? ` (${r.embarcacionCodigo})` : ''}` : '—'}
+        </Typography>
+      )
+    },
+    {
+      id: 'cuota',
+      label: 'Cuota',
+      render: (r) => (
+        <Tooltip title={`${r.cuotaAlcance || ''} · ${r.cuotaEspecie || ''} · ${r.cuotaMetodo || ''} · ${r.cuotaVigencia || ''}`}>
+          <Box>
+            <Typography variant="body2" sx={{ fontSize: '0.78rem', fontWeight: 600 }}>
+              {r.cuotaAlcance || `Cuota #${r.cuotaId}`}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+              {r.cuotaEspecie || ''} {r.cuotaMetodo ? `· ${r.cuotaMetodo}` : ''}
+            </Typography>
+          </Box>
+        </Tooltip>
+      )
+    },
+    {
+      id: 'fechaDeclaracion',
+      label: 'Fecha',
+      render: (r) => {
+        const f = r.fechaDeclaracion || r.fechaExtraccion;
+        return f ? new Date(f).toLocaleDateString('es-CL') : '—';
+      }
+    },
+    {
+      id: 'kilosCaptura',
+      label: 'kg / Captura',
+      align: 'right',
+      render: (r) => (
+        <Box sx={{ textAlign: 'right' }}>
+          <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 700 }}>
+            {Number(r.kilos || 0).toLocaleString('es-CL')} kg
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+            {Number(r.captura || 0).toLocaleString('es-CL')} cap
+          </Typography>
+        </Box>
+      )
+    },
+    {
+      id: 'porcentajeConsumo',
+      label: 'Consumo s/Límite (%)',
+      align: 'right',
+      render: (r) => (
+        <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 800, color: 'error.main' }}>
+          {r.porcentajeConsumo != null ? `${r.porcentajeConsumo.toFixed(1)}%` : '—'}
+        </Typography>
+      )
+    },
+    {
+      id: 'excesoKg',
+      label: 'Exceso',
+      align: 'right',
+      render: (r) => (
+        <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 700, color: 'error.dark' }}>
+          {r.excesoKg != null && r.excesoKg > 0 ? `+${Number(r.excesoKg).toLocaleString('es-CL')} kg` : '—'}
+        </Typography>
+      )
+    },
+    {
+      id: 'marca',
+      label: 'Marca',
+      align: 'center',
+      render: (r) => {
+        const color = r.marca === 'POSTERIOR_CIERRE' ? 'error' : (r.marca === 'CUOTA_EXCEDIDA' ? 'warning' : 'secondary');
+        return (
+          <Chip
+            label={r.marca}
+            size="small"
+            color={color}
+            sx={{ fontSize: '0.66rem', height: 20, fontWeight: 700 }}
+          />
+        );
+      }
+    },
+    {
+      id: 'estadoGestion',
+      label: 'Estado',
+      align: 'center',
+      render: (r) => {
+        const resuelta = r.resuelta || r.estadoGestion === 'RESUELTA';
+        return (
+          <Chip
+            label={r.estadoGestion || (resuelta ? 'Resuelta' : 'Pendiente')}
+            size="small"
+            color={resuelta ? 'success' : 'default'}
+            variant="outlined"
+            sx={{ fontSize: '0.66rem', height: 20, fontWeight: 600 }}
+          />
+        );
+      }
+    }
+  ], []);
+
+  // Chips para filtros de marca en Tab 1
+  const chipsFiltroMarca = useMemo(() => [
+    { id: 'TODAS', label: 'Todas las marcas', activo: filtroMarca === 'TODAS', onClick: () => setFiltroMarca('TODAS') },
+    { id: 'CUOTA_EXCEDIDA', label: 'Cuota Excedida', activo: filtroMarca === 'CUOTA_EXCEDIDA', onClick: () => setFiltroMarca('CUOTA_EXCEDIDA') },
+    { id: 'POSTERIOR_CIERRE', label: 'Posterior Cierre', activo: filtroMarca === 'POSTERIOR_CIERRE', onClick: () => setFiltroMarca('POSTERIOR_CIERRE') },
+    { id: 'DECLARACION_EXTEMPORANEA', label: 'Extemporánea', activo: filtroMarca === 'DECLARACION_EXTEMPORANEA', onClick: () => setFiltroMarca('DECLARACION_EXTEMPORANEA') },
+  ], [filtroMarca]);
+
+  // Columnas para Tab 2: Personas sobre su tope individual (TQ.2)
+  const columnasPersonas = useMemo(() => [
+    {
+      id: 'rut',
+      label: 'RUT',
+      mono: true,
+      render: (r) => r.rut || '—'
+    },
+    {
+      id: 'nombre',
+      label: 'Nombre',
+      render: (r) => (
+        <Typography variant="body2" sx={{ fontSize: '0.78rem', fontWeight: 700 }}>
+          {r.nombre || '—'}
+        </Typography>
+      )
+    },
+    {
+      id: 'perfil',
+      label: 'Perfil',
+      render: (r) => (
+        <Chip label={r.perfil || '—'} size="small" sx={{ fontSize: '0.68rem', height: 20, fontWeight: 600 }} />
+      )
+    },
+    {
+      id: 'embarcacionesUsadas',
+      label: 'Embarcaciones',
+      render: (r) => {
+        if (Array.isArray(r.embarcacionesUsadas) && r.embarcacionesUsadas.length > 0) {
+          return (
+            <Typography variant="body2" sx={{ fontSize: '0.76rem' }}>
+              {r.embarcacionesUsadas.join(', ')}
+            </Typography>
+          );
+        }
+        return '—';
+      }
+    },
+    {
+      id: 'cantidadDeclaraciones',
+      label: 'Declaraciones',
+      align: 'center',
+      render: (r) => r.cantidadDeclaraciones || 0
+    },
+    {
+      id: 'consumo',
+      label: 'Consumo',
+      align: 'right',
+      render: (r) => (
+        <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 700 }}>
+          {Number(r.consumo || 0).toLocaleString('es-CL')} kg
+        </Typography>
+      )
+    },
+    {
+      id: 'limiteEfectivo',
+      label: 'Tope Efectivo',
+      align: 'right',
+      render: (r) => (
+        <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+          {Number(r.limiteEfectivo || 0).toLocaleString('es-CL')} kg
+        </Typography>
+      )
+    },
+    {
+      id: 'porcentaje',
+      label: '% Consumo',
+      align: 'right',
+      render: (r) => {
+        const pct = r.porcentaje != null ? r.porcentaje : (r.limiteEfectivo > 0 ? (r.consumo / r.limiteEfectivo) * 100 : 0);
+        const isOver = pct > 100;
+        return (
+          <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 800, color: isOver ? 'error.main' : 'text.primary' }}>
+            {pct.toFixed(1)}%
+          </Typography>
+        );
+      }
+    },
+    {
+      id: 'exceso',
+      label: 'Exceso',
+      align: 'right',
+      render: (r) => {
+        const exc = r.exceso != null ? Number(r.exceso) : Math.max(0, Number(r.consumo || 0) - Number(r.limiteEfectivo || 0));
+        return (
+          <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 700, color: exc > 0 ? 'error.dark' : 'text.disabled' }}>
+            {exc > 0 ? `+${exc.toLocaleString('es-CL')} kg` : '—'}
+          </Typography>
+        );
+      }
+    }
+  ], []);
+
+  // Chips para filtros de personas en Tab 2
+  const chipsFiltroPersonas = useMemo(() => [
+    { id: 'SOBRE_LIMITE', label: 'Solo sobre límite', activo: soloSobreLimite, color: 'error', onClick: () => setSoloSobreLimite(true) },
+    { id: 'TODAS', label: 'Todas las personas con actividad', activo: !soloSobreLimite, onClick: () => setSoloSobreLimite(false) },
+  ], [soloSobreLimite]);
+
+  // Texto normativo dinámico según parámetro de imputación territorial (TC.8)
+  const notaTerritorialTexto = useMemo(() => {
+    if (imputacionArmador === 'CALETA_DESEMBARQUE') {
+      return 'El consumo suma recolectores (comuna de inscripción) y armadores (caleta de desembarque). Las AMERB se controlan en su propio módulo.';
+    }
+    return 'El consumo suma recolectores y armadores según comuna de inscripción (regla TC.8). Las AMERB se controlan en su propio módulo.';
+  }, [imputacionArmador]);
 
   if (loading && cuotas.length === 0) {
     return (
@@ -194,7 +554,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
           </Box>
         </Box>
 
-        {/* Nota Normativa de Consumo Combinado Áreas Libres (Punto 3 / R1.3) */}
+        {/* Nota Normativa de Consumo Territorial (TC.8) */}
         <Box
           sx={{
             display: 'flex',
@@ -210,7 +570,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
           }}
         >
           <Typography variant="caption" sx={{ fontFamily: 'Inter', color: 'text.secondary', fontSize: '0.74rem' }}>
-            <strong>Nota territorial:</strong> El consumo suma recolectores (comuna de inscripción) y armadores (caleta de desembarque). Las AMERB se controlan en su propio módulo.
+            <strong>Nota territorial:</strong> {notaTerritorialTexto}
           </Typography>
         </Box>
 
@@ -226,16 +586,63 @@ export default function ControlCuotaDiaria({ dateRange }) {
           cuotas.map((cuota, index) => {
             const limiteEfectivo = cuota.limiteEfectivo != null ? cuota.limiteEfectivo : (cuota.limiteCuota || 0);
             const limiteNominal = cuota.limiteNominal != null ? cuota.limiteNominal : limiteEfectivo;
-            const displayPercentage = cuota.porcentajeUso > 100 ? 100 : cuota.porcentajeUso;
-            const colors = getProgressColors(cuota.porcentajeUso);
+            const isPlantilla = Boolean(cuota.esPlantilla);
+            const displayPercentage = isPlantilla 
+              ? Math.min(100, cuota.maxPorcentaje || cuota.porcentajeUso || 0)
+              : (cuota.porcentajeUso > 100 ? 100 : cuota.porcentajeUso);
+            const colors = getProgressColors(isPlantilla ? (cuota.maxPorcentaje || cuota.porcentajeUso || 0) : cuota.porcentajeUso);
+            const isSelected = cuotaSeleccionadaId === cuota.cuotaId;
             
             return (
-              <Box key={cuota.cuotaId || index} sx={{ mb: 3, '&:last-child': { mb: 1 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'baseline' }}>
+              <Box 
+                key={cuota.cuotaId || index}
+                onClick={() => handleToggleCardSelection(cuota.cuotaId)}
+                sx={{ 
+                  mb: 2.5, 
+                  p: 2,
+                  borderRadius: 3,
+                  cursor: 'pointer',
+                  border: 1,
+                  borderColor: isSelected ? 'primary.main' : 'divider',
+                  bgcolor: isSelected 
+                    ? (t => t.palette.mode === 'dark' ? 'rgba(5, 150, 105, 0.08)' : 'rgba(5, 150, 105, 0.04)') 
+                    : 'background.paper',
+                  boxShadow: isSelected ? 2 : 0,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    boxShadow: 2,
+                    borderColor: isSelected ? 'primary.main' : 'primary.light',
+                    transform: 'translateY(-1px)'
+                  },
+                  '&:last-child': { mb: 1 } 
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'baseline', flexWrap: 'wrap', gap: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0, flexWrap: 'wrap' }}>
                     <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
                       {cuota.especieNombre}
                     </Typography>
+
+                    {/* Chip de cuota seleccionada */}
+                    {isSelected && (
+                      <Chip 
+                        size="small" 
+                        label="Filtrando sobrepasos" 
+                        color="primary" 
+                        sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700 }} 
+                      />
+                    )}
+
+                    {/* Badge de Plantilla Individual (TM.2) */}
+                    {isPlantilla && (
+                      <Chip
+                        size="small"
+                        label="Plantilla Individual"
+                        color="secondary"
+                        variant="outlined"
+                        sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700 }}
+                      />
+                    )}
 
                     {/* Badge de Vigencia Temporal (T1.7) */}
                     {cuota.vigenciaFormateada ? (
@@ -357,26 +764,41 @@ export default function ControlCuotaDiaria({ dateRange }) {
                       </Typography>
                     )}
                   </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.825rem', color: 'text.secondary' }}>
-                      {cuota.volumenExtraido?.toLocaleString('es-CL')} / {limiteEfectivo?.toLocaleString('es-CL')} kg ({cuota.metrica || 'CAPTURA'}){' '}
-                      <span style={{ fontWeight: 700, color: colors.label }}>
-                        ({cuota.porcentajeUso}%)
-                      </span>
-                    </Typography>
-                    {cuota.descripcionEquivalencia ? (
-                      <Typography variant="caption" sx={{ color: 'info.main', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
-                        {cuota.descripcionEquivalencia}
+
+                  {/* Cifras de consumo */}
+                  {isPlantilla ? (
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.825rem', color: 'text.secondary' }}>
+                        <span style={{ fontWeight: 700, color: colors.label }}>
+                          {cuota.textoConsumoPlantilla || `${cuota.personasSobreLimite || 0} de ${cuota.personasConActividad || 0} personas sobre su tope (máx. ${(cuota.maxPorcentaje || cuota.porcentajeUso || 0).toFixed(1)}%)`}
+                        </span>
                       </Typography>
-                    ) : (limiteNominal !== limiteEfectivo && limiteNominal > 0 && (
-                      <Typography variant="caption" sx={{ color: 'info.main', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
-                        {limiteNominal.toLocaleString('es-CL')} kg nominal ≡ {limiteEfectivo.toLocaleString('es-CL')} kg captura
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
+                        Tope individual de {limiteNominal?.toLocaleString('es-CL')} kg {cuota.humedadEstadoNombre || ''} por persona
                       </Typography>
-                    ))}
-                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
-                      Saldo disponible: {Math.max(0, limiteEfectivo - (cuota.volumenExtraido || 0)).toLocaleString('es-CL')} kg
-                    </Typography>
-                  </Box>
+                    </Box>
+                  ) : (
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.825rem', color: 'text.secondary' }}>
+                        {cuota.volumenExtraido?.toLocaleString('es-CL')} / {limiteEfectivo?.toLocaleString('es-CL')} kg ({cuota.metrica || 'CAPTURA'}){' '}
+                        <span style={{ fontWeight: 700, color: colors.label }}>
+                          ({cuota.porcentajeUso}%)
+                        </span>
+                      </Typography>
+                      {cuota.descripcionEquivalencia ? (
+                        <Typography variant="caption" sx={{ color: 'info.main', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
+                          {cuota.descripcionEquivalencia}
+                        </Typography>
+                      ) : (limiteNominal !== limiteEfectivo && limiteNominal > 0 && (
+                        <Typography variant="caption" sx={{ color: 'info.main', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>
+                          {limiteNominal.toLocaleString('es-CL')} kg nominal ≡ {limiteEfectivo.toLocaleString('es-CL')} kg captura
+                        </Typography>
+                      ))}
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
+                        Saldo disponible: {Math.max(0, limiteEfectivo - (cuota.volumenExtraido || 0)).toLocaleString('es-CL')} kg
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
                 <LinearProgress 
                   variant="determinate" 
@@ -395,6 +817,122 @@ export default function ControlCuotaDiaria({ dateRange }) {
             );
           })
         )}
+
+        {/* Botón y cabecera para desplegable de Detalle de Sobrepasos (TQ.2) */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, pt: 1.5, borderTop: 1, borderColor: 'divider', flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {cuotaSeleccionadaId && (
+              <Chip
+                label={`Filtrando sobrepasos por cuota #${cuotaSeleccionadaId}`}
+                size="small"
+                color="primary"
+                onDelete={() => setCuotaSeleccionadaId(null)}
+                sx={{ fontWeight: 700, fontSize: '0.72rem' }}
+              />
+            )}
+          </Box>
+          <Button
+            size="small"
+            variant={showSobrepasos ? 'outlined' : 'text'}
+            color="primary"
+            startIcon={<WarningIcon />}
+            endIcon={showSobrepasos ? <UpIcon /> : <DownIcon />}
+            onClick={() => setShowSobrepasos(!showSobrepasos)}
+            sx={{ textTransform: 'none', fontFamily: 'Outfit', fontWeight: 700 }}
+          >
+            {showSobrepasos ? 'Ocultar Detalle de Sobrepasos' : 'Ver Detalle de Sobrepasos (Auditoría)'}
+          </Button>
+        </Box>
+
+        {/* Sección desplegable: Detalle de sobrepasos en 2 pestañas (TQ.2) */}
+        <Collapse in={showSobrepasos} unmountOnExit={false}>
+          <Box sx={{ mt: 2, p: 2, borderRadius: 3, border: 1, borderColor: 'divider', bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'grey.50' }}>
+            <Tabs
+              value={tabIndex}
+              onChange={(e, v) => setTabIndex(v)}
+              sx={{
+                mb: 2,
+                borderBottom: 1,
+                borderColor: 'divider',
+                '& .MuiTab-root': { textTransform: 'none', fontFamily: 'Outfit', fontWeight: 700, fontSize: '0.82rem' }
+              }}
+            >
+              <Tab label="1. Declaraciones sobre el límite" />
+              <Tab label="2. Cuotas individuales: personas sobre su tope" />
+            </Tabs>
+
+            {/* PESTAÑA 1: Declaraciones sobre el límite */}
+            {tabIndex === 0 && (
+              <TablaDetalleHallazgos
+                titulo="Declaraciones sobre el límite"
+                subtitulo="Declaraciones registradas cuando el consumo superaba el límite o posteriores a cierre (TQ.1 · TQ.2)"
+                columnas={columnasSobrepasos}
+                filtrosChip={chipsFiltroMarca}
+                fetcher={fetcherSobrepasos}
+                exportarNombre="sobrepasos_declaraciones"
+                onFilaClick={(r) => {
+                  const tipo = r.declaracionTipo;
+                  const id = r.declaracionId;
+                  if (tipo && id) {
+                    navigate(`/consultas/${tipo.toLowerCase()}/${id}`);
+                  }
+                }}
+                vacio="No se registran sobrepasos de cuota para los filtros seleccionados."
+                maxHeight={360}
+                paginacion={true}
+              />
+            )}
+
+            {/* PESTAÑA 2: Cuotas individuales: personas sobre su tope */}
+            {tabIndex === 1 && (
+              <Box>
+                {/* Selector de cuota para inspección individual */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5, flexWrap: 'wrap' }}>
+                  <Typography variant="caption" sx={{ fontFamily: 'Inter', fontWeight: 700, color: 'text.secondary' }}>
+                    Cuota evaluada:
+                  </Typography>
+                  <FormControl size="small" sx={{ minWidth: 260 }}>
+                    <Select
+                      value={cuotaPersonasId || ''}
+                      onChange={(e) => setCuotaPersonasId(e.target.value)}
+                      slotProps={{
+                        input: {
+                          sx: { borderRadius: 2, fontFamily: 'Inter', fontSize: '0.8rem', py: 0.25 }
+                        }
+                      }}
+                    >
+                      {cuotas.map((c) => (
+                        <MenuItem key={c.cuotaId} value={c.cuotaId} sx={{ fontSize: '0.8rem', fontFamily: 'Inter' }}>
+                          #{c.cuotaId} · {c.especieNombre} ({c.alcance || c.comunaNombre || 'Cuota'}) {c.esPlantilla ? '— [Plantilla]' : ''}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                {errorPersonas && (
+                  <Alert severity="error" sx={{ mb: 1.5, py: 0.5, fontSize: '0.8rem' }}>
+                    {errorPersonas}
+                  </Alert>
+                )}
+
+                <TablaDetalleHallazgos
+                  titulo="Consumo individual por persona"
+                  subtitulo="Desglose de extracciones por persona y cálculo de tope individual (TM.2 · TQ.2)"
+                  columnas={columnasPersonas}
+                  filtrosChip={chipsFiltroPersonas}
+                  data={personasData}
+                  loading={loadingPersonas}
+                  exportarNombre="personas_consumo_cuota"
+                  vacio="No hay personas con declaraciones para la cuota y filtro seleccionados."
+                  maxHeight={360}
+                  paginacion={true}
+                  initialPageSize={20}
+                />
+              </Box>
+            )}
+          </Box>
+        </Collapse>
       </CardContent>
     </Card>
   );

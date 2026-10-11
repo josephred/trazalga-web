@@ -462,6 +462,10 @@ export default function CuotasExtraccionMaestro() {
       setFormAnualError('Debe seleccionar al menos una comuna.');
       return;
     }
+    if (formAnual.nivelAgregacion === 'PROVINCIA' && !formAnual.provincia) {
+      setFormAnualError('Debe seleccionar una provincia.');
+      return;
+    }
     if (formAnual.nivelAgregacion === 'REGION' && !formAnual.region) {
       setFormAnualError('Debe seleccionar una región.');
       return;
@@ -486,6 +490,7 @@ export default function CuotasExtraccionMaestro() {
       ambito: 'AREA_LIBRE',
       nivelAgregacion: formAnual.nivelAgregacion,
       regionId: formAnual.region?.id || null,
+      provinciaId: formAnual.nivelAgregacion === 'PROVINCIA' ? formAnual.provincia?.id : null,
       comunaIds: formAnual.nivelAgregacion === 'COMUNA' ? formAnual.comunas.map((c) => c.id) : [],
       especieId: formAnual.especie.id,
       extraccionTipoId: formAnual.extraccionTipo.id,
@@ -1082,7 +1087,20 @@ export default function CuotasExtraccionMaestro() {
         </TableContainer>
       </Card>
 
-      {/* Modal Formulario Definitivo */}
+      {/* Modal Formulario Modularizado (TM.3) */}
+      <CuotaForm
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        cuotaData={form}
+        maestros={maestros}
+        onSaved={async () => {
+          await cargarListado();
+          setMensaje({ type: 'success', text: `Cuota ${form.id ? 'actualizada' : 'creada'} correctamente.` });
+          setTimeout(() => setMensaje(null), 4000);
+        }}
+      />
+
+      {false && (
       <Dialog
         open={dialogOpen}
         onClose={() => !saving && setDialogOpen(false)}
@@ -1389,6 +1407,7 @@ export default function CuotasExtraccionMaestro() {
           </Button>
         </DialogActions>
       </Dialog>
+      )}
 
       {/* Dialog Alta Anual (T1.8) */}
       <Dialog
@@ -1452,6 +1471,7 @@ export default function CuotasExtraccionMaestro() {
               onChange={(e) => setFormAnual((p) => ({ ...p, nivelAgregacion: e.target.value }))}
             >
               <MenuItem value="COMUNA">Comunal</MenuItem>
+              <MenuItem value="PROVINCIA">Provincial</MenuItem>
               <MenuItem value="REGION">Regional</MenuItem>
             </TextField>
 
@@ -1474,6 +1494,28 @@ export default function CuotasExtraccionMaestro() {
               ))}
             </TextField>
           </Box>
+
+          {/* Selector de Provincia (si es Provincial) */}
+          {formAnual.nivelAgregacion === 'PROVINCIA' && (
+            <Box sx={{ mb: 2.5 }}>
+              <Autocomplete
+                size="small"
+                options={maestros.provincias || []}
+                getOptionLabel={(p) => (p.nombre ? `${p.nombre} (${p.region?.nombre || ''})` : '')}
+                isOptionEqualToValue={(p, v) => p.id === v.id}
+                value={formAnual.provincia || null}
+                onChange={(_, newVal) => setFormAnual((p) => ({ ...p, provincia: newVal, region: newVal?.region || p.region }))}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Provincia comprendida *"
+                    placeholder="Seleccionar provincia…"
+                    helperText="Se generarán 12 cuotas mensuales consecutivas para esta provincia."
+                  />
+                )}
+              />
+            </Box>
+          )}
 
           {/* Selector de Comunas (si es Comunal) */}
           {formAnual.nivelAgregacion === 'COMUNA' && (

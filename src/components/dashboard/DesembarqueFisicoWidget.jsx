@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -32,7 +33,8 @@ import {
   RestartAlt as ResetIcon,
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
-import { getDesembarqueFisico, getDesembarqueFisicoDetalle } from '../../services/reportesService';
+import { getDesembarqueFisico, getDesembarqueFisicoDetalle, getDesembarqueAtipicos } from '../../services/reportesService';
+import TablaDetalleHallazgos from './comun/TablaDetalleHallazgos';
 import api from '../../api/axiosConfig';
 
 const COLOR_PRIMARIO = '#059669';
@@ -40,11 +42,16 @@ const COLOR_SECUNDARIO = '#10b981';
 
 export default function DesembarqueFisicoWidget({ dateRange }) {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [metrics, setMetrics] = useState(null);
   const [detalle, setDetalle] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDetalle, setShowDetalle] = useState(false);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
+
+  // Estados para hallazgos de desembarque atípico (TD.1 · TD.2 · TD.3)
+  const [showAtipicos, setShowAtipicos] = useState(false);
+  const [filtroRapidoAtipico, setFiltroRapidoAtipico] = useState('TODOS');
 
   // Dimensión de agrupación activa (T7)
   const [agruparPor, setAgruparPor] = useState('CALETA');
@@ -195,6 +202,188 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
     }
     setShowDetalle(!showDetalle);
   };
+
+  // Fetcher y configuración de tabla de hallazgos de desembarque atípico (TD.1 · TD.2 · TD.3)
+  const fetcherAtipicos = useCallback(
+    async (params) => {
+      const base = parseFilters();
+      const query = {
+        ...base,
+        ...params
+      };
+      if (filtroRapidoAtipico === 'UMBRAL') query.criterioTipo = 'UMBRAL';
+      if (filtroRapidoAtipico === 'ESTADISTICO') query.criterioTipo = 'ESTADISTICO';
+      if (filtroRapidoAtipico === 'SIN_GESTIONAR') query.estadoGestion = 'SIN_GESTIONAR';
+      return await getDesembarqueAtipicos(query);
+    },
+    [dateRange, perfil, especieId, macrozonaId, regionId, provinciaId, comunaId, caletaId, usuarioId, agruparPor, filtroRapidoAtipico]
+  );
+
+  const chipsFiltrosAtipicos = useMemo(() => [
+    { id: 'TODOS', label: 'Todos', activo: filtroRapidoAtipico === 'TODOS', onClick: () => setFiltroRapidoAtipico('TODOS') },
+    { id: 'UMBRAL', label: 'Umbral', activo: filtroRapidoAtipico === 'UMBRAL', onClick: () => setFiltroRapidoAtipico('UMBRAL') },
+    { id: 'ESTADISTICO', label: 'Estadístico', activo: filtroRapidoAtipico === 'ESTADISTICO', onClick: () => setFiltroRapidoAtipico('ESTADISTICO') },
+    { id: 'SIN_GESTIONAR', label: 'Sin gestionar', activo: filtroRapidoAtipico === 'SIN_GESTIONAR', onClick: () => setFiltroRapidoAtipico('SIN_GESTIONAR') },
+  ], [filtroRapidoAtipico]);
+
+  const columnasAtipicos = useMemo(() => [
+    {
+      id: 'folio',
+      label: 'Folio',
+      mono: true,
+      render: (r) => r.folio || (r.declaracionId ? `ID-${r.declaracionId}` : '—')
+    },
+    {
+      id: 'perfil',
+      label: 'Perfil',
+      render: (r) => <Chip label={r.perfil || r.tipo || '—'} size="small" sx={{ fontSize: '0.7rem', height: 20, fontWeight: 700 }} />
+    },
+    {
+      id: 'actor',
+      label: 'Recolector o Armador / Embarcación',
+      render: (r) => {
+        const actor = `${r.nombre || ''} ${r.rut ? `(${r.rut})` : ''}`.trim() || '—';
+        const emb = r.embarcacionNombre ? ` / ${r.embarcacionNombre}${r.embarcacionCodigo ? ` (${r.embarcacionCodigo})` : ''}` : '';
+        return (
+          <Typography variant="body2" sx={{ fontSize: '0.78rem', fontWeight: 600 }}>
+            {actor}{emb}
+          </Typography>
+        );
+      }
+    },
+    {
+      id: 'caleta',
+      label: 'Caleta',
+      render: (r) => r.caleta || '—'
+    },
+    {
+      id: 'fechaDeclaracion',
+      label: 'Fecha Declaración',
+      render: (r) => r.fechaDeclaracion ? new Date(r.fechaDeclaracion).toLocaleDateString('es-CL') : '—'
+    },
+    {
+      id: 'especieHumedad',
+      label: 'Especie / Humedad',
+      render: (r) => `${r.especie || '—'}${r.humedad ? ` (${r.humedad})` : ''}`
+    },
+    {
+      id: 'kilos',
+      label: 'kg Declarados',
+      align: 'right',
+      render: (r) => (
+        <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 700 }}>
+          {Number(r.kilos || 0).toLocaleString('es-CL')} kg
+        </Typography>
+      )
+    },
+    {
+      id: 'criterioTexto',
+      label: 'Criterio',
+      render: (r) => {
+        const esSigma = r.criterioParametro === 'desembarque_atipico_sigma';
+        const esVigente = r.fuente === 'VIGENTE';
+        const label = r.criterioTexto || (esVigente ? 'Umbral vigente' : 'Umbral registrado');
+        return (
+          <Tooltip title={r.criterioTexto || label}>
+            <Chip
+              label={label}
+              size="small"
+              color={esSigma ? 'secondary' : 'warning'}
+              variant={esVigente ? 'outlined' : 'filled'}
+              sx={{ fontSize: '0.7rem', height: 20, maxWidth: 220 }}
+            />
+          </Tooltip>
+        );
+      }
+    },
+    {
+      id: 'estadoGestion',
+      label: 'Estado',
+      align: 'center',
+      render: (r) => {
+        const esSinMarca = r.estadoGestion === 'SIN_MARCA' || !r.marcaId;
+        const resuelta = r.resuelta || r.estadoGestion === 'RESUELTA';
+        const label = esSinMarca ? 'Sin marca (SQL)' : (r.estadoGestion || (resuelta ? 'Resuelta' : 'Pendiente'));
+        return (
+          <Chip
+            label={label}
+            size="small"
+            color={resuelta ? 'success' : (esSinMarca ? 'default' : 'warning')}
+            variant="outlined"
+            sx={{ fontSize: '0.68rem', height: 20, fontWeight: 700 }}
+          />
+        );
+      }
+    }
+  ], []);
+
+  const columnasTodasDeclaraciones = useMemo(() => [
+    {
+      id: 'folio',
+      label: 'Folio',
+      mono: true,
+      render: (d) => d.folio || `ID-${d.id}`
+    },
+    {
+      id: 'perfil',
+      label: 'Perfil',
+      render: (d) => <Chip label={d.perfil} size="small" sx={{ fontSize: '0.7rem', height: 20 }} />
+    },
+    {
+      id: 'fecha',
+      label: 'Fecha',
+      render: (d) => d.fecha ? new Date(d.fecha).toLocaleDateString('es-CL') : '—'
+    },
+    {
+      id: 'actor',
+      label: 'Actor / Declarante',
+      render: (d) => (
+        <Typography variant="body2" sx={{ fontSize: '0.78rem', fontWeight: 600 }}>
+          {d.actor} {d.rut ? `(${d.rut})` : ''}
+        </Typography>
+      )
+    },
+    {
+      id: 'especie',
+      label: 'Especie',
+      render: (d) => d.especie
+    },
+    {
+      id: 'caleta',
+      label: 'Caleta',
+      render: (d) => d.caleta || '—'
+    },
+    {
+      id: 'comuna',
+      label: 'Comuna',
+      render: (d) => d.comuna || '—'
+    },
+    {
+      id: 'provincia',
+      label: 'Provincia',
+      render: (d) => d.provincia || '—'
+    },
+    {
+      id: 'desembarqueKg',
+      label: 'Desembarque (kg)',
+      align: 'right',
+      render: (d) => (
+        <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 700 }}>
+          {Number(d.desembarqueKg || 0).toLocaleString('es-CL')} kg
+        </Typography>
+      )
+    },
+    {
+      id: 'estado',
+      label: 'Estado',
+      align: 'center',
+      render: (d) => d.esAtipico ? (
+        <Chip label="Atípico" size="small" color="warning" sx={{ fontSize: '0.7rem', height: 20, fontWeight: 700 }} />
+      ) : (
+        <Chip label="Normal" size="small" sx={{ fontSize: '0.7rem', height: 20, bgcolor: 'divider' }} />
+      )
+    }
+  ], []);
 
   const chartData = (metrics?.datosAgrupados || metrics?.porEspecie || []).slice(0, 8);
 
@@ -523,12 +712,22 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
 
               <Grid item xs={6} sm={3}>
                 <Box
+                  onClick={() => {
+                    setShowAtipicos(true);
+                    setFiltroRapidoAtipico('TODOS');
+                  }}
                   sx={{
                     p: 2,
                     borderRadius: 3,
                     bgcolor: (metrics?.declaracionesAtipicas || 0) > 0 ? 'rgba(245, 158, 11, 0.08)' : (t) => (t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'grey.50'),
                     border: 1,
                     borderColor: (metrics?.declaracionesAtipicas || 0) > 0 ? 'warning.main' : 'divider',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      boxShadow: 2,
+                      transform: 'translateY(-2px)'
+                    }
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -637,79 +836,78 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
               </Table>
             </TableContainer>
 
-            {/* Botón para expandir detalle de declaraciones individuales */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 'auto', pt: 1, borderTop: 1, borderColor: 'divider' }}>
+            {/* Botones para desplegables de auditoría (TD.3) */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto', pt: 1.5, borderTop: 1, borderColor: 'divider', flexWrap: 'wrap', gap: 1 }}>
+              <Button
+                size="small"
+                variant={showAtipicos ? 'outlined' : 'text'}
+                color="warning"
+                startIcon={<WarningIcon />}
+                endIcon={showAtipicos ? <UpIcon /> : <DownIcon />}
+                onClick={() => setShowAtipicos(!showAtipicos)}
+                sx={{ textTransform: 'none', fontFamily: 'Outfit', fontWeight: 700 }}
+              >
+                {showAtipicos
+                  ? 'Ocultar Hallazgos de Desembarque Atípico'
+                  : `Ver Hallazgos de Desembarque Atípico (${metrics?.declaracionesAtipicas || 0})`}
+              </Button>
+
               <Button
                 size="small"
                 endIcon={showDetalle ? <UpIcon /> : <DownIcon />}
                 onClick={handleToggleDetalle}
                 sx={{ textTransform: 'none', fontFamily: 'Outfit', fontWeight: 600, color: 'text.secondary' }}
               >
-                {showDetalle ? 'Ocultar Detalle de Declaraciones' : 'Ver Detalle de Declaraciones (Auditoría)'}
+                {showDetalle ? 'Ocultar Todas las Declaraciones' : 'Ver Todas las Declaraciones (Auditoría)'}
               </Button>
             </Box>
 
-            {/* Tabla desplegable de detalle individual */}
+            {/* 1. SECCIÓN DESPLEGABLE: Hallazgos de desembarque atípico (TD.1 · TD.2 · TD.3) */}
+            <Collapse in={showAtipicos} unmountOnExit={false}>
+              <Box sx={{ mt: 2, mb: 2, p: 2, borderRadius: 3, border: 1, borderColor: 'warning.light', bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.04)' : 'rgba(245, 158, 11, 0.02)' }}>
+                <TablaDetalleHallazgos
+                  titulo="Hallazgos de desembarque atípico"
+                  subtitulo="Desembarques que superan el umbral físico o desvían estadísticamente según normativa y fiscalización (TD.1 · TD.2 · TD.3)"
+                  columnas={columnasAtipicos}
+                  filtrosChip={chipsFiltrosAtipicos}
+                  fetcher={fetcherAtipicos}
+                  exportarNombre="hallazgos_desembarque_atipico"
+                  onFilaClick={(r) => {
+                    const tipo = r.tipo || r.perfil;
+                    const id = r.declaracionId;
+                    if (tipo && id) {
+                      navigate(`/consultas/${tipo.toLowerCase()}/${id}`);
+                    }
+                  }}
+                  vacio="No se registran desembarques atípicos para los filtros seleccionados."
+                  maxHeight={360}
+                  paginacion={true}
+                />
+              </Box>
+            </Collapse>
+
+            {/* 2. SECCIÓN DESPLEGABLE: Todas las declaraciones (con paginación y exportación) */}
             <Collapse in={showDetalle}>
-              <Box sx={{ mt: 2 }}>
-                {loadingDetalle ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                    <CircularProgress size={24} />
-                  </Box>
-                ) : (
-                  <TableContainer component={Paper} elevation={0} sx={{ border: 1, borderColor: 'divider', borderRadius: 3, maxHeight: 300 }}>
-                    <Table size="small" stickyHeader>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Folio</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Perfil</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Fecha</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Actor / Declarante</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Especie</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Caleta</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Comuna</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Provincia</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }} align="right">Desembarque (kg)</TableCell>
-                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }} align="center">Estado</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {detalle.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={10} align="center" sx={{ py: 3, color: 'text.secondary' }}>
-                              No hay declaraciones que coincidan con los filtros.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          detalle.map((d) => (
-                            <TableRow key={`${d.perfil}-${d.id}`} hover>
-                              <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{d.folio || `ID-${d.id}`}</TableCell>
-                              <TableCell><Chip label={d.perfil} size="small" sx={{ fontSize: '0.7rem', height: 20 }} /></TableCell>
-                              <TableCell sx={{ fontSize: '0.8rem' }}>{d.fecha ? new Date(d.fecha).toLocaleDateString('es-CL') : '—'}</TableCell>
-                              <TableCell sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
-                                {d.actor} {d.rut ? `(${d.rut})` : ''}
-                              </TableCell>
-                              <TableCell sx={{ fontSize: '0.8rem' }}>{d.especie}</TableCell>
-                              <TableCell sx={{ fontSize: '0.8rem' }}>{d.caleta || '—'}</TableCell>
-                              <TableCell sx={{ fontSize: '0.8rem' }}>{d.comuna || '—'}</TableCell>
-                              <TableCell sx={{ fontSize: '0.8rem' }}>{d.provincia || '—'}</TableCell>
-                              <TableCell sx={{ fontSize: '0.85rem', fontWeight: 700 }} align="right">
-                                {d.desembarqueKg?.toLocaleString('es-CL')}
-                              </TableCell>
-                              <TableCell align="center">
-                                {d.esAtipico ? (
-                                  <Chip label="Atípico" size="small" color="warning" sx={{ fontSize: '0.7rem', height: 20, fontWeight: 700 }} />
-                                ) : (
-                                  <Chip label="Normal" size="small" sx={{ fontSize: '0.7rem', height: 20, bgcolor: 'divider' }} />
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
+              <Box sx={{ mt: 2, p: 2, borderRadius: 3, border: 1, borderColor: 'divider', bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'grey.50' }}>
+                <TablaDetalleHallazgos
+                  titulo="Todas las declaraciones"
+                  subtitulo="Auditoría general de desembarques individuales registrados en el período"
+                  columnas={columnasTodasDeclaraciones}
+                  data={detalle}
+                  loading={loadingDetalle}
+                  paginacion={true}
+                  initialPageSize={20}
+                  exportarNombre="todas_las_declaraciones_desembarque"
+                  onFilaClick={(d) => {
+                    const tipo = d.perfil;
+                    const id = d.id;
+                    if (tipo && id) {
+                      navigate(`/consultas/${tipo.toLowerCase()}/${id}`);
+                    }
+                  }}
+                  vacio="No hay declaraciones que coincidan con los filtros seleccionados."
+                  maxHeight={360}
+                />
               </Box>
             </Collapse>
           </>

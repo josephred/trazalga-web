@@ -150,3 +150,53 @@ export const getOrigenGeo = async (filters) => {
   return response.data;
 };
 
+/**
+ * Obtiene el listado paginado y auditable de hallazgos de desembarque atípico (TD.1).
+ */
+export const getDesembarqueAtipicos = async (filters = {}) => {
+  const params = formatParams(filters);
+  if (filters.fuente) params.fuente = filters.fuente;
+  if (filters.estadoGestion) params.estadoGestion = filters.estadoGestion;
+  if (filters.criterioTipo) params.criterioTipo = filters.criterioTipo;
+  if (filters.page !== undefined) params.page = filters.page;
+  if (filters.size !== undefined) params.size = filters.size;
+
+  const response = await api.get('/reportes/desembarque-fisico/atipicos', {
+    params,
+    signal: filters.signal
+  });
+  return response.data;
+};
+
+/**
+ * Obtiene el listado paginado y auditable de sobrepasos de cuotas (TQ.1).
+ */
+export const getCuotasSobrepasos = async (filters = {}) => {
+  const params = formatParams(filters);
+  if (filters.cuotaId) params.cuotaId = filters.cuotaId;
+  if (filters.extraccionTipoId) params.extraccionTipoId = filters.extraccionTipoId;
+  if (filters.marcas) params.marcas = Array.isArray(filters.marcas) ? filters.marcas.join(',') : filters.marcas;
+  if (filters.estadoGestion) params.estadoGestion = filters.estadoGestion;
+  if (filters.resuelta !== undefined) params.resuelta = filters.resuelta;
+  if (filters.page !== undefined) params.page = filters.page;
+  if (filters.size !== undefined) params.size = filters.size;
+
+  const response = await api.get('/reportes/cuotas/sobrepasos', {
+    params,
+    signal: filters.signal
+  });
+  return response.data;
+};
+
+/**
+ * Obtiene el desglose individual por persona para una cuota específica (TM.2 / TQ.1).
+ */
+export const getCuotaPersonas = async (cuotaId, soloSobreLimite = false, options = {}) => {
+  const response = await api.get(`/reportes/cuotas/${cuotaId}/personas`, {
+    params: { soloSobreLimite },
+    signal: options?.signal
+  });
+  return response.data;
+};
+
+
