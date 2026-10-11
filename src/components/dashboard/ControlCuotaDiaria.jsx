@@ -17,18 +17,28 @@ import {
   Button,
   Tooltip,
   Collapse,
-  Alert
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
+  Grid
 } from '@mui/material';
 import {
   KeyboardArrowDown as DownIcon,
   KeyboardArrowUp as UpIcon,
   WarningAmber as WarningIcon,
   Person as PersonIcon,
-  CheckCircleOutline as CheckIcon
+  CheckCircleOutline as CheckIcon,
+  Autorenew as AutorenewIcon
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 import { getCuotasSobrepasos, getCuotaPersonas } from '../../services/reportesService';
 import TablaDetalleHallazgos from './comun/TablaDetalleHallazgos';
+import { getPerfil } from '../../auth/sesion';
+import { puedeHacer } from '../../auth/perfiles';
+import { cuotaService } from '../../services/cuotaService';
 
 export default function ControlCuotaDiaria({ dateRange }) {
   const navigate = useNavigate();
@@ -57,6 +67,15 @@ export default function ControlCuotaDiaria({ dateRange }) {
 
   // TC.8: Parámetro de imputación territorial de armadores
   const [imputacionArmador, setImputacionArmador] = useState('INSCRIPCION');
+
+  // Control de permisos y estado de recálculo (TC.10 / TQ.3)
+  const perfil = getPerfil();
+  const puedeRecalcular = puedeHacer(perfil, 'EJECUTAR_RECALCULO');
+  const [recalculoModalOpen, setRecalculoModalOpen] = useState(false);
+  const [cuotaPorRecalcular, setCuotaPorRecalcular] = useState(null);
+  const [recalculando, setRecalculando] = useState(false);
+  const [resultadoRecalculo, setResultadoRecalculo] = useState(null);
+  const [recalculoError, setRecalculoError] = useState(null);
 
   // Cargar configuración general para nota territorial (TC.8)
   useEffect(() => {
@@ -96,35 +115,66 @@ export default function ControlCuotaDiaria({ dateRange }) {
   }, []);
 
   // Cargar cuotas de áreas libres según filtros
-  useEffect(() => {
-    const fetchCuotas = async () => {
-      try {
-        setLoading(true);
-        const params = new URLSearchParams();
-        if (dateRange && dateRange.startDate && dateRange.endDate) {
-          params.append('startDate', dateRange.startDate);
-          params.append('endDate', dateRange.endDate);
-        }
-        if (comunaId) {
-          params.append('comunaId', comunaId);
-        }
-        if (extraccionTipoId) {
-          params.append('extraccionTipoId', extraccionTipoId);
-        }
-        
-        const response = await api.get(`/cuotas/dashboard-diario?${params.toString()}`);
-        setCuotas(response.data || []);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching cuotas:', err);
-        setError(err.message || 'Error desconocido al cargar cuotas');
-      } finally {
-        setLoading(false);
+  const fetchCuotas = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (dateRange && dateRange.startDate && dateRange.endDate) {
+        params.append('startDate', dateRange.startDate);
+        params.append('endDate', dateRange.endDate);
       }
-    };
-
-    fetchCuotas();
+      if (comunaId) {
+        params.append('comunaId', comunaId);
+      }
+      if (extraccionTipoId) {
+        params.append('extraccionTipoId', extraccionTipoId);
+      }
+      
+      const response = await api.get(`/cuotas/dashboard-diario?${params.toString()}`);
+      setCuotas(response.data || []);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching cuotas:', err);
+      setError(err.message || 'Error desconocido al cargar cuotas');
+    } finally {
+      setLoading(false);
+    }
   }, [dateRange, comunaId, extraccionTipoId]);
+
+  useEffect(() => {
+    fetchCuotas();
+  }, [fetchCuotas]);
+
+  const handleAbrirRecalculo = (cuota) => {
+    setCuotaPorRecalcular(cuota);
+    setResultadoRecalculo(null);
+    setRecalculoError(null);
+    setRecalculoModalOpen(true);
+  };
+
+  const handleCerrarRecalculo = () => {
+    if (recalculando) return;
+    setRecalculoModalOpen(false);
+    setCuotaPorRecalcular(null);
+    setResultadoRecalculo(null);
+    setRecalculoError(null);
+  };
+
+  const handleEjecutarRecalculo = async () => {
+    if (!cuotaPorRecalcular) return;
+    setRecalculando(true);
+    setRecalculoError(null);
+    try {
+      const res = await cuotaService.recalcularHallazgos(cuotaPorRecalcular.cuotaId);
+      setResultadoRecalculo(res);
+      fetchCuotas();
+    } catch (err) {
+      console.error('Error al recalcular hallazgos de cuota:', err);
+      setRecalculoError(err.response?.data?.message || err.message || 'Error al ejecutar el recálculo.');
+    } finally {
+      setRecalculando(false);
+    }
+  };
 
   // Sincronizar cuotaPersonasId con selección o primera cuota disponible
   useEffect(() => {
@@ -813,6 +863,56 @@ export default function ControlCuotaDiaria({ dateRange }) {
                     }
                   }}
                 />
+
+                {/* Aviso TQ.3: Declaraciones del período sin evaluar */}
+                {cuota.declaracionesPreviasSinEvaluar != null && cuota.declaracionesPreviasSinEvaluar > 0 && (
+                  <Box
+                    onClick={(e) => e.stopPropagation()}
+                    sx={{
+                      mt: 1.5,
+                      p: 1.2,
+                      borderRadius: 2,
+                      bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb',
+                      border: 1,
+                      borderColor: 'warning.light',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 1.5,
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <WarningIcon color="warning" sx={{ fontSize: 18 }} />
+                      <Typography variant="caption" sx={{ fontFamily: 'Inter', color: 'warning.dark', fontWeight: 600 }}>
+                        <strong>{cuota.declaracionesPreviasSinEvaluar}</strong> {cuota.declaracionesPreviasSinEvaluar === 1 ? 'declaración' : 'declaraciones'} del período {cuota.declaracionesPreviasSinEvaluar === 1 ? 'anterior' : 'anteriores'} a la carga de esta cuota no {cuota.declaracionesPreviasSinEvaluar === 1 ? 'fue evaluada' : 'fueron evaluadas'}.
+                      </Typography>
+                    </Box>
+                    {puedeRecalcular && (
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="warning"
+                        startIcon={<AutorenewIcon />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAbrirRecalculo(cuota);
+                        }}
+                        sx={{
+                          textTransform: 'none',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          py: 0.3,
+                          px: 1.2,
+                          borderRadius: 2,
+                          boxShadow: 0
+                        }}
+                      >
+                        Recalcular hallazgos
+                      </Button>
+                    )}
+                  </Box>
+                )}
               </Box>
             );
           })
@@ -934,6 +1034,125 @@ export default function ControlCuotaDiaria({ dateRange }) {
           </Box>
         </Collapse>
       </CardContent>
+
+      {/* Modal Diálogo de Recálculo de Hallazgos (TC.10 / TQ.3) */}
+      <Dialog
+        open={recalculoModalOpen}
+        onClose={handleCerrarRecalculo}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontFamily: 'Outfit', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AutorenewIcon color="warning" />
+          Recalcular Hallazgos de Cuota #{cuotaPorRecalcular?.cuotaId}
+        </DialogTitle>
+        <DialogContent>
+          {cuotaPorRecalcular && (
+            <Box sx={{ mb: 2, p: 1.5, borderRadius: 2, bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'grey.50', border: 1, borderColor: 'divider' }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+                {cuotaPorRecalcular.especieNombre} — {cuotaPorRecalcular.alcance || cuotaPorRecalcular.comunasNombre || cuotaPorRecalcular.comunaNombre || 'Cuota'}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                Método: {cuotaPorRecalcular.extraccionTipoNombre || 'Todos'} · Vigencia: {cuotaPorRecalcular.vigenciaFormateada || cuotaPorRecalcular.periodo || '—'}
+              </Typography>
+            </Box>
+          )}
+
+          {recalculoError && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+              {recalculoError}
+            </Alert>
+          )}
+
+          {!resultadoRecalculo ? (
+            <DialogContentText sx={{ fontFamily: 'Inter', fontSize: '0.88rem', color: 'text.primary', lineHeight: 1.6 }}>
+              Esta operación recorre cronológicamente todas las declaraciones aplicables dentro de la vigencia de la cuota.
+              Reconstruirá el consumo acumulado secuencialmente y registrará las marcas correspondientes que falten (<code>CUOTA_EXCEDIDA</code>, <code>POSTERIOR_CIERRE</code> o <code>DECLARACION_EXTEMPORANEA</code>) con origen <strong>RECALCULO</strong>.
+              <br /><br />
+              <strong>Garantía de idempotencia:</strong> Las marcas existentes no se borrarán ni se duplicarán. Se registrará un evento de auditoría oficial <code>RECALCULADA</code>.
+            </DialogContentText>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Alert severity="success" sx={{ borderRadius: 2 }}>
+                Recálculo completado exitosamente para la cuota #{resultadoRecalculo.cuotaId}.
+              </Alert>
+
+              <Box sx={{ p: 2, borderRadius: 2, border: 1, borderColor: 'divider', bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.08)' : '#f0fdf4' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit', mb: 1, color: 'success.dark' }}>
+                  Resumen de Auditoría
+                </Typography>
+                <Grid container spacing={1.5}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Declaraciones Evaluadas</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{resultadoRecalculo.declaracionesEvaluadas}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Marcas Nuevas Creadas</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: resultadoRecalculo.marcasNuevas > 0 ? 'warning.main' : 'text.primary' }}>
+                      {resultadoRecalculo.marcasNuevas}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Marcas Preexistentes</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{resultadoRecalculo.marcasExistentes}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Consumo Reconstruido</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      {resultadoRecalculo.consumoFinalKg?.toLocaleString('es-CL')} kg ({resultadoRecalculo.porcentajeFinalUso}%)
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {Array.isArray(resultadoRecalculo.marcasNuevasDetalle) && resultadoRecalculo.marcasNuevasDetalle.length > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', display: 'block', mb: 0.5 }}>
+                    Detalle de Marcas Nuevas Generadas ({resultadoRecalculo.marcasNuevasDetalle.length}):
+                  </Typography>
+                  <Box sx={{ maxHeight: 150, overflowY: 'auto', p: 1, border: 1, borderColor: 'divider', borderRadius: 2 }}>
+                    {resultadoRecalculo.marcasNuevasDetalle.map((m, idx) => (
+                      <Box key={idx} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 0.3, borderBottom: '1px dashed', borderColor: 'divider', fontSize: '0.75rem' }}>
+                        <span><strong>{m.marca}</strong> ({m.tipoDeclaracion} #{m.declaracionId})</span>
+                        <span style={{ color: '#64748b' }}>{m.motivo || m.observacion || ''}</span>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          {!resultadoRecalculo ? (
+            <>
+              <Button onClick={handleCerrarRecalculo} disabled={recalculando} sx={{ textTransform: 'none', fontFamily: 'Inter' }}>
+                Cancelar
+              </Button>
+              <Button
+                variant="contained"
+                color="warning"
+                onClick={handleEjecutarRecalculo}
+                disabled={recalculando}
+                startIcon={recalculando ? <CircularProgress size={18} color="inherit" /> : <AutorenewIcon />}
+                sx={{ textTransform: 'none', fontFamily: 'Outfit', fontWeight: 700, borderRadius: 2 }}
+              >
+                {recalculando ? 'Recalculando…' : 'Ejecutar Recálculo'}
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleCerrarRecalculo}
+              sx={{ textTransform: 'none', fontFamily: 'Outfit', fontWeight: 700, borderRadius: 2 }}
+            >
+              Cerrar
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 }
