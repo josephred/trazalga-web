@@ -48,6 +48,7 @@ import {
   AutoAwesome as AutoAwesomeIcon,
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
+import CuotaForm from './cuotas/CuotaForm';
 
 const MESES = [
   { id: 1, nombre: 'Enero' },
@@ -109,6 +110,7 @@ export default function CuotasExtraccionMaestro() {
   const [cuotas, setCuotas] = useState([]);
   const [maestros, setMaestros] = useState({
     regiones: [],
+    provincias: [],
     comunas: [],
     especies: [],
     extraccionTipos: [],
@@ -120,6 +122,7 @@ export default function CuotasExtraccionMaestro() {
   // Filtros de listado
   const [filtroAnio, setFiltroAnio] = useState(ANIO_ACTUAL);
   const [filtroMes, setFiltroMes] = useState('');
+  const [filtroNivel, setFiltroNivel] = useState('');
   const [filtroComuna, setFiltroComuna] = useState('');
   const [filtroMetodo, setFiltroMetodo] = useState('');
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -194,7 +197,11 @@ export default function CuotasExtraccionMaestro() {
     const fechas = calcFechasMes(ANIO_ACTUAL, MES_ACTUAL);
     setForm({
       ...FORM_VACIO,
+      nivelAgregacion: 'COMUNA',
       region: maestros.regiones?.[0] || null,
+      provincia: null,
+      usuario: null,
+      esPlantilla: false,
       comunas: [],
       especie: maestros.especies?.[0] || null,
       extraccionTipo: maestros.extraccionTipos?.[0] || null,
@@ -239,17 +246,27 @@ export default function CuotasExtraccionMaestro() {
     const cIds = c.comunaIds ? Array.from(c.comunaIds) : (c.comunaId ? [c.comunaId] : []);
     const comunasSel = (maestros.comunas || []).filter((cm) => cIds.includes(cm.id));
 
+    // Resolver provincia
+    const provSel = (maestros.provincias || []).find((p) => p.id === c.provinciaId) || null;
+
     // Resolver región
     const regSel = (maestros.regiones || []).find((r) => r.id === c.regionId) ||
+      (provSel?.region ? (maestros.regiones || []).find((r) => r.id === provSel.region.id) : null) ||
       (comunasSel.length > 0 && comunasSel[0].regionId
         ? (maestros.regiones || []).find((r) => r.id === comunasSel[0].regionId)
         : null);
 
+    // Resolver usuario si es cuota individual de persona específica
+    const usuSel = c.usuarioId ? { id: c.usuarioId, rut: c.usuarioRut, nombres: c.usuarioNombre } : null;
+
     setForm({
       id: c.id,
       ambito: 'AREA_LIBRE',
-      nivelAgregacion: c.nivelAgregacion === 'REGION' ? 'REGION' : 'COMUNA',
+      nivelAgregacion: c.nivelAgregacion || 'COMUNA',
       region: regSel || maestros.regiones?.[0] || null,
+      provincia: provSel,
+      usuario: usuSel,
+      esPlantilla: Boolean(c.esPlantilla),
       comunas: comunasSel,
       especie: (maestros.especies || []).find((e) => e.id === c.especieId) || null,
       extraccionTipo: (maestros.extraccionTipos || []).find((et) => et.id === c.extraccionTipoId) || null,
@@ -573,9 +590,13 @@ export default function CuotasExtraccionMaestro() {
   };
 
   const cuotasFiltradas = useMemo(() => {
+    let filtradas = cuotas;
+    if (filtroNivel) {
+      filtradas = filtradas.filter((c) => (c.nivelAgregacion || 'COMUNA').toUpperCase() === filtroNivel.toUpperCase());
+    }
     const txt = filtroTexto.trim().toLowerCase();
-    if (!txt) return cuotas;
-    return cuotas.filter((c) => {
+    if (!txt) return filtradas;
+    return filtradas.filter((c) => {
       const blob = [
         c.alcance,
         c.especieNombre,
@@ -589,7 +610,7 @@ export default function CuotasExtraccionMaestro() {
         .toLowerCase();
       return blob.includes(txt);
     });
-  }, [cuotas, filtroTexto]);
+  }, [cuotas, filtroNivel, filtroTexto]);
 
   return (
     <Box>
@@ -611,13 +632,13 @@ export default function CuotasExtraccionMaestro() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
             <ScaleIcon color="secondary" />
             <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
-              Cuotas Comunales Mensuales de Áreas Libres (Recolectores y Armadores)
+              Cuotas de Extracción de Áreas Libres y Asignación Individual
             </Typography>
           </Box>
           <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', lineHeight: 1.6 }}>
-            Límites mensuales decretados por Subpesca para áreas libres. El consumo acumula conjuntamente
-            a <strong>recolectores de orilla</strong> (imputados por comuna de residencia) y <strong>armadores artesanales</strong> (imputados por caleta de desembarque).
-            El motor descuenta en <strong>captura biológica corregida</strong> (o desembarque con resolución) y evalúa alertas o bloqueos concurrentemente.
+            Motor de cuotas multiescala decretadas por Subpesca: <strong>Comunales</strong>, <strong>Provinciales</strong>, <strong>Regionales</strong> e <strong>Individuales</strong> (personal o plantilla con tope general).
+            El consumo unifica a recolectores de orilla (por inscripción o desembarque K15) y armadores artesanales según regla D1.
+            Descuento en <strong>captura biológica corregida</strong> (o desembarque con resolución).
           </Typography>
         </CardContent>
       </Card>
@@ -663,6 +684,22 @@ export default function CuotasExtraccionMaestro() {
                 {m.nombre}
               </MenuItem>
             ))}
+          </TextField>
+
+          {/* Filtro Nivel de Agregación */}
+          <TextField
+            select
+            size="small"
+            label="Nivel"
+            value={filtroNivel}
+            onChange={(e) => setFiltroNivel(e.target.value)}
+            sx={{ width: 140 }}
+          >
+            <MenuItem value="">Todos los niveles</MenuItem>
+            <MenuItem value="COMUNA">Comunal</MenuItem>
+            <MenuItem value="PROVINCIA">Provincial</MenuItem>
+            <MenuItem value="REGION">Regional</MenuItem>
+            <MenuItem value="INDIVIDUAL">Individual</MenuItem>
           </TextField>
 
           {/* Filtro Comuna */}
@@ -814,9 +851,25 @@ export default function CuotasExtraccionMaestro() {
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
                           <Chip
-                            label={c.nivelAgregacion || 'COMUNA'}
+                            label={
+                              c.nivelAgregacion === 'INDIVIDUAL'
+                                ? (c.esPlantilla ? 'Plantilla (Tope)' : 'Individual')
+                                : c.nivelAgregacion === 'PROVINCIA'
+                                ? 'Provincial'
+                                : c.nivelAgregacion === 'REGION'
+                                ? 'Regional'
+                                : 'Comunal'
+                            }
                             size="small"
-                            color={c.nivelAgregacion === 'REGION' ? 'secondary' : 'primary'}
+                            color={
+                              c.nivelAgregacion === 'INDIVIDUAL'
+                                ? (c.esPlantilla ? 'info' : 'warning')
+                                : c.nivelAgregacion === 'PROVINCIA'
+                                ? 'secondary'
+                                : c.nivelAgregacion === 'REGION'
+                                ? 'info'
+                                : 'primary'
+                            }
                             variant="outlined"
                             sx={{ fontWeight: 700, fontSize: '0.7rem' }}
                           />
@@ -844,6 +897,11 @@ export default function CuotasExtraccionMaestro() {
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {c.alcance || c.comunasNombre || c.regionNombre || `Cuota #${c.id}`}
                         </Typography>
+                        {c.usuarioNombre && (
+                          <Typography variant="caption" sx={{ color: 'warning.main', fontWeight: 600, display: 'block' }}>
+                            Titular: {c.usuarioNombre} {c.usuarioRut ? `(${c.usuarioRut})` : ''}
+                          </Typography>
+                        )}
                         {c.resolucion && (
                           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                             {c.resolucion}
@@ -898,27 +956,56 @@ export default function CuotasExtraccionMaestro() {
 
                       {/* Consumo en Vivo */}
                       <TableCell>
-                        <Box sx={{ width: '100%', maxWidth: 220 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                              {fmtKg(c.consumoAcumulado)} ({pctConsumido}%)
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                fontWeight: 700,
-                                color: pctConsumido >= 100 ? 'error.main' : pctConsumido >= 80 ? 'warning.main' : 'success.main',
-                              }}
-                            >
-                              {fmtKg(c.saldoDisponible)} disp.
-                            </Typography>
-                          </Box>
-                          <LinearProgress
-                            variant="determinate"
-                            value={Math.min(100, pctConsumido || 0)}
-                            color={pctConsumido >= 100 ? 'error' : pctConsumido >= 80 ? 'warning' : 'primary'}
-                            sx={{ height: 6, borderRadius: 3 }}
-                          />
+                        <Box sx={{ width: '100%', maxWidth: 230 }}>
+                          {c.esPlantilla ? (
+                            <>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', display: 'block', mb: 0.3 }}>
+                                {c.textoConsumoPlantilla || `${fmtKg(c.consumoAcumulado)} acumulado`}
+                              </Typography>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                  Total: {fmtKg(c.consumoAcumulado)}
+                                </Typography>
+                                {c.personasSobreLimite > 0 && (
+                                  <Chip
+                                    label={`${c.personasSobreLimite} sobre tope`}
+                                    size="small"
+                                    color="error"
+                                    sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700 }}
+                                  />
+                                )}
+                              </Box>
+                              <LinearProgress
+                                variant="determinate"
+                                value={Math.min(100, pctConsumido || 0)}
+                                color={pctConsumido >= 100 ? 'error' : pctConsumido >= 80 ? 'warning' : 'info'}
+                                sx={{ height: 6, borderRadius: 3 }}
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                  {fmtKg(c.consumoAcumulado)} ({pctConsumido}%)
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: pctConsumido >= 100 ? 'error.main' : pctConsumido >= 80 ? 'warning.main' : 'success.main',
+                                  }}
+                                >
+                                  {fmtKg(c.saldoDisponible)} disp.
+                                </Typography>
+                              </Box>
+                              <LinearProgress
+                                variant="determinate"
+                                value={Math.min(100, pctConsumido || 0)}
+                                color={pctConsumido >= 100 ? 'error' : pctConsumido >= 80 ? 'warning' : 'primary'}
+                                sx={{ height: 6, borderRadius: 3 }}
+                              />
+                            </>
+                          )}
                         </Box>
                       </TableCell>
 

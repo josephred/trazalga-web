@@ -360,10 +360,10 @@ export default function ParametrosGeneralesMaestro() {
               <TextField
                 select
                 fullWidth
-                label="Acción ante Exceso de Límite"
+                label="Acción ante Exceso de Límite [DEPRECADO]"
                 value={configs['cuota_accion_exceso_limite'] || 'ALERTA_EXCESO'}
                 onChange={(e) => handleValorChange('cuota_accion_exceso_limite', e.target.value)}
-                helperText="ALERTA_EXCESO marca y notifica; BLOQUEO_DECLARACION rechaza con 422."
+                helperText="[DEPRECADO] Cada cuota define su propio modo de acción (SOLO_ALERTA o BLOQUEO_DECLARACION)."
               >
                 <MenuItem value="ALERTA_EXCESO">ALERTA_EXCESO (Marca y notifica)</MenuItem>
                 <MenuItem value="BLOQUEO_DECLARACION">BLOQUEO_DECLARACION (Rechaza 422)</MenuItem>

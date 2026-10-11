@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -32,6 +32,7 @@ import {
   LocalShipping as LocalShippingIcon
 } from '@mui/icons-material';
 import { getRetencionBodega } from '../../services/reportesService';
+import TablaDetalleHallazgos from './comun/TablaDetalleHallazgos';
 
 export default function RetencionBodegaWidget({ dateRange }) {
   const theme = useTheme();
@@ -130,6 +131,149 @@ export default function RetencionBodegaWidget({ dateRange }) {
 
     return true;
   });
+
+  const lotesConRowSx = useMemo(() => {
+    return lotesFiltrados.map((row) => ({
+      ...row,
+      rowSx: {
+        bgcolor: row.semaforo === 'ROJO' ? 'rgba(239, 68, 68, 0.02)' : 'inherit'
+      }
+    }));
+  }, [lotesFiltrados]);
+
+  const columnasRetencion = useMemo(() => [
+    {
+      id: 'folio',
+      label: 'Folio',
+      mono: true,
+      render: (row) => row.folio
+    },
+    {
+      id: 'especie',
+      label: 'Especie',
+      render: (row) => (
+        <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.82rem' }}>
+          {row.especie}
+        </Typography>
+      )
+    },
+    {
+      id: 'kg',
+      label: 'Kg',
+      align: 'right',
+      render: (row) => (
+        <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.82rem', fontWeight: 700 }}>
+          {row.kg?.toLocaleString('es-CL')}
+        </Typography>
+      )
+    },
+    {
+      id: 'estadoDeclarado',
+      label: 'Estado Declarado',
+      render: (row) => (
+        <Chip
+          label={row.estadoDeclarado}
+          size="small"
+          sx={{ fontSize: '0.68rem', height: 20, fontWeight: 700 }}
+        />
+      )
+    },
+    {
+      id: 'tramoReal',
+      label: 'Tramo Real',
+      render: (row) => (
+        <Tooltip title={row.inconsistenciaHumedad ? `Inconsistencia biológica: declarado como ${row.estadoDeclarado}, pero por tiempo transcurrido (${row.horasTranscurridas} h) ya corresponde a ${row.tramoReal}.` : 'Consistente'}>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: row.inconsistenciaHumedad ? 800 : 500,
+                color: row.inconsistenciaHumedad ? 'error.main' : 'text.primary',
+                fontSize: '0.75rem'
+              }}
+            >
+              {row.tramoReal}
+            </Typography>
+            {row.inconsistenciaHumedad && (
+              <WarningIcon sx={{ fontSize: 13, color: 'error.main' }} />
+            )}
+          </Box>
+        </Tooltip>
+      )
+    },
+    {
+      id: 'horasTranscurridas',
+      label: 'Horas Transcurridas',
+      align: 'center',
+      render: (row) => {
+        const esRojo = row.semaforo === 'ROJO';
+        return (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Typography variant="body2" sx={{ fontWeight: 800, fontSize: '0.8rem', color: esRojo ? 'error.main' : 'text.primary' }}>
+              {row.horasTranscurridas} h
+            </Typography>
+            <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.secondary' }}>
+              {(row.horasTranscurridas / 24).toFixed(1)} días
+            </Typography>
+          </Box>
+        );
+      }
+    },
+    {
+      id: 'plazoMaxHoras',
+      label: 'Plazo Máx.',
+      align: 'center',
+      render: (row) => (
+        <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.8rem', color: 'text.secondary' }}>
+          {row.plazoMaxHoras !== null && row.plazoMaxHoras !== undefined ? `${row.plazoMaxHoras} h` : 'Sin límite'}
+        </Typography>
+      )
+    },
+    {
+      id: 'enBodega',
+      label: 'Ubicación / Destino',
+      align: 'center',
+      render: (row) => row.enBodega ? (
+        <Chip
+          icon={<StoreIcon sx={{ fontSize: 12 }} />}
+          label="En Bodega Virtual"
+          size="small"
+          color="warning"
+          variant="outlined"
+          sx={{ fontSize: '0.68rem', height: 20, fontWeight: 700 }}
+        />
+      ) : (
+        <Chip
+          icon={<LocalShippingIcon sx={{ fontSize: 12 }} />}
+          label="Despachado a Planta"
+          size="small"
+          color="success"
+          variant="outlined"
+          sx={{ fontSize: '0.68rem', height: 20, fontWeight: 600 }}
+        />
+      )
+    },
+    {
+      id: 'semaforo',
+      label: 'Semáforo',
+      align: 'center',
+      render: (row) => (
+        <Chip
+          icon={<CircleIcon sx={{ fontSize: '10px !important', color: `${getSemaforoColor(row.semaforo)} !important` }} />}
+          label={row.semaforo}
+          size="small"
+          sx={{
+            fontSize: '0.68rem',
+            height: 20,
+            fontWeight: 800,
+            bgcolor: `${getSemaforoColor(row.semaforo)}15`,
+            color: getSemaforoColor(row.semaforo),
+            border: `1px solid ${getSemaforoColor(row.semaforo)}40`
+          }}
+        />
+      )
+    }
+  ], [theme]);
 
   return (
     <Card
@@ -520,126 +664,15 @@ export default function RetencionBodegaWidget({ dateRange }) {
                   </Box>
                 </Box>
 
-                {/* 3. TABLA DE LOTES EVALUADOS */}
-                <TableContainer component={Paper} elevation={0} sx={{ border: 1, borderColor: 'divider', borderRadius: 3, maxHeight: 300 }}>
-                  <Table size="small" stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Folio</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Especie</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Estado Declarado</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Tramo Real</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Horas Transcurridas</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Plazo Máx.</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Ubicación / Destino</TableCell>
-                        <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="center">Semáforo</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {lotesFiltrados.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={9} align="center" sx={{ py: 3, color: 'text.secondary', fontFamily: 'Inter' }}>
-                            No hay lotes que coincidan con los filtros seleccionados.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        lotesFiltrados.map((row, idx) => {
-                          const esRojo = row.semaforo === 'ROJO';
-                          const esAmarillo = row.semaforo === 'AMARILLO';
-                          return (
-                            <TableRow key={idx} hover sx={{ bgcolor: esRojo ? 'rgba(239, 68, 68, 0.02)' : 'inherit' }}>
-                              <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8rem', fontWeight: 700 }}>
-                                {row.folio}
-                              </TableCell>
-                              <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem' }}>
-                                {row.especie}
-                              </TableCell>
-                              <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.82rem', fontWeight: 700 }} align="right">
-                                {row.kg?.toLocaleString('es-CL')}
-                              </TableCell>
-                              <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.8rem', fontWeight: 600 }}>
-                                <Chip
-                                  label={row.estadoDeclarado}
-                                  size="small"
-                                  sx={{ fontSize: '0.68rem', height: 20, fontWeight: 700 }}
-                                />
-                              </TableCell>
-                              <TableCell sx={{ fontFamily: 'Inter', fontSize: '0.8rem' }}>
-                                <Tooltip title={row.inconsistenciaHumedad ? `Inconsistencia biológica: declarado como ${row.estadoDeclarado}, pero por tiempo transcurrido (${row.horasTranscurridas} h) ya corresponde a ${row.tramoReal}.` : 'Consistente'}>
-                                  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                                    <Typography
-                                      variant="caption"
-                                      sx={{
-                                        fontWeight: row.inconsistenciaHumedad ? 800 : 500,
-                                        color: row.inconsistenciaHumedad ? 'error.main' : 'text.primary',
-                                        fontSize: '0.75rem'
-                                      }}
-                                    >
-                                      {row.tramoReal}
-                                    </Typography>
-                                    {row.inconsistenciaHumedad && (
-                                      <WarningIcon sx={{ fontSize: 13, color: 'error.main' }} />
-                                    )}
-                                  </Box>
-                                </Tooltip>
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontFamily: 'Inter', fontSize: '0.8rem', fontWeight: 700 }}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 800, fontSize: '0.8rem', color: esRojo ? 'error.main' : 'text.primary' }}>
-                                    {row.horasTranscurridas} h
-                                  </Typography>
-                                  <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.secondary' }}>
-                                    {(row.horasTranscurridas / 24).toFixed(1)} días
-                                  </Typography>
-                                </Box>
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontFamily: 'Inter', fontSize: '0.8rem', color: 'text.secondary' }}>
-                                {row.plazoMaxHoras !== null && row.plazoMaxHoras !== undefined ? `${row.plazoMaxHoras} h` : 'Sin límite'}
-                              </TableCell>
-                              <TableCell align="center">
-                                {row.enBodega ? (
-                                  <Chip
-                                    icon={<StoreIcon sx={{ fontSize: 12 }} />}
-                                    label="En Bodega Virtual"
-                                    size="small"
-                                    color="warning"
-                                    variant="outlined"
-                                    sx={{ fontSize: '0.68rem', height: 20, fontWeight: 700 }}
-                                  />
-                                ) : (
-                                  <Chip
-                                    icon={<LocalShippingIcon sx={{ fontSize: 12 }} />}
-                                    label="Despachado a Planta"
-                                    size="small"
-                                    color="success"
-                                    variant="outlined"
-                                    sx={{ fontSize: '0.68rem', height: 20, fontWeight: 600 }}
-                                  />
-                                )}
-                              </TableCell>
-                              <TableCell align="center">
-                                <Chip
-                                  icon={<CircleIcon sx={{ fontSize: '10px !important', color: `${getSemaforoColor(row.semaforo)} !important` }} />}
-                                  label={row.semaforo}
-                                  size="small"
-                                  sx={{
-                                    fontSize: '0.68rem',
-                                    height: 20,
-                                    fontWeight: 800,
-                                    bgcolor: `${getSemaforoColor(row.semaforo)}15`,
-                                    color: getSemaforoColor(row.semaforo),
-                                    border: `1px solid ${getSemaforoColor(row.semaforo)}40`
-                                  }}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                {/* 3. TABLA DE LOTES EVALUADOS (TA.4) */}
+                <TablaDetalleHallazgos
+                  columnas={columnasRetencion}
+                  data={lotesConRowSx}
+                  exportarNombre="lotes_retencion_bodega"
+                  maxHeight={300}
+                  paginacion={false}
+                  vacio="No hay lotes que coincidan con los filtros seleccionados."
+                />
               </>
             )}
           </Box>

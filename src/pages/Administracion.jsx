@@ -44,9 +44,11 @@ import {
   Search as SearchIcon,
   Clear as ClearIcon,
   ChevronRight as ChevronRightIcon,
-  GridView as GridViewIcon
+  GridView as GridViewIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import api from '../api/axiosConfig';
+import { getTareasProgramadas } from '../services/adminService';
 import MapaTrayectoUsuario from '../components/dashboard/MapaTrayectoUsuario';
 import CuotasExtraccionMaestro from '../components/admin/CuotasExtraccionMaestro';
 import VedasEspecieMaestro from '../components/admin/VedasEspecieMaestro';
@@ -400,10 +402,31 @@ export default function Administracion() {
   const [trackingInterval, setTrackingInterval] = useState(5);
   const [loadingTracking, setLoadingTracking] = useState(true);
 
+  // Estados para tareas programadas (TA.6)
+  const [tareasProgramadas, setTareasProgramadas] = useState([]);
+  const [loadingTareas, setLoadingTareas] = useState(false);
+
+  const tieneFalloTareas = useMemo(() => {
+    return Array.isArray(tareasProgramadas) && tareasProgramadas.some((t) => t.estado === 'ERROR');
+  }, [tareasProgramadas]);
+
   useEffect(() => {
     fetchConfiguraciones();
     fetchGeneralConfigs();
+    fetchTareasProgramadas();
   }, []);
+
+  const fetchTareasProgramadas = async () => {
+    try {
+      setLoadingTareas(true);
+      const data = await getTareasProgramadas();
+      setTareasProgramadas(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error al cargar estado de tareas programadas", error);
+    } finally {
+      setLoadingTareas(false);
+    }
+  };
 
   const fetchConfiguraciones = async () => {
     try {
@@ -734,6 +757,27 @@ export default function Administracion() {
                 {configuraciones.filter(c => c.activo).length} / {configuraciones.length}
               </Typography>
             </Box>
+
+            <Box
+              sx={{
+                bgcolor: tieneFalloTareas ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                backdropFilter: 'blur(10px)',
+                border: (theme) => `1px solid ${tieneFalloTareas ? '#ef4444' : 'rgba(255, 255, 255, 0.12)'}`,
+                borderRadius: 3,
+                px: 2.5,
+                py: 1.5,
+                textAlign: 'center',
+                flexGrow: 1,
+                minWidth: 110,
+              }}
+            >
+              <Typography variant="caption" sx={{ display: 'block', opacity: 0.6, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Cron 06:00
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: tieneFalloTareas ? 'error.main' : 'success.main', mt: 0.5 }}>
+                {tieneFalloTareas ? 'FALLO' : 'OK'}
+              </Typography>
+            </Box>
           </Box>
         </Box>
 
@@ -827,6 +871,130 @@ export default function Administracion() {
                 />
               </Box>
             </Box>
+
+            {/* Monitor de Observabilidad de Tareas Programadas (TA.6 / TC.6) */}
+            <Card
+              sx={{
+                mb: 4.5,
+                borderRadius: 3.5,
+                bgcolor: (theme) => {
+                  if (tieneFalloTareas) {
+                    return theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(254, 226, 226, 0.6)';
+                  }
+                  return theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.04)' : 'rgba(240, 253, 250, 0.7)';
+                },
+                border: (theme) => `1.5px solid ${tieneFalloTareas ? '#ef4444' : (theme.palette.mode === 'dark' ? 'rgba(16, 185, 129, 0.25)' : '#99f6e4')}`,
+                boxShadow: tieneFalloTareas ? '0 4px 20px rgba(239, 68, 68, 0.15)' : '0 2px 12px rgba(0,0,0,0.03)',
+                transition: 'all 0.3s ease',
+              }}
+            >
+              <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    {tieneFalloTareas ? (
+                      <ErrorOutlineIcon sx={{ color: '#ef4444', fontSize: 30 }} />
+                    ) : (
+                      <CheckCircleIcon sx={{ color: '#10b981', fontSize: 30 }} />
+                    )}
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.1rem', color: 'text.primary' }}>
+                          Monitoreo de Tareas Programadas (Cron)
+                        </Typography>
+                        <Chip
+                          size="small"
+                          label={tieneFalloTareas ? 'FALLA DETECTADA' : 'OPERATIVO'}
+                          color={tieneFalloTareas ? 'error' : 'success'}
+                          sx={{ fontWeight: 800, fontSize: '0.7rem', height: 22 }}
+                        />
+                      </Box>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                        Auditoría y ejecución automática de cuotas (06:00), vedas y retenciones (TA.6 / TC.6)
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={loadingTareas ? <CircularProgress size={14} /> : <RefreshIcon sx={{ fontSize: 16 }} />}
+                    onClick={fetchTareasProgramadas}
+                    disabled={loadingTareas}
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, fontSize: '0.8rem' }}
+                  >
+                    Actualizar
+                  </Button>
+                </Box>
+
+                {tareasProgramadas.length === 0 ? (
+                  <Alert severity="info" sx={{ borderRadius: 2, fontFamily: 'Inter' }}>
+                    No se registran ejecuciones recientes. La próxima revisión programada se ejecutará automáticamente a las 06:00.
+                  </Alert>
+                ) : (
+                  <Grid container spacing={2}>
+                    {tareasProgramadas.map((tarea) => {
+                      const isError = tarea.estado === 'ERROR';
+                      return (
+                        <Grid item xs={12} sm={6} md={4} key={tarea.id || tarea.nombre}>
+                          <Box
+                            sx={{
+                              p: 2,
+                              borderRadius: 2.5,
+                              bgcolor: (theme) => isError 
+                                ? (theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2') 
+                                : (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#ffffff'),
+                              border: (theme) => `1px solid ${isError ? '#ef4444' : theme.palette.divider}`,
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'Outfit', color: 'text.primary' }}>
+                                {tarea.nombre === 'REVISION_CUOTAS' ? 'Revisión Diaria Cuotas' : 
+                                 tarea.nombre === 'REVISION_VEDAS' ? 'Revisión Diaria Vedas' : tarea.nombre}
+                              </Typography>
+                              <Chip
+                                size="small"
+                                label={tarea.estado}
+                                color={isError ? 'error' : (tarea.estado === 'OK' ? 'success' : 'warning')}
+                                sx={{ fontWeight: 800, fontSize: '0.68rem', height: 20 }}
+                              />
+                            </Box>
+                            <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontFamily: 'Inter' }}>
+                              Inicio: {tarea.inicio ? new Date(tarea.inicio).toLocaleString('es-CL') : '—'}
+                            </Typography>
+                            {tarea.fin && (
+                              <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontFamily: 'Inter' }}>
+                                Fin: {new Date(tarea.fin).toLocaleString('es-CL')}
+                              </Typography>
+                            )}
+                            <Typography variant="caption" sx={{ display: 'block', fontWeight: 700, mt: 0.5, color: isError ? 'error.main' : 'text.primary', fontFamily: 'Inter' }}>
+                              Registros: {tarea.procesados || 0} procesados
+                            </Typography>
+                            {tarea.mensaje && (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  display: 'block',
+                                  mt: 0.8,
+                                  p: 1,
+                                  borderRadius: 1.5,
+                                  bgcolor: isError ? 'rgba(239, 68, 68, 0.12)' : 'rgba(0,0,0,0.03)',
+                                  color: isError ? 'error.main' : 'text.secondary',
+                                  fontSize: '0.74rem',
+                                  fontFamily: 'monospace',
+                                  wordBreak: 'break-word',
+                                }}
+                              >
+                                {tarea.mensaje}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Categorías Temáticas con Grid de Tarjetas */}
             {CATEGORIAS_MODULOS.map((cat) => {
@@ -1291,29 +1459,6 @@ export default function Administracion() {
                         }}
                       />
                     </Box>
-
-                    {config.tipoAlerta === 'LIMITE_CUOTA' && (
-                      <Box sx={{ mt: 3, mb: 1, p: 2.5, borderRadius: 3, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default', border: 1, borderColor: 'divider' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, fontFamily: 'Inter' }}>
-                            Umbral de disparo:
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: config.activo ? 'secondary.main' : 'text.disabled', fontWeight: 800, fontFamily: 'Inter' }}>
-                            {config.umbral || 80}% de la cuota
-                          </Typography>
-                        </Box>
-                        <ModernSlider
-                          value={config.umbral || 80}
-                          onChange={(e, val) => handleSliderChange(config.id, val)}
-                          valueLabelDisplay="auto"
-                          step={5}
-                          min={10}
-                          max={100}
-                          disabled={!config.activo}
-                          sx={{ mt: 1 }}
-                        />
-                      </Box>
-                    )}
                   </CardContent>
 
                   <Box sx={{ p: 2.5, pt: 0, display: 'flex', justifyContent: 'flex-end', borderTop: 1, borderColor: 'divider', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'background.default' }}>
