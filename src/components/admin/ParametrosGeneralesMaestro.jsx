@@ -458,6 +458,10 @@ export default function ParametrosGeneralesMaestro() {
               onClick={() =>
                 handleGuardarCategoria([
                   'variacion_peso_umbral_general_pct',
+                  'planta_exige_peso_romana',
+                  'variacion_peso_exige_voucher',
+                  'planta_exige_humedad_recepcion',
+                  'planta_version_minima',
                   'retencion_bodega_activo',
                   'retencion_bodega_dias_amarilla',
                   'retencion_bodega_dias_naranja',
@@ -475,7 +479,7 @@ export default function ParametrosGeneralesMaestro() {
             </Button>
           </Box>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-            Parámetros para evaluar discrepancias de peso entre Origen, Comercializador y Planta de Producción, tiempos de permanencia en bodega virtual y reglas de pérdida biológica.
+            Parámetros para evaluar discrepancias de peso entre Origen, Comercializador y Planta de Producción, exigencias de romana, versión mínima y reglas de retención.
           </Typography>
 
           <Grid container spacing={3}>
@@ -496,6 +500,80 @@ export default function ParametrosGeneralesMaestro() {
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Margen tolerable entre pesaje de origen y recepción en planta.
               </Typography>
+            </Grid>
+
+            {/* Exigencias en Recepción de Planta (TP.2 / TP.3) */}
+            <Grid item xs={12} sm={8}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                Exigencias en Recepción de Planta (Módulo de Planta · TP.2 / TP.3):
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={4}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={configs['planta_exige_peso_romana'] === 'true'}
+                        onChange={(e) =>
+                          handleValorChange('planta_exige_peso_romana', e.target.checked ? 'true' : 'false')
+                        }
+                        color="secondary"
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Exigir Peso Romana</Typography>}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                    Rechaza recepciones sin peso neto mayor a 0 kg (422).
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={configs['variacion_peso_exige_voucher'] === 'true'}
+                        onChange={(e) =>
+                          handleValorChange('variacion_peso_exige_voucher', e.target.checked ? 'true' : 'false')
+                        }
+                        color="secondary"
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Exigir N° Voucher</Typography>}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                    Exige número de ticket/voucher emitido por báscula.
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={configs['planta_exige_humedad_recepcion'] === 'true'}
+                        onChange={(e) =>
+                          handleValorChange('planta_exige_humedad_recepcion', e.target.checked ? 'true' : 'false')
+                        }
+                        color="secondary"
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Exigir Humedad</Typography>}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                    Exige estado verificado de humedad al recibir.
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Versión Mínima de App Móvil para Plantas (planta_version_minima)"
+                    placeholder="Ej: 1.1.0 (vacío = sin restricción)"
+                    value={configs['planta_version_minima'] || ''}
+                    onChange={(e) => handleValorChange('planta_version_minima', e.target.value)}
+                    helperText="Si se especifica, versiones anteriores recibirán error 422 solicitando actualizar TrazAlga (TP.3)."
+                  />
+                </Grid>
+              </Grid>
             </Grid>
 
             {/* Retención de Bodega */}

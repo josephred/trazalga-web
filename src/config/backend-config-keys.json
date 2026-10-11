@@ -58,6 +58,9 @@
     "origen_geo_patron_pct",
     "origen_geo_patron_min_decl",
     "patente_vigencia_horas",
-    "patente_consulta_max_por_minuto"
+    "patente_consulta_max_por_minuto",
+    "planta_exige_peso_romana",
+    "planta_version_minima",
+    "planta_exige_humedad_recepcion"
   ]
 }

@@ -58,6 +58,7 @@ import ParametrosGeneralesMaestro from '../components/admin/ParametrosGeneralesM
 import AmerbEspeciesMaestro from '../components/admin/AmerbEspeciesMaestro';
 import MacrozonasMaestro from '../components/admin/MacrozonasMaestro';
 import CaletasMaestro from '../components/admin/CaletasMaestro';
+import MonitoreoVersionesApp from '../components/admin/MonitoreoVersionesApp';
 import FactoryIcon from '@mui/icons-material/Factory';
 import ScaleIcon from '@mui/icons-material/Scale';
 import BlockIcon from '@mui/icons-material/Block';
@@ -1488,6 +1489,9 @@ export default function Administracion() {
             </Grid>
 
             <Divider sx={{ my: 4 }} />
+
+            {/* TP.1: Monitoreo de Versiones de App Móvil */}
+            <MonitoreoVersionesApp />
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="h6" sx={{ fontFamily: 'Outfit', fontWeight: 700, mb: 0.5 }}>

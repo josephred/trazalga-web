@@ -553,7 +553,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                   >
                     <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                       <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', color: 'text.secondary' }}>
-                        Pesaje de Entrada
+                        Peso neto en romana (kg)
                       </Typography>
                       <Chip
                         label={planta.conRomana ? 'Romana Verificada' : 'Sin Romana'}
@@ -569,7 +569,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
 
                     {planta.conRomana ? (
                       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                        Voucher N.º: <strong>{planta.numeroVoucherRomana || 'S/N'}</strong> · Fecha: {formatDate(planta.fechaPesajeRomana)}
+                        Voucher N.º: <strong>{planta.numeroVoucherRomana || 'S/N'}</strong> · Fecha: {formatDate(planta.fechaPesajeRomana)} · Peso bruto del camión menos tara
                       </Typography>
                     ) : (
                       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
