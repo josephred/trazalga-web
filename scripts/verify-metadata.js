@@ -24,7 +24,9 @@ const VALID_MARCAS = new Set([
   'CUOTA_EXCEDIDA',
   'POSTERIOR_CIERRE',
   'DOBLE_OPERACION',
-  'ORIGEN_GEO_INCONSISTENTE'
+  'ORIGEN_GEO_INCONSISTENTE',
+  'RETENCION_EXCEDIDA',
+  'DECLARACION_EXTEMPORANEA'
 ]);
 
 // 2. Términos expresamente prohibidos / obsoletos según plan RX.3

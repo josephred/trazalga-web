@@ -118,6 +118,24 @@ const MARCA_CONFIG = {
     indicador: 'Indicador 9',
     descripcion: 'Distancia entre coordenadas GPS capturadas y origen declarado excede el umbral tolerable',
   },
+  RETENCION_EXCEDIDA: {
+    label: 'Retención Excedida',
+    color: '#dc2626',
+    bg: 'rgba(220, 38, 38, 0.1)',
+    border: 'rgba(220, 38, 38, 0.3)',
+    icon: LockIcon,
+    indicador: 'Indicador 7',
+    descripcion: 'Carga retenida en bodega virtual por superar el tiempo normativo de frescura (Res. 3602)',
+  },
+  DECLARACION_EXTEMPORANEA: {
+    label: 'Declaración Extemporánea',
+    color: '#854d0e',
+    bg: 'rgba(133, 77, 14, 0.1)',
+    border: 'rgba(133, 77, 14, 0.3)',
+    icon: WarningIcon,
+    indicador: 'Indicador 3',
+    descripcion: 'Declaración ingresada fuera de los días de gracia permitidos',
+  },
 };
 
 export default function ConsolaHallazgos() {

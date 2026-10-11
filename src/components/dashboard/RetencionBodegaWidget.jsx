@@ -29,7 +29,8 @@ import {
   Schedule as ScheduleIcon,
   AccessTime as AccessTimeIcon,
   ErrorOutline as ErrorOutlineIcon,
-  LocalShipping as LocalShippingIcon
+  LocalShipping as LocalShippingIcon,
+  Lock as LockIcon
 } from '@mui/icons-material';
 import { getRetencionBodega } from '../../services/reportesService';
 import TablaDetalleHallazgos from './comun/TablaDetalleHallazgos';
@@ -116,6 +117,7 @@ export default function RetencionBodegaWidget({ dateRange }) {
 
   // Filtrado de lotes para la tabla detallada
   const lotesFiltrados = (data?.lotes || []).filter(row => {
+    if (filtroSemaforo === 'RETENIDAS' && !row.bloqueada) return false;
     if (filtroSemaforo === 'ROJO' && row.semaforo !== 'ROJO') return false;
     if (filtroSemaforo === 'AMARILLO' && row.semaforo !== 'AMARILLO') return false;
     if (filtroSemaforo === 'VERDE' && row.semaforo !== 'VERDE') return false;
@@ -136,7 +138,11 @@ export default function RetencionBodegaWidget({ dateRange }) {
     return lotesFiltrados.map((row) => ({
       ...row,
       rowSx: {
-        bgcolor: row.semaforo === 'ROJO' ? 'rgba(239, 68, 68, 0.02)' : 'inherit'
+        bgcolor: row.bloqueada
+          ? 'rgba(239, 68, 68, 0.04)'
+          : row.semaforo === 'ROJO'
+            ? 'rgba(239, 68, 68, 0.02)'
+            : 'inherit'
       }
     }));
   }, [lotesFiltrados]);
@@ -147,6 +153,15 @@ export default function RetencionBodegaWidget({ dateRange }) {
       label: 'Folio',
       mono: true,
       render: (row) => row.folio
+    },
+    {
+      id: 'actorComercializador',
+      label: 'Comercializador (titular)',
+      render: (row) => (
+        <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.8rem', fontWeight: 600 }}>
+          {row.actorComercializador || row.actorOrigen || '—'}
+        </Typography>
+      )
     },
     {
       id: 'especie',
@@ -227,6 +242,35 @@ export default function RetencionBodegaWidget({ dateRange }) {
         <Typography variant="body2" sx={{ fontFamily: 'Inter', fontSize: '0.8rem', color: 'text.secondary' }}>
           {row.plazoMaxHoras !== null && row.plazoMaxHoras !== undefined ? `${row.plazoMaxHoras} h` : 'Sin límite'}
         </Typography>
+      )
+    },
+    {
+      id: 'estadoBloqueo',
+      label: 'Estado',
+      align: 'center',
+      render: (row) => row.bloqueada ? (
+        <Tooltip title={row.motivoBloqueo || 'Carga retenida por plazo excedido en bodega virtual'}>
+          <Chip
+            icon={<LockIcon sx={{ fontSize: '11px !important', color: '#fff !important' }} />}
+            label={row.marcaId ? `🔒 Retenida (#${row.marcaId})` : '🔒 Retenida'}
+            size="small"
+            sx={{
+              bgcolor: 'error.main',
+              color: '#fff',
+              fontSize: '0.68rem',
+              height: 20,
+              fontWeight: 800
+            }}
+          />
+        </Tooltip>
+      ) : (
+        <Chip
+          label="Libre"
+          size="small"
+          variant="outlined"
+          color="success"
+          sx={{ fontSize: '0.68rem', height: 20, fontWeight: 600 }}
+        />
       )
     },
     {
@@ -360,10 +404,29 @@ export default function RetencionBodegaWidget({ dateRange }) {
                     variant="outlined"
                     sx={{ fontWeight: 700, fontSize: '0.7rem', height: 24 }}
                   />
+                  {(data?.cargasRetenidas || 0) > 0 && (
+                    <Chip
+                      icon={<LockIcon sx={{ fontSize: 13 }} />}
+                      label={`${data?.cargasRetenidas} retenidas`}
+                      size="small"
+                      color="error"
+                      sx={{ fontWeight: 800, fontSize: '0.7rem', height: 24 }}
+                    />
+                  )}
+                  {(data?.totalLotesEnTransitoAPlanta || 0) > 0 && (
+                    <Chip
+                      icon={<LocalShippingIcon sx={{ fontSize: 13 }} />}
+                      label={`${data?.totalLotesEnTransitoAPlanta} en tránsito a planta`}
+                      size="small"
+                      color="info"
+                      variant="outlined"
+                      sx={{ fontWeight: 700, fontSize: '0.7rem', height: 24 }}
+                    />
+                  )}
                   {(data?.semaforoRojo || 0) > 0 ? (
                     <Chip
                       icon={<ErrorOutlineIcon sx={{ fontSize: 14 }} />}
-                      label={`${data?.semaforoRojo} lotes en alerta roja`}
+                      label={`${data?.semaforoRojo} en alerta roja`}
                       size="small"
                       color="error"
                       sx={{ fontWeight: 800, fontSize: '0.7rem', height: 24 }}
@@ -594,6 +657,14 @@ export default function RetencionBodegaWidget({ dateRange }) {
                       Filtrar lotes:
                     </Typography>
                     <ButtonGroup size="small" variant="outlined" sx={{ '& .MuiButton-root': { textTransform: 'none', fontSize: '0.72rem', fontWeight: 700, px: 1.5, py: 0.3 } }}>
+                      <Button
+                        variant={filtroSemaforo === 'RETENIDAS' ? 'contained' : 'outlined'}
+                        color="error"
+                        onClick={() => setFiltroSemaforo('RETENIDAS')}
+                        startIcon={<LockIcon sx={{ fontSize: 13 }} />}
+                      >
+                        Retenidas ({data?.cargasRetenidas || 0})
+                      </Button>
                       <Button
                         variant={filtroSemaforo === 'ROJO' ? 'contained' : 'outlined'}
                         color="error"

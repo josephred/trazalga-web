@@ -325,7 +325,7 @@ export const INDICADORES_METADATA = {
       'Período legal de la cuota (Diario, Mensual, Anual) confrontado con el rango activo. El consumo se imputa según la fecha configurada en {{cuota_fecha_imputacion:EXTRACCION}} (`cuota_fecha_imputacion`: `EXTRACCION` por defecto o `DECLARACION`). Las declaraciones de recolector con período de extracción (`periodo_extraccion_inicio` y `_fin`) se imputan por `fecha_extraccion`, sin prorratear.',
     formula: 'Consumo Acumulado = SUM(captura_o_desembarque) imputado territorialmente vs Límite Efectivo de Cuota (kg)',
     criterioFiscalizacion:
-      'La cuota con mayor porcentaje de uso define el "cuello de botella". El sistema emite alerta preventiva cuando el saldo restante es inferior al {{cuota_umbral_restante_pct:10.0}}% (`cuota_umbral_restante_pct`), alerta de velocidad si el ritmo de consumo supera en más de {{cuota_desvio_velocidad_pct:25.0}}% (`cuota_desvio_velocidad_pct`) el tiempo transcurrido, y aviso de expiración a los {{cuota_dias_previos_expiracion:5}} días previos al fin de vigencia. Si alguna cuota aplicable se agota o está CERRADA y tiene política BLOQUEO_DECLARACION, el sistema rechaza la declaración con código HTTP 422, informando la cuota rectora causante del bloqueo.'
+      'La cuota con mayor porcentaje de uso define el "cuello de botella". El sistema emite alerta preventiva cuando el saldo restante es inferior al {{cuota_umbral_restante_pct:10.0}}% (`cuota_umbral_restante_pct`), alerta de velocidad si el ritmo de consumo supera en más de {{cuota_desvio_velocidad_pct:25.0}}% (`cuota_desvio_velocidad_pct`) el tiempo transcurrido, y aviso de expiración a los {{cuota_dias_previos_expiracion:5}} días previos al fin de vigencia. Si alguna cuota aplicable se agota o está CERRADA y tiene política BLOQUEO_DECLARACION, el sistema rechaza la declaración con código HTTP 422, informando la cuota rectora causante del bloqueo. Las declaraciones recepcionadas con fecha extemporánea fuera de los días de gracia permitidos se identifican con la marca oficial DECLARACION_EXTEMPORANEA para fiscalización.'
   },
 
   limiteDiarioLed: {
@@ -403,7 +403,7 @@ export const INDICADORES_METADATA = {
     periodoFechas: 'Lotes en bodega virtual y lotes con trazabilidad en el período.',
     formula: 'Horas = TIMESTAMPDIFF(HOUR, fecha_origen, COALESCE(fecha_destino, NOW())), comparado contra plazoMaxHoras según humedad.',
     criterioFiscalizacion:
-      'Aplica los tramos de la Res. 3602: plazo máximo de {{retencion_humedo_max_horas:24}} h para húmedo (`retencion_humedo_max_horas`), {{retencion_semihumedo_max_horas:72}} h para semihúmedo (`retencion_semihumedo_max_horas`) y {{retencion_semiseco_max_horas:216}} h para semiseco (`retencion_semiseco_max_horas`); el recurso seco no tiene límite temporal. El semáforo preventivo pasa a amarillo a partir del {{retencion_preaviso_pct:80}}% del plazo máximo (`retencion_preaviso_pct`) y a rojo al superarlo. Superar el plazo máximo extingue la validez del estado de humedad declarado y la captura biológica calculada con su factor. Gobernado por el interruptor maestro `retencion_bodega_activo` ({{retencion_bodega_activo:true}}).'
+      'Aplica los tramos de la Res. 3602: plazo máximo de {{retencion_humedo_max_horas:24}} h para húmedo (`retencion_humedo_max_horas`), {{retencion_semihumedo_max_horas:72}} h para semihúmedo (`retencion_semihumedo_max_horas`) y {{retencion_semiseco_max_horas:216}} h para semiseco (`retencion_semiseco_max_horas`); el recurso seco no tiene límite temporal. El semáforo preventivo pasa a amarillo a partir del {{retencion_preaviso_pct:80}}% del plazo máximo (`retencion_preaviso_pct`) y a rojo al superarlo. Superar el plazo máximo extingue la validez del estado de humedad declarado y la captura biológica calculada con su factor. Si el bloqueo automático está activo ({{retencion_bloqueo_activo:false}}), el lote se bloquea con marca oficial RETENCION_EXCEDIDA tras superar {{retencion_bloqueo_humedo_horas:120}} h en húmedo. Gobernado por el interruptor maestro `retencion_bodega_activo` ({{retencion_bodega_activo:true}}).'
   },
 
   integracionHumedadTiempo: {
@@ -589,6 +589,12 @@ export const DEFAULT_CONFIG_VALUES = {
   retencion_semihumedo_max_horas: '72',
   retencion_semiseco_max_horas: '216',
   retencion_preaviso_pct: '80',
+  retencion_bloqueo_activo: 'false',
+  retencion_bloqueo_humedo_horas: '120',
+  retencion_bloqueo_semihumedo_horas: '0',
+  retencion_bloqueo_semiseco_horas: '0',
+  retencion_bloqueo_especies: 'TODAS',
+  retencion_bloqueo_preaviso_pct: '80.0',
   retencion_bodega_dias_amarilla: '3',
   retencion_bodega_dias_naranja: '5',
   retencion_bodega_dias_roja: '7',
