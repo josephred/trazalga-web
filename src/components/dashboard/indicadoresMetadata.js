@@ -371,18 +371,18 @@ export const INDICADORES_METADATA = {
     codigo: 'IND-06',
     nombre: 'Indicador 6: Trazabilidad de Peso y Variación en Ruta',
     categoria: 'Cadena de Custodia y Balances',
-    subtitulo: 'Comparación peso origen vs peso recepción en comprador (Pesaje física romana vs Conciliación documental)',
+    subtitulo: 'Recepción vinculante Comercializador → Planta (Romana) y Conciliación informativa de Acopio',
     icono: 'CompareArrows',
     color: '#06b6d4',
     resumenNegocio:
-      'Compara el peso declarado por el pescador en origen frente al peso registrado por comercializadores y plantas en la recepción de la carga. Separa de forma estricta el pesaje físico en romana —con número de voucher obligatorio y vinculante para fiscalización— de la conciliación documental entre guías, para no distorsionar el promedio de mermas reales.',
-    metricaBase: 'Variación porcentual de peso físico en cada tramo de custodia: `((Peso Recepción - Peso Origen) / Peso Origen) * 100`.',
+      'Contrasta el pesaje en báscula/romana en planta de abastecimiento contra la suma de despachos consumidos que la abastecieron directamente (única métrica vinculante con consecuencias sancionatorias). No compara pesaje de planta contra orígenes biológicos (los orígenes son estrictamente informativos de trazabilidad). Incluye evaluación de coherencia biológica y balance contable informativo de compras/ventas de acopiadores.',
+    metricaBase: 'Variación porcentual canónica: `((Peso Romana - Suma Despachos Consumidos) / Suma Despachos Consumidos) * 100`.',
     humedadFactor:
       'Diferencia el comportamiento según estado de humedad de origen y días de tránsito: para alga húmeda con más de {{bio_humedo_dias_minimos_transito:3}} días de traslado (`bio_humedo_dias_minimos_transito`) se exige una merma mínima del {{bio_humedo_merma_minima_pct:5.0}}% (`bio_humedo_merma_minima_pct`) por deshidratación natural; para alga seca la tolerancia de variación máxima es de {{bio_seco_merma_maxima_pct:3.0}}% (`bio_seco_merma_maxima_pct`).',
     fuentesDatos:
-      'Reconstrucción de la cadena de custodia de tres puntos vinculada por `folio_origen`: Origen (recolector/armador/área) → Comercializador Intermedio → Planta de Procesamiento (`declaracion_planta_abastecimiento`), con campos de pesaje físico en romana (`peso_romana_kg`, `voucher_romana_numero`, `fecha_pesaje`).',
+      'Reconstrucción de la cadena de custodia vinculada por columna declaracion_destinatario_id o tokens de trazabilidad: Despacho Comercializador (`declaracion_comercializador`) → Recepción Planta Abastecimiento (`declaracion_planta_abastecimiento`), con campos de pesaje físico en romana (`peso_romana_kg`, `voucher_romana_numero`, `fecha_pesaje`).',
     periodoFechas: 'Declaraciones vinculadas procesadas en el período seleccionado.',
-    formula: 'Variación % = ((desembarque_receptor - desembarque_emisor) / desembarque_emisor) × 100 evaluada junto con días de tránsito y estado de humedad de origen.',
+    formula: 'Variación % = ((peso_romana_kg - SUM(despachos_consumidos)) / SUM(despachos_consumidos)) × 100 evaluada con EvaluadorCoherenciaBiologica.',
     criterioFiscalizacion:
       'Evalúa la variación frente al umbral general (`variacion_peso_umbral_general_pct`, {{variacion_peso_umbral_general_pct:5.0}}%). Separa los lotes con pesaje en romana certificado (vinculante, exigencia gobernada por `variacion_peso_exige_voucher`, {{variacion_peso_exige_voucher:true}}) de los lotes sólo documentales. Las discrepancias anómalas alimentan el indicador 8 y el modulador biológico del perfilador de riesgo.'
   },

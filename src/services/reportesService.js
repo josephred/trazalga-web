@@ -189,6 +189,34 @@ export const getCuotasSobrepasos = async (filters = {}) => {
 };
 
 /**
+ * Obtiene el listado paginado y auditable de recepciones comercializador -> planta (TV.3).
+ */
+export const getVariacionPesoRecepciones = async (filters = {}) => {
+  const params = formatParams(filters);
+  if (filters.semaforo) params.semaforo = filters.semaforo;
+  if (filters.tramo) params.tramo = filters.tramo;
+  if (filters.plantaId) params.plantaId = filters.plantaId;
+  if (filters.page !== undefined) params.page = filters.page;
+  if (filters.size !== undefined) params.size = filters.size;
+
+  const response = await api.get('/reportes/variacion-peso/recepciones', {
+    params,
+    signal: filters?.signal
+  });
+  return response.data;
+};
+
+/**
+ * Obtiene los orígenes biológicos informativos de una recepción en planta (TV.3).
+ */
+export const getOrigenesRecepcionPlanta = async (plantaId, options = {}) => {
+  const response = await api.get(`/reportes/variacion-peso/recepciones/${plantaId}/origenes`, {
+    signal: options?.signal
+  });
+  return response.data;
+};
+
+/**
  * Obtiene el desglose individual por persona para una cuota específica (TM.2 / TQ.1).
  */
 export const getCuotaPersonas = async (cuotaId, soloSobreLimite = false, options = {}) => {
@@ -198,5 +226,6 @@ export const getCuotaPersonas = async (cuotaId, soloSobreLimite = false, options
   });
   return response.data;
 };
+
 
 
