@@ -282,7 +282,7 @@ export const INDICADORES_METADATA = {
     periodoFechas: 'Declaraciones registradas dentro del rango temporal seleccionado.',
     formula: 'SUM(desembarque) GROUP BY caleta_id, usuario_id, especie_id, humedad_estado_id (con agregación por comuna y provincia)',
     criterioFiscalizacion:
-      'Permite monitorear tendencias de volumen por caleta y por pescador. Aplica detección estadística de desembarques atípicos: si un desembarque supera en más de 2.5 desviaciones estándar el promedio histórico del perfil en esa comuna o caleta, o rebasa el umbral configurable de {{desembarque_umbral_atipico_kg:5000}} kg (`desembarque_umbral_atipico_kg`), se etiqueta con la marca oficial DESEMBARQUE_ATIPICO. Doble Imputación Territorial: El desembarque físico se imputa a la caleta y comuna física donde ocurrió la descarga en costa (reflejando la presión extractiva sobre el ecosistema local), a diferencia del consumo de cuotas de recolectores (Indicador 3) que se imputa a su comuna de inscripción RPA.'
+      'Permite monitorear tendencias de volumen por caleta y por pescador. Aplica detección estadística de desembarques atípicos: si un desembarque supera en más de {{desembarque_atipico_sigma:2.5}} desviaciones estándar el promedio histórico del perfil en esa comuna o caleta (criterio estadístico activo: {{desembarque_atipico_estadistico_activo:false}}, ventana de {{desembarque_atipico_ventana_dias:90}} días con mínimo {{desembarque_atipico_min_muestras:10}} muestras), o rebasa el umbral configurable de {{desembarque_umbral_atipico_kg:5000}} kg (`desembarque_umbral_atipico_kg`), se etiqueta con la marca oficial DESEMBARQUE_ATIPICO. Doble Imputación Territorial: El desembarque físico se imputa a la caleta y comuna física donde ocurrió la descarga en costa (reflejando la presión extractiva sobre el ecosistema local), a diferencia del consumo de cuotas de recolectores (Indicador 3) que se imputa a su comuna de inscripción RPA.'
   },
 
   capturaCorregida: {
@@ -325,7 +325,7 @@ export const INDICADORES_METADATA = {
       'Período legal de la cuota (Diario, Mensual, Anual) confrontado con el rango activo. El consumo se imputa según la fecha configurada en {{cuota_fecha_imputacion:EXTRACCION}} (`cuota_fecha_imputacion`: `EXTRACCION` por defecto o `DECLARACION`). Las declaraciones de recolector con período de extracción (`periodo_extraccion_inicio` y `_fin`) se imputan por `fecha_extraccion`, sin prorratear.',
     formula: 'Consumo Acumulado = SUM(captura_o_desembarque) imputado territorialmente vs Límite Efectivo de Cuota (kg)',
     criterioFiscalizacion:
-      'La cuota con mayor porcentaje de uso define el "cuello de botella". El sistema emite alerta preventiva cuando el saldo restante es inferior al {{cuota_umbral_restante_pct:10.0}}% (`cuota_umbral_restante_pct`), alerta de velocidad si el ritmo de consumo supera en más de {{cuota_desvio_velocidad_pct:25.0}}% (`cuota_desvio_velocidad_pct`) el tiempo transcurrido, y aviso de expiración a los {{cuota_dias_previos_expiracion:5}} días previos al fin de vigencia. Si alguna cuota aplicable se agota o está CERRADA y tiene política BLOQUEO_DECLARACION, el sistema rechaza la declaración con código HTTP 422, informando la cuota rectora causante del bloqueo. Las declaraciones recepcionadas con fecha extemporánea fuera de los días de gracia permitidos se identifican con la marca oficial DECLARACION_EXTEMPORANEA para fiscalización.'
+      'La cuota con mayor porcentaje de uso define el "cuello de botella". El sistema emite alerta preventiva cuando el saldo restante es inferior al {{cuota_umbral_restante_pct:10.0}}% (`cuota_umbral_restante_pct`), alerta de velocidad si el ritmo de consumo supera en más de {{cuota_desvio_velocidad_pct:25.0}}% (`cuota_desvio_velocidad_pct`) el tiempo transcurrido, y aviso de expiración a los {{cuota_dias_previos_expiracion:5}} días previos al fin de vigencia. Cierre automático por vencimiento gobernado por {{cuota_cierre_automatico_vencimiento:false}}. Si alguna cuota aplicable se agota o está CERRADA y tiene política BLOQUEO_DECLARACION, el sistema rechaza la declaración con código HTTP 422, informando la cuota rectora causante del bloqueo. Las declaraciones recepcionadas con fecha extemporánea fuera de los {{cuota_dias_gracia_declaracion:0}} días de gracia permitidos se identifican con la marca oficial DECLARACION_EXTEMPORANEA para fiscalización bajo la acción {{cuota_accion_extemporanea:ALERTA_CRITICA}}. Criterio de imputación de armadores: {{cuota_imputacion_armador:INSCRIPCION}}.'
   },
 
   limiteDiarioLed: {
@@ -384,7 +384,7 @@ export const INDICADORES_METADATA = {
     periodoFechas: 'Declaraciones vinculadas procesadas en el período seleccionado.',
     formula: 'Variación % = ((peso_romana_kg - SUM(despachos_consumidos)) / SUM(despachos_consumidos)) × 100 evaluada con EvaluadorCoherenciaBiologica.',
     criterioFiscalizacion:
-      'Evalúa la variación frente al umbral general (`variacion_peso_umbral_general_pct`, {{variacion_peso_umbral_general_pct:5.0}}%). Separa los lotes con pesaje neto en romana certificado (vinculante, exigencia de peso gobernada por `planta_exige_peso_romana`, {{planta_exige_peso_romana:true}} y voucher por `variacion_peso_exige_voucher`, {{variacion_peso_exige_voucher:true}}) de los lotes sólo documentales. Las discrepancias anómalas alimentan el indicador 8 y el modulador biológico del perfilador de riesgo.'
+      'Evalúa la variación frente al umbral general (`variacion_peso_umbral_general_pct`, {{variacion_peso_umbral_general_pct:5.0}}%). Si cambia la humedad se evalúa la alerta equivalente en captura con {{variacion_peso_alerta_equivalente:false}}. Separa los lotes con pesaje neto en romana certificado (vinculante, exigencia de peso gobernada por `planta_exige_peso_romana`, {{planta_exige_peso_romana:true}} y voucher por `variacion_peso_exige_voucher`, {{variacion_peso_exige_voucher:true}}) de los lotes sólo documentales. Las discrepancias anómalas alimentan el indicador 8 y el modulador biológico del perfilador de riesgo.'
   },
 
   retencionBodega: {
@@ -572,6 +572,10 @@ export const DEFAULT_CONFIG_VALUES = {
   desembarque_fuente_recolector_activa: 'true',
   desembarque_fuente_armador_activa: 'true',
   desembarque_fuente_area_activa: 'true',
+  desembarque_atipico_estadistico_activo: 'false',
+  desembarque_atipico_sigma: '2.5',
+  desembarque_atipico_ventana_dias: '90',
+  desembarque_atipico_min_muestras: '10',
   captura_politica_sin_factor: 'USAR_DEFAULT',
   captura_factor_default: '1.0000',
   cuota_fecha_imputacion: 'EXTRACCION',
@@ -580,10 +584,15 @@ export const DEFAULT_CONFIG_VALUES = {
   cuota_dias_previos_expiracion: '5',
   cuota_accion_post_cierre: 'ALERTA_CRITICA',
   cuota_accion_exceso_limite: 'ALERTA_EXCESO',
+  cuota_cierre_automatico_vencimiento: 'false',
+  cuota_dias_gracia_declaracion: '0',
+  cuota_accion_extemporanea: 'ALERTA_CRITICA',
+  cuota_imputacion_armador: 'INSCRIPCION',
   veda_modo_operacion: 'BLOQUEO_ESTRICTO',
   veda_dias_aviso_previo: '7',
   variacion_peso_umbral_general_pct: '5.0',
   variacion_peso_exige_voucher: 'true',
+  variacion_peso_alerta_equivalente: 'false',
   retencion_bodega_activo: 'true',
   retencion_humedo_max_horas: '24',
   retencion_semihumedo_max_horas: '72',

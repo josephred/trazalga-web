@@ -141,6 +141,10 @@ export default function ParametrosGeneralesMaestro() {
                   'desembarque_fuente_recolector_activa',
                   'desembarque_fuente_armador_activa',
                   'desembarque_fuente_area_activa',
+                  'desembarque_atipico_estadistico_activo',
+                  'desembarque_atipico_sigma',
+                  'desembarque_atipico_ventana_dias',
+                  'desembarque_atipico_min_muestras',
                 ])
               }
               sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
@@ -217,6 +221,67 @@ export default function ParametrosGeneralesMaestro() {
                   label={<Typography variant="body2">Áreas de Manejo (AMERB)</Typography>}
                 />
               </Box>
+            </Grid>
+
+            {/* Criterio Estadístico TD.2 */}
+            <Grid item xs={12}>
+              <Divider sx={{ my: 1 }} />
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                Criterio Estadístico de Desembarque Atípico (TD.2):
+              </Typography>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} sm={3}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={configs['desembarque_atipico_estadistico_activo'] === 'true'}
+                        onChange={(e) =>
+                          handleValorChange('desembarque_atipico_estadistico_activo', e.target.checked ? 'true' : 'false')
+                        }
+                        color="secondary"
+                      />
+                    }
+                    label={<Typography variant="body2">Criterio Estadístico Activo</Typography>}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                    Detecta anomalías por z-score móvil (z &gt; sigma).
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    inputProps={{ step: '0.1' }}
+                    label="Umbral Sigma (desviaciones)"
+                    value={configs['desembarque_atipico_sigma'] || '2.5'}
+                    onChange={(e) => handleValorChange('desembarque_atipico_sigma', e.target.value)}
+                    helperText="Típicamente 2.5 sigma."
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Ventana Histórica (días)"
+                    value={configs['desembarque_atipico_ventana_dias'] || '90'}
+                    onChange={(e) => handleValorChange('desembarque_atipico_ventana_dias', e.target.value)}
+                    helperText="Días hacia atrás para la muestra (90 d)."
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Mínimo de Muestras"
+                    value={configs['desembarque_atipico_min_muestras'] || '10'}
+                    onChange={(e) => handleValorChange('desembarque_atipico_min_muestras', e.target.value)}
+                    helperText="Mínimo de registros en el grupo."
+                  />
+                </Grid>
+              </Grid>
             </Grid>
           </Grid>
         </CardContent>
@@ -300,6 +365,10 @@ export default function ParametrosGeneralesMaestro() {
                   'cuota_dias_previos_expiracion',
                   'cuota_accion_post_cierre',
                   'cuota_accion_exceso_limite',
+                  'cuota_cierre_automatico_vencimiento',
+                  'cuota_dias_gracia_declaracion',
+                  'cuota_accion_extemporanea',
+                  'cuota_imputacion_armador',
                 ])
               }
               sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
@@ -360,10 +429,10 @@ export default function ParametrosGeneralesMaestro() {
               <TextField
                 select
                 fullWidth
-                label="Acción ante Exceso de Límite [DEPRECADO]"
+                label="Acción ante Exceso [DEPRECADO]"
                 value={configs['cuota_accion_exceso_limite'] || 'ALERTA_EXCESO'}
                 onChange={(e) => handleValorChange('cuota_accion_exceso_limite', e.target.value)}
-                helperText="[DEPRECADO] Cada cuota define su propio modo de acción (SOLO_ALERTA o BLOQUEO_DECLARACION)."
+                helperText="[DEPRECADO] Cada cuota define su propio modo de acción."
               >
                 <MenuItem value="ALERTA_EXCESO">ALERTA_EXCESO (Marca y notifica)</MenuItem>
                 <MenuItem value="BLOQUEO_DECLARACION">BLOQUEO_DECLARACION (Rechaza 422)</MenuItem>
@@ -381,6 +450,65 @@ export default function ParametrosGeneralesMaestro() {
               >
                 <MenuItem value="ALERTA_CRITICA">ALERTA_CRITICA (Registra POSTERIOR_CIERRE y notifica)</MenuItem>
                 <MenuItem value="BLOQUEO_TOTAL">BLOQUEO_TOTAL (Rechazo total estricto HTTP 422)</MenuItem>
+              </TextField>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                label="Acción ante Declaración Extemporánea (TC.4)"
+                value={configs['cuota_accion_extemporanea'] || 'ALERTA_CRITICA'}
+                onChange={(e) => handleValorChange('cuota_accion_extemporanea', e.target.value)}
+                helperText="Acción ante declaración extemporánea ingresada fuera de plazo de gracia."
+              >
+                <MenuItem value="ALERTA_CRITICA">ALERTA_CRITICA (Registra DECLARACION_EXTEMPORANEA)</MenuItem>
+                <MenuItem value="BLOQUEO_TOTAL">BLOQUEO_TOTAL (Rechazo HTTP 422)</MenuItem>
+              </TextField>
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={configs['cuota_cierre_automatico_vencimiento'] === 'true'}
+                    onChange={(e) =>
+                      handleValorChange('cuota_cierre_automatico_vencimiento', e.target.checked ? 'true' : 'false')
+                    }
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2">Cierre Automático por Vencimiento</Typography>}
+              />
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                Cierra la cuota al día siguiente del fin de vigencia (TC.3 / D5).
+              </Typography>
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="Días de Gracia para Declarar"
+                value={configs['cuota_dias_gracia_declaracion'] || '0'}
+                onChange={(e) => handleValorChange('cuota_dias_gracia_declaracion', e.target.value)}
+                helperText="Plazo adicional tras el cierre antes de marcar extemporánea (TC.4)."
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Imputación Territorial de Armadores (TC.8)"
+                value={configs['cuota_imputacion_armador'] || 'INSCRIPCION'}
+                onChange={(e) => handleValorChange('cuota_imputacion_armador', e.target.value)}
+                helperText="Criterio territorial oficial para imputar consumo de armadores (D1)."
+              >
+                <MenuItem value="INSCRIPCION">INSCRIPCION (Comuna RPA del usuario armador)</MenuItem>
+                <MenuItem value="CALETA">CALETA (Comuna de la caleta de desembarque)</MenuItem>
               </TextField>
             </Grid>
           </Grid>
