@@ -487,7 +487,7 @@ export default function ControlCuotaDiaria({ dateRange }) {
 
   // Texto normativo dinámico según parámetro de imputación territorial (TC.8)
   const notaTerritorialTexto = useMemo(() => {
-    if (imputacionArmador === 'CALETA_DESEMBARQUE') {
+    if (imputacionArmador === 'CALETA_DESEMBARQUE' || imputacionArmador === 'CALETA') {
       return 'El consumo suma recolectores (comuna de inscripción) y armadores (caleta de desembarque). Las AMERB se controlan en su propio módulo.';
     }
     return 'El consumo suma recolectores y armadores según comuna de inscripción (regla TC.8). Las AMERB se controlan en su propio módulo.';

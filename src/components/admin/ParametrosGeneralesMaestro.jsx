@@ -503,12 +503,12 @@ export default function ParametrosGeneralesMaestro() {
                 fullWidth
                 size="small"
                 label="Imputación Territorial de Armadores (TC.8)"
-                value={configs['cuota_imputacion_armador'] || 'INSCRIPCION'}
+                value={(configs['cuota_imputacion_armador'] === 'CALETA' ? 'CALETA_DESEMBARQUE' : configs['cuota_imputacion_armador']) || 'INSCRIPCION'}
                 onChange={(e) => handleValorChange('cuota_imputacion_armador', e.target.value)}
                 helperText="Criterio territorial oficial para imputar consumo de armadores (D1)."
               >
                 <MenuItem value="INSCRIPCION">INSCRIPCION (Comuna RPA del usuario armador)</MenuItem>
-                <MenuItem value="CALETA">CALETA (Comuna de la caleta de desembarque)</MenuItem>
+                <MenuItem value="CALETA_DESEMBARQUE">CALETA (Comuna de la caleta de desembarque)</MenuItem>
               </TextField>
             </Grid>
           </Grid>
