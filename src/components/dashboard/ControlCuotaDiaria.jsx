@@ -883,10 +883,11 @@ export default function ControlCuotaDiaria({ dateRange }) {
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <WarningIcon color="warning" sx={{ fontSize: 18 }} />
-                      <Typography variant="caption" sx={{ fontFamily: 'Inter', color: 'warning.dark', fontWeight: 600 }}>
-                        <strong>{cuota.declaracionesPreviasSinEvaluar}</strong> {cuota.declaracionesPreviasSinEvaluar === 1 ? 'declaración' : 'declaraciones'} del período {cuota.declaracionesPreviasSinEvaluar === 1 ? 'anterior' : 'anteriores'} a la carga de esta cuota no {cuota.declaracionesPreviasSinEvaluar === 1 ? 'fue evaluada' : 'fueron evaluadas'}.
-                      </Typography>
+                      <Tooltip title="Las declaraciones no disponen de fecha de creación de sistema propia; la precedencia se evalúa usando la fecha y hora de la declaración respecto a la fecha de carga de la cuota.">
+                        <Typography variant="caption" sx={{ fontFamily: 'Inter', color: 'warning.dark', fontWeight: 600, cursor: 'help' }}>
+                          <strong>{cuota.declaracionesPreviasSinEvaluar}</strong> {cuota.declaracionesPreviasSinEvaluar === 1 ? 'declaración' : 'declaraciones'} del período {cuota.declaracionesPreviasSinEvaluar === 1 ? 'anterior' : 'anteriores'} a la carga de esta cuota no {cuota.declaracionesPreviasSinEvaluar === 1 ? 'fue evaluada' : 'fueron evaluadas'} (según fecha y hora de declaración).
+                        </Typography>
+                      </Tooltip>
                     </Box>
                     {puedeRecalcular && (
                       <Button
