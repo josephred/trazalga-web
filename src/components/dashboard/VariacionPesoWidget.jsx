@@ -125,20 +125,18 @@ export default function VariacionPesoWidget({ dateRange }) {
       const pesoData = await getVariacionPeso(filters);
 
       const safePeso = pesoData || {};
-      const safeComPlanta = safePeso.comercializadorPlanta || {
-        totalRecepciones: safePeso.pesaje?.total || safePeso.pesajes || 0,
-        recepcionesVerde: 0,
-        recepcionesAmarillo: 0,
-        recepcionesRojo: safePeso.pesaje?.fueraUmbral || safePeso.fueraUmbral || 0,
-        totalesPorSemaforo: {
-          VERDE: Math.max(0, (safePeso.pesaje?.total || 0) - (safePeso.pesaje?.fueraUmbral || 0)),
-          AMARILLO: 0,
-          ROJO: safePeso.pesaje?.fueraUmbral || 0
-        },
-        promedioDeltaPct: safePeso.pesaje?.promedioVariacionPct ?? safePeso.promedioVariacionPct ?? null,
-        sinHumedadVerificada: 0,
-        topDesviaciones: []
-      };
+      let safeComPlanta = null;
+      if (safePeso.comercializadorPlanta && !safePeso.comercializadorPlanta.error && safePeso.comercializadorPlanta.disponible !== false) {
+        safeComPlanta = safePeso.comercializadorPlanta;
+      } else {
+        safeComPlanta = {
+          error: safePeso.comercializadorPlanta?.error || 'Indicador no disponible',
+          disponible: false,
+          totalRecepciones: null,
+          promedioDeltaPct: null,
+          totalesPorSemaforo: { VERDE: 0, AMARILLO: 0, ROJO: 0 }
+        };
+      }
 
       setMetrics({
         umbralPct: safePeso.umbralPct || 5.0,
@@ -400,7 +398,17 @@ export default function VariacionPesoWidget({ dateRange }) {
                 />
               </Box>
 
-              <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+              {comPlanta?.disponible === false || comPlanta?.error ? (
+                <Box sx={{ p: 2.5, bgcolor: 'background.paper', borderRadius: 2, border: '1px dashed', borderColor: 'warning.main', textAlign: 'center' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'warning.dark', fontFamily: 'Outfit' }}>
+                    Indicador no disponible
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', mt: 0.5, display: 'block' }}>
+                    {comPlanta?.error || 'El cálculo centralizado de variación de peso no está disponible en este momento.'}
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid container spacing={2} sx={{ alignItems: 'center' }}>
                 <Grid item xs={12} sm={3}>
                   <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
@@ -494,6 +502,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                   </Box>
                 </Grid>
               </Grid>
+            )}
             </Box>
 
             {/* Dos Poblaciones de Control Secundarias / Informativas */}
