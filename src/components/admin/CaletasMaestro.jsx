@@ -37,9 +37,11 @@ import {
   Anchor as AnchorIcon,
   HelpOutline as HelpOutlineIcon,
   CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon
+  Warning as WarningIcon,
+  UploadFile as UploadFileIcon
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
+import ImportarCoordenadasDialog from './ImportarCoordenadasDialog';
 
 export default function CaletasMaestro() {
   const [caletas, setCaletas] = useState([]);
@@ -60,6 +62,7 @@ export default function CaletasMaestro() {
   const [formLongitud, setFormLongitud] = useState('');
   const [formVaraderoId, setFormVaraderoId] = useState('');
   const [saving, setSaving] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   useEffect(() => {
     cargarDatos();
@@ -286,7 +289,7 @@ export default function CaletasMaestro() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               size="small"
@@ -296,6 +299,22 @@ export default function CaletasMaestro() {
               sx={{ textTransform: 'none', fontFamily: 'Outfit', fontWeight: 600, borderRadius: 2.5 }}
             >
               Actualizar
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<UploadFileIcon />}
+              onClick={() => setImportDialogOpen(true)}
+              sx={{
+                textTransform: 'none',
+                fontFamily: 'Outfit',
+                fontWeight: 600,
+                borderRadius: 2.5,
+                bgcolor: '#0284c7',
+                '&:hover': { bgcolor: '#0369a1' }
+              }}
+            >
+              Carga Masiva (TG.1)
             </Button>
           </Grid>
         </Grid>
@@ -370,9 +389,19 @@ export default function CaletasMaestro() {
                       </TableCell>
                       <TableCell align="center">
                         {c.latitud != null && c.longitud != null ? (
-                          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
-                            {c.latitud.toFixed(4)}, {c.longitud.toFixed(4)}
-                          </Typography>
+                          <Box>
+                            <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                              {c.latitud.toFixed(4)}, {c.longitud.toFixed(4)}
+                            </Typography>
+                            {c.fuenteCoordenada && (
+                              <Chip
+                                label={c.fuenteCoordenada}
+                                size="small"
+                                variant="outlined"
+                                sx={{ fontSize: '0.65rem', height: 18, mt: 0.5, borderColor: 'primary.light', color: 'primary.main' }}
+                              />
+                            )}
+                          </Box>
                         ) : c.varadero && c.varadero.latitud != null ? (
                           <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'warning.main', fontWeight: 600 }}>
                             {c.varadero.latitud.toFixed(4)}, {c.varadero.longitud.toFixed(4)} (Varadero)
@@ -524,6 +553,13 @@ export default function CaletasMaestro() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Diálogo de Carga Masiva y Cobertura Geográfica (TG.1) */}
+      <ImportarCoordenadasDialog
+        open={importDialogOpen}
+        onClose={() => setImportDialogOpen(false)}
+        onImportacionExitosa={cargarDatos}
+      />
     </Box>
   );
 }
