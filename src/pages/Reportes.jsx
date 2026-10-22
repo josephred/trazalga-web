@@ -243,6 +243,7 @@ export default function Reportes() {
                     onRowClick={handleRowClick}
                     actions={
                       <Button
+                        id="btn-descargar-csv"
                         variant="contained"
                         color="primary"
                         startIcon={<DownloadIcon />}
@@ -255,6 +256,8 @@ export default function Reportes() {
                           fontFamily: 'Outfit',
                           px: 2.5,
                           py: 1,
+                          minHeight: 44,
+                          width: { xs: '100%', sm: 'auto' },
                           boxShadow: '0 4px 14px rgba(14, 165, 233, 0.25)',
                         }}
                       >

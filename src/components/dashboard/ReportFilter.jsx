@@ -493,8 +493,8 @@ const ReportFilter = ({ onGenerate }) => {
                         />
                     </Box>
 
-                    {/* Botón Generar */}
-                    <Box sx={{ display: 'flex', justifyContent: 'stretch' }}>
+                    {/* Botón Generar (TF.5) */}
+                    <Box sx={{ display: 'flex', width: '100%', justifyContent: 'stretch' }}>
                         <Button
                             id="btn-generar-reporte"
                             variant="contained"
@@ -502,7 +502,9 @@ const ReportFilter = ({ onGenerate }) => {
                             onClick={handleGenerar}
                             startIcon={<SearchIcon />}
                             sx={{
-                                height: '40px',
+                                width: { xs: '100%', sm: '100%', lg: 'auto' },
+                                minHeight: 44,
+                                height: { xs: 44, lg: '40px' },
                                 px: 3,
                                 minWidth: 120,
                                 borderRadius: 3,
