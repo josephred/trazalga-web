@@ -37,6 +37,7 @@ import {
   ContentCopy as CopyIcon,
 } from '@mui/icons-material';
 import TrazabilidadDialog from '../dashboard/TrazabilidadDialog';
+import MapaDobleGeorreferencia from '../comun/MapaDobleGeorreferencia';
 
 const SEMAFORO_COLORS = {
   VERDE: { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0', label: 'Normal (Verde)' },
@@ -79,52 +80,89 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
   };
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', mt: 2, px: { xs: 1, sm: 2 } }}>
-      {/* Barra de Acciones Superior */}
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        justifyContent="space-between"
-        spacing={1.5}
-        sx={{ mb: 2.5 }}
+    <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', mt: 1, px: { xs: 1, sm: 2 }, overflowX: 'hidden' }}>
+      {/* Barra de Acciones Superior Sticky (TF.4: Botón Volver siempre visible) */}
+      <Box
+        sx={{
+          position: 'sticky',
+          top: { xs: 56, sm: 64 },
+          zIndex: 10,
+          bgcolor: (theme) => theme.palette.mode === 'light' ? 'rgba(248, 250, 252, 0.95)' : 'rgba(15, 23, 42, 0.95)',
+          backdropFilter: 'blur(8px)',
+          py: 1,
+          mb: 2,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2,
+        }}
       >
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Button
-            startIcon={<ArrowBackIcon />}
-            variant="outlined"
-            size="small"
-            onClick={onVolver}
-            sx={{ fontWeight: 700, borderRadius: 2 }}
-          >
-            Nueva Búsqueda
-          </Button>
-          <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: '1.1rem', sm: '1.3rem' } }}>
-            Ficha de Trazabilidad
-          </Typography>
-        </Stack>
-
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: 'flex-end' }}>
-          <Button
-            startIcon={<GraphIcon />}
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={() => setGraphOpen(true)}
-            sx={{ fontWeight: 700, borderRadius: 2 }}
-          >
-            Ver Grafo
-          </Button>
-          <Tooltip title="Copiar enlace directo">
-            <IconButton
-              onClick={handleCopiarEnlace}
-              color="primary"
-              sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          spacing={1}
+        >
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Button
+              id="btn-volver-consultas"
+              startIcon={<ArrowBackIcon />}
+              variant="outlined"
+              size="medium"
+              onClick={onVolver}
+              sx={{
+                fontWeight: 700,
+                borderRadius: 2,
+                minWidth: 44,
+                minHeight: 44,
+                textTransform: 'none',
+                fontFamily: 'Outfit',
+                fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                bgcolor: (t) => t.palette.mode === 'light' ? '#ffffff' : '#1e293b',
+              }}
             >
-              <ShareIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+              Volver
+            </Button>
+            <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: '0.95rem', sm: '1.25rem' }, fontFamily: 'Outfit' }}>
+              Ficha de Traza
+            </Typography>
+          </Stack>
+
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Button
+              startIcon={<GraphIcon />}
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={() => setGraphOpen(true)}
+              sx={{
+                fontWeight: 700,
+                borderRadius: 2,
+                minHeight: 44,
+                textTransform: 'none',
+                fontFamily: 'Outfit',
+                px: { xs: 1.5, sm: 2 },
+              }}
+            >
+              Grafo
+            </Button>
+            <Tooltip title="Copiar enlace directo">
+              <IconButton
+                onClick={handleCopiarEnlace}
+                color="primary"
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  minWidth: 44,
+                  minHeight: 44,
+                }}
+              >
+                <ShareIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Stack>
-      </Stack>
+      </Box>
 
       {/* 1. Franja Superior de Alertas y Retenciones */}
       {alertas && (alertas.totalMarcasActivas > 0 || alertas.hayCargasRetenidas) && (
@@ -170,7 +208,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
       <Paper
         elevation={0}
         sx={{
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           mb: 3,
           borderRadius: 2.5,
           border: '1px solid',
@@ -178,36 +216,36 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
           bgcolor: (theme) => theme.palette.mode === 'light' ? '#f8fafc' : '#1e293b',
         }}
       >
-        <Grid container spacing={2} alignItems="center">
+        <Grid container spacing={{ xs: 1.5, sm: 2 }} alignItems="center">
           <Grid size={{ xs: 6, sm: 3 }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', wordBreak: 'break-word' }}>
               Especie Principal
             </Typography>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, wordBreak: 'break-word' }}>
               {ficha.especiePredominante || 'No especificada'}
             </Typography>
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
-              Estado Humedad Predominante
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', wordBreak: 'break-word' }}>
+              Humedad Predominante
             </Typography>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, wordBreak: 'break-word' }}>
               {ficha.humedadPredominante || 'HÚMEDO'}
             </Typography>
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
-              Total Desembarcado en Origen
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', wordBreak: 'break-word' }}>
+              Total en Origen
             </Typography>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main', wordBreak: 'break-word' }}>
               {formatKg(ficha.totalKgOrigen)}
             </Typography>
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
-              Intermediarios / Destino
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', wordBreak: 'break-word' }}>
+              Destino / Intermed.
             </Typography>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, wordBreak: 'break-word' }}>
               {comercializadores && comercializadores.length > 0
                 ? `${comercializadores.length} Comercializador(es)`
                 : 'Directo a Planta'}
@@ -215,6 +253,14 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
           </Grid>
         </Grid>
       </Paper>
+
+      {/* 3. Sección Mapa: Origen y lugar de declaración (TG.4) */}
+      <MapaDobleGeorreferencia
+        origenes={origenes}
+        comercializadores={comercializadores}
+        planta={planta}
+        altura="300px"
+      />
 
       {/* 3. Contenedor de las 3 Tarjetas (Horizontal en Desktop, Apiladas en Mobile) */}
       <Grid container spacing={3}>
@@ -463,27 +509,96 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                           )}
                         </Paper>
 
-                        {/* Transporte y Guías si fue despachado */}
+                        {/* Bloque Destacado de Transporte y Chofer (TF.4) */}
                         {com.despachado && (
-                          <Grid container spacing={1} sx={{ mb: 1 }}>
-                            <Grid size={{ xs: 6 }}>
-                              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                                Patente: <strong>{com.patenteCamion || 'S/P'}</strong>
-                                {com.patenteCarro ? ` · Carro: ${com.patenteCarro}` : ''}
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              p: 1.5,
+                              borderRadius: 2,
+                              bgcolor: (t) => t.palette.mode === 'light' ? '#f5f3ff' : '#2e1065',
+                              border: '1px solid',
+                              borderColor: (t) => t.palette.mode === 'light' ? '#ddd6fe' : '#581c87',
+                              mb: 1.5,
+                            }}
+                          >
+                            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                              <TruckIcon sx={{ fontSize: '1.15rem', color: '#7c3aed' }} />
+                              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#6d28d9', fontFamily: 'Outfit' }}>
+                                Transporte y Chofer
                               </Typography>
-                            </Grid>
-                            <Grid size={{ xs: 6 }}>
-                              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                                Cantidad: <strong>{formatKg(com.cantidadKg)}</strong>
-                              </Typography>
-                            </Grid>
-                            <Grid size={{ xs: 12 }}>
-                              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                                Guía Origen: <strong>{com.docOrigenNumero || 'S/N'}</strong>
-                                {com.docDestinoNumero ? ` · Guía Destino: ${com.docDestinoNumero}` : ''}
-                              </Typography>
-                            </Grid>
-                          </Grid>
+                            </Stack>
+
+                            <Stack spacing={1}>
+                              {/* Patentes del vehículo sin cortes */}
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                                  Patente:
+                                </Typography>
+                                <Chip
+                                  label={com.patenteCamion ? `Camión: ${com.patenteCamion}` : 'S/P'}
+                                  size="small"
+                                  sx={{
+                                    fontWeight: 800,
+                                    fontFamily: 'monospace',
+                                    bgcolor: (t) => t.palette.mode === 'light' ? '#ede9fe' : '#4c1d95',
+                                    color: (t) => t.palette.mode === 'light' ? '#5b21b6' : '#ddd6fe',
+                                  }}
+                                />
+                                {com.patenteCarro && (
+                                  <Chip
+                                    label={`Carro: ${com.patenteCarro}`}
+                                    size="small"
+                                    sx={{
+                                      fontWeight: 800,
+                                      fontFamily: 'monospace',
+                                      bgcolor: (t) => t.palette.mode === 'light' ? '#ede9fe' : '#4c1d95',
+                                      color: (t) => t.palette.mode === 'light' ? '#5b21b6' : '#ddd6fe',
+                                    }}
+                                  />
+                                )}
+                              </Box>
+
+                              {/* Chofer y RUT sin cortes */}
+                              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                <PersonIcon sx={{ fontSize: '1rem', color: 'text.secondary', mt: 0.2 }} />
+                                <Box sx={{ minWidth: 0, flex: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 700, wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: 1.3 }}>
+                                    {com.chofer || 'Chofer no informado'}
+                                  </Typography>
+                                  {com.rutChofer && (
+                                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                                      RUT: <strong>{com.rutChofer}</strong>
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+
+                              {/* Guía y Documentos de Traslado */}
+                              <Box sx={{ pt: 0.5, borderTop: '1px dashed', borderColor: 'divider' }}>
+                                <Stack direction="row" spacing={0.8} alignItems="flex-start">
+                                  <ReceiptIcon sx={{ fontSize: '0.95rem', color: 'text.secondary', mt: 0.2 }} />
+                                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                                      {com.docOrigenTipo || 'Guía Despacho'}: <strong>{com.docOrigenNumero || 'S/N'}</strong>
+                                      {com.docOrigenFecha ? ` (${formatDate(com.docOrigenFecha)})` : ''}
+                                      {com.docDestinoNumero ? ` · Guía Destino: ${com.docDestinoNumero}` : ''}
+                                    </Typography>
+                                  </Box>
+                                </Stack>
+                              </Box>
+
+                              {/* Cantidad transportada */}
+                              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pt: 0.5 }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                                  Carga Transportada:
+                                </Typography>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                                  {formatKg(com.cantidadKg)}
+                                </Typography>
+                              </Stack>
+                            </Stack>
+                          </Paper>
                         )}
                       </Box>
                     );
@@ -716,6 +831,27 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Botón Inferior para volver cómodamente en móviles (TF.4) */}
+      <Box sx={{ mt: 3, mb: 4, display: 'flex', justifyContent: 'center' }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          variant="outlined"
+          color="inherit"
+          onClick={onVolver}
+          sx={{
+            fontWeight: 700,
+            borderRadius: 2.5,
+            minHeight: 44,
+            px: 3,
+            textTransform: 'none',
+            fontFamily: 'Outfit',
+            bgcolor: (t) => t.palette.mode === 'light' ? '#f8fafc' : '#1e293b',
+          }}
+        >
+          Volver a la búsqueda
+        </Button>
+      </Box>
 
       {/* Diálogo de Grafo Interactivo */}
       {graphOpen && (
