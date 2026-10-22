@@ -914,7 +914,7 @@ export default function Administracion() {
                     {tareasProgramadas.map((tarea) => {
                       const isError = tarea.estado === 'ERROR';
                       return (
-                        <Grid item xs={12} sm={6} md={4} key={tarea.id || tarea.nombre}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={tarea.id || tarea.nombre}>
                           <Box
                             sx={{
                               p: 2,
@@ -1035,7 +1035,7 @@ export default function Administracion() {
                   {/* Grid de Tarjetas de Módulo */}
                   <Grid container spacing={2.5}>
                     {modulosDeCategoria.map((mod) => (
-                      <Grid item xs={12} sm={6} md={4} key={mod.id}>
+                      <Grid size={{ xs: 12, sm: 6, md: 4 }} key={mod.id}>
                         <Card
                           elevation={0}
                           onClick={() => handleSelectTab(mod.tabIndex)}
@@ -1354,7 +1354,7 @@ export default function Administracion() {
           <Box>
             <Grid container spacing={3}>
               {configuraciones.map((config) => (
-              <Grid item xs={12} md={6} key={config.id}>
+              <Grid size={{ xs: 12, md: 6 }} key={config.id}>
                 <Card
                   elevation={0}
                   sx={{
@@ -1506,7 +1506,7 @@ export default function Administracion() {
         {activeTab === 7 && (
           <Grid container spacing={4}>
             {/* Columna Izquierda: Configuración del GPS Móvil */}
-            <Grid item xs={12} lg={4}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <Card
                 elevation={0}
                 sx={{
@@ -1635,7 +1635,7 @@ export default function Administracion() {
             </Grid>
 
             {/* Columna Derecha: Mapa y buscador de trayectoria */}
-            <Grid item xs={12} lg={8}>
+            <Grid size={{ xs: 12, lg: 8 }}>
               <MapaTrayectoUsuario />
             </Grid>
           </Grid>
@@ -1698,7 +1698,7 @@ export default function Administracion() {
               {SYNC_TASKS.map((task) => {
                 const isLoading = syncLoading === task.key;
                 return (
-                  <Grid item xs={12} sm={6} lg={4} key={task.key}>
+                  <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={task.key}>
                     <Card
                       elevation={0}
                       sx={{

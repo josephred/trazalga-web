@@ -1084,21 +1084,21 @@ export default function ControlCuotaDiaria({ dateRange }) {
                   Resumen de Auditoría
                 </Typography>
                 <Grid container spacing={1.5}>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Declaraciones Evaluadas</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>{resultadoRecalculo.declaracionesEvaluadas}</Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Marcas Nuevas Creadas</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 700, color: resultadoRecalculo.marcasNuevas > 0 ? 'warning.main' : 'text.primary' }}>
                       {resultadoRecalculo.marcasNuevas}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Marcas Preexistentes</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>{resultadoRecalculo.marcasExistentes}</Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Consumo Reconstruido</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>
                       {resultadoRecalculo.consumoFinalKg?.toLocaleString('es-CL')} kg ({resultadoRecalculo.porcentajeFinalUso}%)

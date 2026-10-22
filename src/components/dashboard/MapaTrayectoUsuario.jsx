@@ -263,7 +263,7 @@ export default function MapaTrayectoUsuario({ hallazgo = null }) {
 
         {/* Filtros de Búsqueda */}
         <Grid container spacing={2.5} alignItems="center" sx={{ mb: 3 }}>
-          <Grid item xs={12} md={4.5}>
+          <Grid size={{ xs: 12, md: 4.5 }}>
             <Autocomplete
               options={usuarios}
               getOptionLabel={(option) => `${option.rut} - ${option.nombres} ${option.apellidop}`}
@@ -290,7 +290,7 @@ export default function MapaTrayectoUsuario({ hallazgo = null }) {
               isOptionEqualToValue={(option, value) => option.id === value.id}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
             <TextField
               fullWidth
               label="Fecha Inicio"
@@ -306,7 +306,7 @@ export default function MapaTrayectoUsuario({ hallazgo = null }) {
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
             <TextField
               fullWidth
               label="Fecha Fin"
@@ -322,7 +322,7 @@ export default function MapaTrayectoUsuario({ hallazgo = null }) {
               }}
             />
           </Grid>
-          <Grid item xs={12} md={2.5}>
+          <Grid size={{ xs: 12, md: 2.5 }}>
             <Button
               fullWidth
               variant="contained"

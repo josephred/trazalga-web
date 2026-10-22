@@ -329,7 +329,7 @@ export default function IndicadorHelpDialog({ open, onClose, indicador, dateRang
           </Typography>
           <Grid container spacing={1.5}>
             {/* Métrica Base */}
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -367,7 +367,7 @@ export default function IndicadorHelpDialog({ open, onClose, indicador, dateRang
             </Grid>
 
             {/* Humedad y Factor */}
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -405,7 +405,7 @@ export default function IndicadorHelpDialog({ open, onClose, indicador, dateRang
             </Grid>
 
             {/* Fuentes de Datos */}
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -443,7 +443,7 @@ export default function IndicadorHelpDialog({ open, onClose, indicador, dateRang
             </Grid>
 
             {/* Criterio de Fiscalización */}
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Paper
                 elevation={0}
                 sx={{

@@ -294,7 +294,7 @@ export default function MacrozonasMaestro() {
 
       <Grid container spacing={3}>
         {/* Columna Izquierda: Listado de Macrozonas */}
-        <Grid item xs={12} lg={7}>
+        <Grid size={{ xs: 12, lg: 7 }}>
           <Card
             elevation={0}
             sx={{
@@ -451,7 +451,7 @@ export default function MacrozonasMaestro() {
         </Grid>
 
         {/* Columna Derecha: Detalle y Regiones de la Macrozona Seleccionada */}
-        <Grid item xs={12} lg={5}>
+        <Grid size={{ xs: 12, lg: 5 }}>
           <Card
             elevation={0}
             sx={{
@@ -570,7 +570,7 @@ export default function MacrozonasMaestro() {
 
           {/* Fila 1: Nombre, Código y Switches */}
           <Grid container spacing={2} sx={{ mt: 0.2 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Nombre de la Macrozona *"
@@ -580,7 +580,7 @@ export default function MacrozonasMaestro() {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <TextField
                 fullWidth
                 label="Código Identificador"
@@ -589,7 +589,7 @@ export default function MacrozonasMaestro() {
                 onChange={(e) => setForm((p) => ({ ...p, codigo: e.target.value }))}
               />
             </Grid>
-            <Grid item xs={12} sm={3} sx={{ display: 'flex', alignItems: 'center' }}>
+            <Grid size={{ xs: 12, sm: 3 }} sx={{ display: 'flex', alignItems: 'center' }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -689,7 +689,7 @@ export default function MacrozonasMaestro() {
                 {regiones.map((reg) => {
                   const checked = form.esNacional || form.regionIds.includes(reg.id);
                   return (
-                    <Grid item xs={12} sm={6} md={4} key={reg.id}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={reg.id}>
                       <FormControlLabel
                         control={
                           <Checkbox

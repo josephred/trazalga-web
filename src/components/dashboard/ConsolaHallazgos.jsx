@@ -416,7 +416,7 @@ export default function ConsolaHallazgos() {
           const isSelected = filtroMarca === key;
 
           return (
-            <Grid item xs={12} sm={6} md={2.4} key={key}>
+            <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={key}>
               <Card
                 elevation={0}
                 onClick={() => setFiltroMarca(isSelected ? '' : key)}
@@ -480,7 +480,7 @@ export default function ConsolaHallazgos() {
       {/* Barra de Filtros */}
       <Card elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, border: 1, borderColor: 'divider' }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={2.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
             <TextField
               select
               fullWidth
@@ -498,7 +498,7 @@ export default function ConsolaHallazgos() {
             </TextField>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               select
               fullWidth
@@ -514,7 +514,7 @@ export default function ConsolaHallazgos() {
             </TextField>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               select
               fullWidth
@@ -530,7 +530,7 @@ export default function ConsolaHallazgos() {
             </TextField>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               type="date"
               fullWidth
@@ -542,7 +542,7 @@ export default function ConsolaHallazgos() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               type="date"
               fullWidth
@@ -554,7 +554,7 @@ export default function ConsolaHallazgos() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={1.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
             <Button
               fullWidth
               variant="outlined"

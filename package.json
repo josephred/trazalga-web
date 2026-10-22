@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/verify-grid.js",
     "build": "vite build",
     "lint": "eslint .",
     "test:metadata": "node scripts/verify-metadata.js",

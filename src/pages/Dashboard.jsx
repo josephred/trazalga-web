@@ -74,7 +74,7 @@ export default function Dashboard() {
 
         {/* Malla de Indicadores Clave (KPIs) */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <StatCard
               title="Declaraciones totales"
               value={(resumen.declaracionesTotales || 0).toLocaleString('es-CL')}
@@ -85,7 +85,7 @@ export default function Dashboard() {
               dateRange={dateRange}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <StatCard
               title="Volumen total (kg)"
               value={(resumen.volumenTotal || 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })}
@@ -96,7 +96,7 @@ export default function Dashboard() {
               dateRange={dateRange}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <StatCard
               title="Alertas activas"
               value={(resumen.alertasActivas || 0).toLocaleString('es-CL')}
@@ -107,7 +107,7 @@ export default function Dashboard() {
               dateRange={dateRange}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <StatCard
               title="Casos abiertos"
               value={(resumen.casosAbiertos || 0).toLocaleString('es-CL')}
@@ -118,7 +118,7 @@ export default function Dashboard() {
               dateRange={dateRange}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <StatCard
               title="% Inconsistencias"
               value={`${(resumen.inconsistenciasPct || 0).toLocaleString('es-CL', { maximumFractionDigits: 1 })}%`}
@@ -129,7 +129,7 @@ export default function Dashboard() {
               dateRange={dateRange}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <StatCard
               title="Actores fiscalizados"
               value={(resumen.actoresFiscalizados || 0).toLocaleString('es-CL')}
@@ -142,7 +142,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Sub-indicadores por perfil */}
-          <Grid item xs={12} sm={6} md={3} lg={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }}>
             <StatCard
               title="Decl. Recolector"
               value={(resumen.totalRecolector || 0).toLocaleString('es-CL')}
@@ -153,7 +153,7 @@ export default function Dashboard() {
               dateRange={dateRange}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }}>
             <StatCard
               title="Nº Viajes (Armador)"
               value={viajesArmador.toLocaleString('es-CL')}
@@ -166,7 +166,7 @@ export default function Dashboard() {
               dateRange={dateRange}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }}>
             <StatCard
               title="Decl. Área de Manejo"
               value={(resumen.totalArea || 0).toLocaleString('es-CL')}
@@ -177,7 +177,7 @@ export default function Dashboard() {
               dateRange={dateRange}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }}>
             <StatCard
               title="Decl. Comercializador"
               value={(resumen.totalComercializador || 0).toLocaleString('es-CL')}
@@ -188,7 +188,7 @@ export default function Dashboard() {
               dateRange={dateRange}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }}>
             <StatCard
               title="Volumen Comprado (Comercializador)"
               value={`${(resumen.volumenComprado || 0).toLocaleString('es-CL', { maximumFractionDigits: 0 })} kg`}
@@ -203,7 +203,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Gráfico Principal de Desembarques y Declaraciones */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Box sx={{ position: 'relative', height: '100%' }}>
               <IndicadorRecolector dateRange={dateRange} />
               <IndicadorHelpButton helpKey="evolucionDesembarque" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
@@ -211,7 +211,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Indicador 1: Desembarque Físico */}
-          <Grid item xs={12} md={12} sx={{ width: '100%' }}>
+          <Grid size={{ xs: 12, md: 12 }} sx={{ width: '100%' }}>
             <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <DesembarqueFisicoWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="desembarqueFisico" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
@@ -219,7 +219,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Indicador 2: Captura Corregida */}
-          <Grid item xs={12} md={12} sx={{ width: '100%' }}>
+          <Grid size={{ xs: 12, md: 12 }} sx={{ width: '100%' }}>
             <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <CapturaCorregidaWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="capturaCorregida" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
@@ -227,7 +227,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Indicador 3: Control de Cuotas */}
-          <Grid item xs={12} md={12} sx={{ width: '100%' }}>
+          <Grid size={{ xs: 12, md: 12 }} sx={{ width: '100%' }}>
             <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <ControlCuotaDiaria dateRange={dateRange} />
               <IndicadorHelpButton helpKey="controlCuotas" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
@@ -235,14 +235,14 @@ export default function Dashboard() {
           </Grid>
 
           {/* Indicador 4: Límite Diario (LED) e Indicador 5: Control de Vedas */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ position: 'relative', height: '100%' }}>
               <LimiteExtraccionDiarioWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="limiteDiarioLed" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ position: 'relative', height: '100%' }}>
               <ExtraccionVedaWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="controlVedas" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
@@ -250,14 +250,14 @@ export default function Dashboard() {
           </Grid>
 
           {/* Indicador 6: Trazabilidad de Peso y Retención en Bodega Virtual */}
-          <Grid item xs={12} md={12} sx={{ width: '100%' }}>
+          <Grid size={{ xs: 12, md: 12 }} sx={{ width: '100%' }}>
             <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <VariacionPesoWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="variacionPeso" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 
-          <Grid item xs={12} md={12} sx={{ width: '100%' }}>
+          <Grid size={{ xs: 12, md: 12 }} sx={{ width: '100%' }}>
             <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <RetencionBodegaWidget />
               <IndicadorHelpButton helpKey="retencionBodega" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
@@ -265,28 +265,28 @@ export default function Dashboard() {
           </Grid>
 
           {/* Indicador 9: Perfilador de Riesgo de Fiscalización (Ancho Completo) */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Box sx={{ position: 'relative', height: '100%' }}>
               <PerfiladorRiesgoWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="perfiladorRiesgo" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ position: 'relative', height: '100%' }}>
               <TiempoValidacionWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="tiempoValidacion" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ position: 'relative', height: '100%' }}>
               <CasosAbiertosWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="casosAbiertos" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
           
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ position: 'relative', height: '100%' }}>
               <DobleOperacionWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="dobleOperacion" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
@@ -294,7 +294,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Indicador 9: Origen Real vs Geolocalización GPS */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ position: 'relative', height: '100%' }}>
               <OrigenGeoWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="origenGeo" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
@@ -302,7 +302,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Curva Snake acumulada (AMERB) — ancho completo */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Box sx={{ position: 'relative', height: '100%' }}>
               <CurvaSnakeWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="curvaSnake" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />

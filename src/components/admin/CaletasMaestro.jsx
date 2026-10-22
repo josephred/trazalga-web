@@ -194,7 +194,7 @@ export default function CaletasMaestro() {
 
       {/* Tarjeta de Resumen y Métricas de Georreferenciación */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card elevation={0} sx={{ p: 2, borderRadius: 3, border: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>
               Coordenadas Oficiales Propias
@@ -207,7 +207,7 @@ export default function CaletasMaestro() {
             </Typography>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card elevation={0} sx={{ p: 2, borderRadius: 3, border: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>
               Fallback vía Varadero
@@ -220,7 +220,7 @@ export default function CaletasMaestro() {
             </Typography>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card elevation={0} sx={{ p: 2, borderRadius: 3, border: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>
               Sin Referencia GPS
@@ -238,7 +238,7 @@ export default function CaletasMaestro() {
       {/* Controles de Búsqueda y Filtros */}
       <Card elevation={0} sx={{ p: 2.5, mb: 3, borderRadius: 3.5, border: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               size="small"
@@ -254,7 +254,7 @@ export default function CaletasMaestro() {
               }}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <FormControl fullWidth size="small">
               <InputLabel>Región</InputLabel>
               <Select
@@ -271,7 +271,7 @@ export default function CaletasMaestro() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <FormControl fullWidth size="small">
               <InputLabel>Estado Georreferenciación</InputLabel>
               <Select
@@ -286,7 +286,7 @@ export default function CaletasMaestro() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={2} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button
               variant="outlined"
               size="small"
@@ -480,7 +480,7 @@ export default function CaletasMaestro() {
             )}
 
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <TextField
                   fullWidth
                   size="small"
@@ -491,7 +491,7 @@ export default function CaletasMaestro() {
                   helperText="Formato decimal WGS84"
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <TextField
                   fullWidth
                   size="small"

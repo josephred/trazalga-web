@@ -409,7 +409,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                 </Box>
               ) : (
                 <Grid container spacing={2} sx={{ alignItems: 'center' }}>
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
                       Recepciones en Romana
@@ -420,7 +420,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                   </Box>
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
                       Promedio Variación (Δ%)
@@ -443,7 +443,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                   </Box>
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
                       Semáforo de Riesgo
@@ -480,7 +480,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                   </Box>
                 </Grid>
 
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'Inter', fontWeight: 600 }}>
                       Sin Humedad Verificada
@@ -507,7 +507,7 @@ export default function VariacionPesoWidget({ dateRange }) {
 
             {/* Dos Poblaciones de Control Secundarias / Informativas */}
             <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Box
                   sx={{
                     p: 2,
@@ -569,7 +569,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Box
                   sx={{
                     p: 2,

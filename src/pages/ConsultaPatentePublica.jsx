@@ -182,7 +182,7 @@ export default function ConsultaPatentePublica() {
           {/* Formulario de Consulta */}
           <Box component="form" onSubmit={(e) => { e.preventDefault(); handleConsultar(); }}>
             <Grid container spacing={2} alignItems="center" justifyContent="center">
-              <Grid item xs={12} sm={8} md={6}>
+              <Grid size={{ xs: 12, sm: 8, md: 6 }}>
                 <Box sx={{ position: 'relative' }}>
                   <TextField
                     fullWidth
@@ -214,7 +214,7 @@ export default function ConsultaPatentePublica() {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} sm={4} md={3}>
+              <Grid size={{ xs: 12, sm: 4, md: 3 }}>
                 <Button
                   fullWidth
                   id="btn-consultar-patente"
@@ -381,7 +381,7 @@ export default function ConsultaPatentePublica() {
 
                 <Grid container spacing={2}>
                   {/* Patente */}
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0' }}>
                       <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
                         Placa Patente
@@ -393,7 +393,7 @@ export default function ConsultaPatentePublica() {
                   </Grid>
 
                   {/* Especie */}
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0' }}>
                       <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
                         Especie Declarada
@@ -405,7 +405,7 @@ export default function ConsultaPatentePublica() {
                   </Grid>
 
                   {/* Fecha y Hora del movimiento */}
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                       <AccessTime sx={{ color: '#f59e0b', mt: 0.5 }} />
                       <Box>
@@ -428,7 +428,7 @@ export default function ConsultaPatentePublica() {
                   </Grid>
 
                   {/* Antigüedad del Movimiento / Vigencia */}
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                       <LocalShipping sx={{ color: '#64748b', mt: 0.5 }} />
                       <Box>

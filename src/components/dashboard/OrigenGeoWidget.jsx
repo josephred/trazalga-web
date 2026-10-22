@@ -160,7 +160,7 @@ export default function OrigenGeoWidget({ dateRange }) {
           <>
             {/* KPI Cards */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2.5, border: 1, borderColor: 'divider', textAlign: 'center' }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontFamily: 'Inter', textTransform: 'uppercase' }}>
                     Evaluadas
@@ -171,7 +171,7 @@ export default function OrigenGeoWidget({ dateRange }) {
                 </Box>
               </Grid>
 
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Box
                   sx={{
                     p: 2,
@@ -191,7 +191,7 @@ export default function OrigenGeoWidget({ dateRange }) {
                 </Box>
               </Grid>
 
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Box
                   sx={{
                     p: 2,
@@ -211,7 +211,7 @@ export default function OrigenGeoWidget({ dateRange }) {
                 </Box>
               </Grid>
 
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2.5, border: 1, borderColor: 'divider', textAlign: 'center' }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontFamily: 'Inter', textTransform: 'uppercase' }}>
                     Sin GPS / Sin Ref.

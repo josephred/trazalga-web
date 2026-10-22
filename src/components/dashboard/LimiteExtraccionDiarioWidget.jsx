@@ -212,7 +212,7 @@ export default function LimiteExtraccionDiarioWidget({ dateRange }) {
 
               {/* KPI Cards */}
               <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Box sx={{ p: 2, borderRadius: 3, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'grey.50', border: 1, borderColor: 'divider' }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
                       Embarcaciones
@@ -223,7 +223,7 @@ export default function LimiteExtraccionDiarioWidget({ dateRange }) {
                   </Box>
                 </Grid>
 
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Box sx={{ p: 2, borderRadius: 3, bgcolor: 'rgba(16, 185, 129, 0.08)', border: 1, borderColor: 'success.main' }}>
                     <Typography variant="caption" sx={{ color: 'success.dark', fontWeight: 700, display: 'block' }}>
                       Dentro de Límite
@@ -234,7 +234,7 @@ export default function LimiteExtraccionDiarioWidget({ dateRange }) {
                   </Box>
                 </Grid>
 
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Box sx={{ p: 2, borderRadius: 3, bgcolor: 'rgba(245, 158, 11, 0.08)', border: 1, borderColor: 'warning.main' }}>
                     <Typography variant="caption" sx={{ color: 'warning.dark', fontWeight: 700, display: 'block' }}>
                       Alerta / Tolerancia
@@ -245,7 +245,7 @@ export default function LimiteExtraccionDiarioWidget({ dateRange }) {
                   </Box>
                 </Grid>
 
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Box sx={{ p: 2, borderRadius: 3, bgcolor: (data?.excedidos || 0) > 0 ? 'rgba(239, 68, 68, 0.1)' : (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'grey.50', border: 1, borderColor: (data?.excedidos || 0) > 0 ? 'error.main' : 'divider' }}>
                     <Typography variant="caption" sx={{ color: (data?.excedidos || 0) > 0 ? 'error.main' : 'text.secondary', fontWeight: 700, display: 'block' }}>
                       Excedidos (&gt;100%)

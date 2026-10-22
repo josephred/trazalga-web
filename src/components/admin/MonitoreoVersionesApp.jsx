@@ -146,7 +146,7 @@ export default function MonitoreoVersionesApp() {
 
         <Grid container spacing={3}>
           {/* Tarjeta de Alerta de Plantas Desactualizadas */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 p: 2.5,
@@ -207,7 +207,7 @@ export default function MonitoreoVersionesApp() {
           </Grid>
 
           {/* Panel de Distribución de Versiones */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 p: 2.5,

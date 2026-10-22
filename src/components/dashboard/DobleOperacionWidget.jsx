@@ -241,7 +241,7 @@ export default function DobleOperacionWidget({ dateRange }) {
 
               {/* KPIs de la pestaña Geográfica */}
               <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <Box sx={{ 
                     p: 1.8, 
                     borderRadius: 3, 
@@ -258,7 +258,7 @@ export default function DobleOperacionWidget({ dateRange }) {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={6} sm={4}>
+                <Grid size={{ xs: 6, sm: 4 }}>
                   <Box sx={{ p: 1.8, borderRadius: 3, bgcolor: 'background.default', border: 1, borderColor: 'divider', textAlign: 'center' }}>
                     <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary' }}>
                       {metricsGeo.totalDeclaraciones || 0}
@@ -268,7 +268,7 @@ export default function DobleOperacionWidget({ dateRange }) {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={6} sm={4}>
+                <Grid size={{ xs: 6, sm: 4 }}>
                   <Box sx={{ p: 1.8, borderRadius: 3, bgcolor: 'background.default', border: 1, borderColor: 'divider', textAlign: 'center' }}>
                     <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.secondary' }}>
                       {metricsGeo.sinGeolocalizacion || 0}

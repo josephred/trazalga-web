@@ -1095,7 +1095,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
             <DialogContent sx={{ p: { xs: 2.5, sm: 3 }, bgcolor: '#f8fafc' }}>
               {/* Tarjetas KPI de Resumen Rápido */}
               <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Paper 
                     elevation={0}
                     sx={{ 
@@ -1123,7 +1123,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                   </Paper>
                 </Grid>
 
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Paper 
                     elevation={0}
                     sx={{ 
@@ -1151,7 +1151,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                   </Paper>
                 </Grid>
 
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Paper 
                     elevation={0}
                     sx={{ 
@@ -1179,7 +1179,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                   </Paper>
                 </Grid>
 
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Paper 
                     elevation={0}
                     sx={{ 
@@ -1211,7 +1211,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
               {/* Secciones detalladas en Cards */}
               <Grid container spacing={2.5}>
                 {/* 1. Actores: Emisor y Destinatario */}
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Paper 
                     elevation={0} 
                     sx={{ 
@@ -1241,7 +1241,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                       </Box>
 
                       <Grid container spacing={1}>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                             RUT EMISOR
                           </Typography>
@@ -1249,7 +1249,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                             {detailData.rutActor || '-'}
                           </Typography>
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                             RPA / CÓDIGO SERNAPESCA
                           </Typography>
@@ -1274,7 +1274,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                 </Grid>
 
                 {/* 2. Destinatario de la Carga */}
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Paper 
                     elevation={0} 
                     sx={{ 
@@ -1304,7 +1304,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                       </Box>
 
                       <Grid container spacing={1}>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                             RUT / CÓDIGO RECEPTOR
                           </Typography>
@@ -1312,7 +1312,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                             {detailData.rutDestinatario || '-'}
                           </Typography>
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                             EVENTO / DESCRIPCIÓN
                           </Typography>
@@ -1326,7 +1326,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                 </Grid>
 
                 {/* 3. Detalles de Recurso y Ubicación */}
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Paper 
                     elevation={0} 
                     sx={{ 
@@ -1347,7 +1347,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
 
                     <Stack spacing={1.5}>
                       <Grid container spacing={1.5}>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                             CALETA / PLANTA / SECTOR
                           </Typography>
@@ -1355,7 +1355,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                             {detailData.caleta || detailData.varaderoOAmerb || 'No informada'}
                           </Typography>
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                             COMUNA / REGIÓN
                           </Typography>
@@ -1397,7 +1397,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                 </Grid>
 
                 {/* 4. Logística y Transporte */}
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Paper 
                     elevation={0} 
                     sx={{ 
@@ -1418,7 +1418,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
 
                     <Stack spacing={1.5}>
                       <Grid container spacing={1.5}>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                             PATENTE CAMIÓN
                           </Typography>
@@ -1432,7 +1432,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                             <Typography variant="body2" sx={{ color: '#94a3b8' }}>-</Typography>
                           )}
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                             PATENTE CARRO
                           </Typography>
@@ -1449,7 +1449,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                       </Grid>
 
                       <Grid container spacing={1.5}>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                             CONDUCTOR / CHOFER
                           </Typography>
@@ -1457,7 +1457,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                             {detailData.chofer || '-'}
                           </Typography>
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                             RUT CONDUCTOR
                           </Typography>
@@ -1480,7 +1480,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
 
                       {(detailData.embarcacion || detailData.buzo) && (
                         <Grid container spacing={1.5}>
-                          <Grid item xs={6}>
+                          <Grid size={{ xs: 6 }}>
                             <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                               EMBARCACIÓN
                             </Typography>
@@ -1488,7 +1488,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                               {detailData.embarcacion || '-'}
                             </Typography>
                           </Grid>
-                          <Grid item xs={6}>
+                          <Grid size={{ xs: 6 }}>
                             <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, display: 'block' }}>
                               BUZO
                             </Typography>
@@ -1504,7 +1504,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
 
                 {/* 5. Trazabilidad de Orígenes y Tokens */}
                 {detailData.declaracionesSeleccionadas && (
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Paper 
                       elevation={0} 
                       sx={{ 

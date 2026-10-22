@@ -157,7 +157,7 @@ export default function ParametrosGeneralesMaestro() {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 label="Unidad Base de Medida"
@@ -166,7 +166,7 @@ export default function ParametrosGeneralesMaestro() {
                 helperText="Bloqueada en kg por norma técnica pesquera."
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 type="number"
@@ -176,7 +176,7 @@ export default function ParametrosGeneralesMaestro() {
                 helperText="Dispara marca de auditoría informativa DESEMBARQUE_ATIPICO."
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
                 Fuentes Computadas en Dashboard:
               </Typography>
@@ -224,13 +224,13 @@ export default function ParametrosGeneralesMaestro() {
             </Grid>
 
             {/* Criterio Estadístico TD.2 */}
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Divider sx={{ my: 1 }} />
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
                 Criterio Estadístico de Desembarque Atípico (TD.2):
               </Typography>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -247,7 +247,7 @@ export default function ParametrosGeneralesMaestro() {
                     Detecta anomalías por z-score móvil (z &gt; sigma).
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <TextField
                     fullWidth
                     size="small"
@@ -259,7 +259,7 @@ export default function ParametrosGeneralesMaestro() {
                     helperText="Típicamente 2.5 sigma."
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <TextField
                     fullWidth
                     size="small"
@@ -270,7 +270,7 @@ export default function ParametrosGeneralesMaestro() {
                     helperText="Días hacia atrás para la muestra (90 d)."
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <TextField
                     fullWidth
                     size="small"
@@ -315,7 +315,7 @@ export default function ParametrosGeneralesMaestro() {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -328,7 +328,7 @@ export default function ParametrosGeneralesMaestro() {
                 <MenuItem value="RECHAZAR_DECLARACION">RECHAZAR_DECLARACION (Bloquear declaración)</MenuItem>
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 type="number"
@@ -378,7 +378,7 @@ export default function ParametrosGeneralesMaestro() {
           </Box>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
                 Umbral Saldo Restante Crítico: {configs['cuota_umbral_restante_pct'] || '10.0'}%
               </Typography>
@@ -396,7 +396,7 @@ export default function ParametrosGeneralesMaestro() {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
                 Desvío Velocidad de Consumo: {configs['cuota_desvio_velocidad_pct'] || '25.0'}%
               </Typography>
@@ -414,7 +414,7 @@ export default function ParametrosGeneralesMaestro() {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 type="number"
@@ -425,7 +425,7 @@ export default function ParametrosGeneralesMaestro() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 select
                 fullWidth
@@ -439,7 +439,7 @@ export default function ParametrosGeneralesMaestro() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -453,7 +453,7 @@ export default function ParametrosGeneralesMaestro() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -467,7 +467,7 @@ export default function ParametrosGeneralesMaestro() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -485,7 +485,7 @@ export default function ParametrosGeneralesMaestro() {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -497,7 +497,7 @@ export default function ParametrosGeneralesMaestro() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 select
                 fullWidth
@@ -540,7 +540,7 @@ export default function ParametrosGeneralesMaestro() {
           </Box>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
@@ -554,7 +554,7 @@ export default function ParametrosGeneralesMaestro() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 type="number"
@@ -612,7 +612,7 @@ export default function ParametrosGeneralesMaestro() {
 
           <Grid container spacing={3}>
             {/* Tolerancia general */}
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
                 Tolerancia General de Variación de Peso: {configs['variacion_peso_umbral_general_pct'] || '5.0'}%
               </Typography>
@@ -631,12 +631,12 @@ export default function ParametrosGeneralesMaestro() {
             </Grid>
 
             {/* Exigencias en Recepción de Planta (TP.2 / TP.3) */}
-            <Grid item xs={12} sm={8}>
+            <Grid size={{ xs: 12, sm: 8 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
                 Exigencias en Recepción de Planta (Módulo de Planta · TP.2 / TP.3):
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -654,7 +654,7 @@ export default function ParametrosGeneralesMaestro() {
                     Rechaza recepciones sin peso neto mayor a 0 kg (422).
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -672,7 +672,7 @@ export default function ParametrosGeneralesMaestro() {
                     Exige número de ticket/voucher emitido por báscula.
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -690,7 +690,7 @@ export default function ParametrosGeneralesMaestro() {
                     Exige estado verificado de humedad al recibir.
                   </Typography>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     size="small"
@@ -705,7 +705,7 @@ export default function ParametrosGeneralesMaestro() {
             </Grid>
 
             {/* Retención de Bodega */}
-            <Grid item xs={12} sm={8}>
+            <Grid size={{ xs: 12, sm: 8 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                   Semáforo de Retención en Bodega Virtual:
@@ -759,7 +759,7 @@ export default function ParametrosGeneralesMaestro() {
             </Grid>
 
             {/* Consistencia Biológica */}
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', my: 1.5 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
@@ -780,7 +780,7 @@ export default function ParametrosGeneralesMaestro() {
               </Box>
 
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <TextField
                     fullWidth
                     size="small"
@@ -791,7 +791,7 @@ export default function ParametrosGeneralesMaestro() {
                     helperText="Días desde los cuales se exige evaporación obligatoria."
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <TextField
                     fullWidth
                     size="small"
@@ -803,7 +803,7 @@ export default function ParametrosGeneralesMaestro() {
                     helperText="Si la merma es menor (o hay ganancia), alerta fraude."
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid size={{ xs: 12, sm: 4 }}>
                   <TextField
                     fullWidth
                     size="small"

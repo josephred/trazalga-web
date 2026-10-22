@@ -342,7 +342,7 @@ export default function AmerbEspeciesMaestro() {
 
       <Grid container spacing={3}>
         {/* Panel izquierdo: Lista de AMERB */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Card
             elevation={0}
             sx={{
@@ -447,7 +447,7 @@ export default function AmerbEspeciesMaestro() {
         </Grid>
 
         {/* Panel derecho: Detalle de AMERB y Especies Habilitadas */}
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <Card
             elevation={0}
             sx={{
@@ -511,19 +511,19 @@ export default function AmerbEspeciesMaestro() {
                   </Box>
 
                   <Grid container spacing={2} sx={{ mt: 1 }}>
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Región</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedAmerb.region || selectedAmerb.regionModel?.nombre || '—'}</Typography>
                     </Grid>
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Comuna</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedAmerb.comuna?.nombre || '—'}</Typography>
                     </Grid>
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Superficie</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedAmerb.superficieHectareas ? `${selectedAmerb.superficieHectareas} ha` : '—'}</Typography>
                     </Grid>
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Estado</Typography>
                       <Chip
                         label={selectedAmerb.estado || 'VIGENTE'}
@@ -532,7 +532,7 @@ export default function AmerbEspeciesMaestro() {
                         sx={{ fontSize: '0.7rem', height: 22, fontWeight: 700 }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
                       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Centroide Geográfico Oficial (GPS)</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600, color: selectedAmerb.latitud != null ? 'text.primary' : 'warning.main', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <LocationOnIcon sx={{ fontSize: 16, color: selectedAmerb.latitud != null ? 'success.main' : 'warning.main' }} />
@@ -1005,7 +1005,7 @@ export default function AmerbEspeciesMaestro() {
             />
 
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <TextField
                   fullWidth
                   size="small"
@@ -1016,7 +1016,7 @@ export default function AmerbEspeciesMaestro() {
                   onChange={(e) => setFormCuota({ ...formCuota, fechaInicio: e.target.value })}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <TextField
                   fullWidth
                   size="small"

@@ -179,7 +179,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
         }}
       >
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={6} sm={3}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
               Especie Principal
             </Typography>
@@ -187,7 +187,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
               {ficha.especiePredominante || 'No especificada'}
             </Typography>
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
               Estado Humedad Predominante
             </Typography>
@@ -195,7 +195,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
               {ficha.humedadPredominante || 'HÚMEDO'}
             </Typography>
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
               Total Desembarcado en Origen
             </Typography>
@@ -203,7 +203,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
               {formatKg(ficha.totalKgOrigen)}
             </Typography>
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid size={{ xs: 6, sm: 3 }}>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
               Intermediarios / Destino
             </Typography>
@@ -219,7 +219,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
       {/* 3. Contenedor de las 3 Tarjetas (Horizontal en Desktop, Apiladas en Mobile) */}
       <Grid container spacing={3}>
         {/* BLOQUE 1: ORIGEN */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card
             elevation={0}
             sx={{
@@ -300,18 +300,18 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
 
                       {/* Ubicación y Fechas */}
                       <Grid container spacing={1} sx={{ mb: 1 }}>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                             Ubicación: <strong>{orig.caleta || 'Sin caleta'}</strong>, {orig.comuna || ''} {orig.region || ''}
                             {orig.varaderoOAmerb ? ` · ${orig.varaderoOAmerb}` : ''}
                           </Typography>
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                             Extracción: <strong>{formatDate(orig.fechaExtraccion)}</strong>
                           </Typography>
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                             Declaración: <strong>{formatDate(orig.fechaDeclaracion)} {orig.hora || ''}</strong>
                           </Typography>
@@ -359,7 +359,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
         </Grid>
 
         {/* BLOQUE 2: COMERCIALIZADOR */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card
             elevation={0}
             sx={{
@@ -466,18 +466,18 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                         {/* Transporte y Guías si fue despachado */}
                         {com.despachado && (
                           <Grid container spacing={1} sx={{ mb: 1 }}>
-                            <Grid item xs={6}>
+                            <Grid size={{ xs: 6 }}>
                               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                                 Patente: <strong>{com.patenteCamion || 'S/P'}</strong>
                                 {com.patenteCarro ? ` · Carro: ${com.patenteCarro}` : ''}
                               </Typography>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={{ xs: 6 }}>
                               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                                 Cantidad: <strong>{formatKg(com.cantidadKg)}</strong>
                               </Typography>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={{ xs: 12 }}>
                               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                                 Guía Origen: <strong>{com.docOrigenNumero || 'S/N'}</strong>
                                 {com.docDestinoNumero ? ` · Guía Destino: ${com.docDestinoNumero}` : ''}
@@ -501,7 +501,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
         </Grid>
 
         {/* BLOQUE 3: PLANTA DE ABASTECIMIENTO */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card
             elevation={0}
             sx={{
@@ -593,7 +593,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                         Estado de Humedad (T3.3)
                       </Typography>
                       <Grid container spacing={1}>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                             Declarado en Origen:
                           </Typography>
@@ -604,7 +604,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                             sx={{ fontWeight: 700, fontSize: '0.72rem', height: 22, mt: 0.3 }}
                           />
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                             Al Recibir Camión:
                           </Typography>

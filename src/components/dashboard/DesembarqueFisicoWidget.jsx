@@ -677,7 +677,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
           <>
             {/* Tarjetas de Resumen KPI */}
             <Grid container spacing={2} sx={{ mb: 2.5 }}>
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Box sx={{ p: 2, borderRadius: 3, bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'grey.50'), border: 1, borderColor: 'divider' }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
                     Desembarque Total
@@ -688,7 +688,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
                 </Box>
               </Grid>
 
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Box sx={{ p: 2, borderRadius: 3, bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'grey.50'), border: 1, borderColor: 'divider' }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
                     Declaraciones
@@ -699,7 +699,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
                 </Box>
               </Grid>
 
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Box sx={{ p: 2, borderRadius: 3, bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'grey.50'), border: 1, borderColor: 'divider' }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
                     Promedio / Faena
@@ -710,7 +710,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
                 </Box>
               </Grid>
 
-              <Grid item xs={6} sm={3}>
+              <Grid size={{ xs: 6, sm: 3 }}>
                 <Box
                   onClick={() => {
                     setShowAtipicos(true);

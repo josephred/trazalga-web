@@ -843,25 +843,25 @@ export default function FactoresConversionMaestro() {
               </Typography>
 
               <Grid container spacing={2}>
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Paper sx={{ p: 1.5, textAlign: 'center', borderRadius: 2, bgcolor: 'grey.50' }}>
                     <Typography variant="caption" color="text.secondary">Procesadas</Typography>
                     <Typography variant="h6" sx={{ fontWeight: 800 }}>{recalculoResumen.totalProcesadas}</Typography>
                   </Paper>
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Paper sx={{ p: 1.5, textAlign: 'center', borderRadius: 2, bgcolor: 'rgba(16, 185, 129, 0.08)' }}>
                     <Typography variant="caption" color="success.dark">Actualizadas</Typography>
                     <Typography variant="h6" sx={{ fontWeight: 800, color: 'success.main' }}>{recalculoResumen.totalActualizadas}</Typography>
                   </Paper>
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Paper sx={{ p: 1.5, textAlign: 'center', borderRadius: 2, bgcolor: 'rgba(239, 68, 68, 0.08)' }}>
                     <Typography variant="caption" color="error.dark">Omitidas</Typography>
                     <Typography variant="h6" sx={{ fontWeight: 800, color: 'error.main' }}>{recalculoResumen.totalOmitidas}</Typography>
                   </Paper>
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid size={{ xs: 6, sm: 3 }}>
                   <Paper sx={{ p: 1.5, textAlign: 'center', borderRadius: 2, bgcolor: 'rgba(14, 165, 233, 0.08)' }}>
                     <Typography variant="caption" color="secondary.dark">Variación Total</Typography>
                     <Typography variant="h6" sx={{ fontWeight: 800, color: 'secondary.main' }}>

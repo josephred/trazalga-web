@@ -155,7 +155,7 @@ export default function ResultadosBusqueda({ resultados, onSelect, termino }) {
 
                   {/* Fila inferior: Metadatos clave y Acción */}
                   <Grid container spacing={1.5} alignItems="center">
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                       <Stack direction="row" spacing={0.8} alignItems="center">
                         <LocationIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
                         <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 500 }} noWrap>
@@ -164,7 +164,7 @@ export default function ResultadosBusqueda({ resultados, onSelect, termino }) {
                       </Stack>
                     </Grid>
 
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                       <Stack direction="row" spacing={0.8} alignItems="center">
                         <CalendarIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
                         <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 500 }}>
@@ -173,7 +173,7 @@ export default function ResultadosBusqueda({ resultados, onSelect, termino }) {
                       </Stack>
                     </Grid>
 
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                       <Stack direction="row" spacing={0.8} alignItems="center">
                         <ScaleIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
                         <Typography variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 700 }}>
@@ -182,7 +182,7 @@ export default function ResultadosBusqueda({ resultados, onSelect, termino }) {
                       </Stack>
                     </Grid>
 
-                    <Grid item xs={6} sm={3} sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                    <Grid size={{ xs: 6, sm: 3 }} sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
                       <Stack
                         direction="row"
                         spacing={0.5}

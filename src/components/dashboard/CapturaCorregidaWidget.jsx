@@ -147,7 +147,7 @@ export default function CapturaCorregidaWidget({ dateRange }) {
           <>
             {/* KPI Cards */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ p: 2, borderRadius: 3, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'grey.50', border: 1, borderColor: 'divider' }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
                     Desembarque Físico Total
@@ -158,7 +158,7 @@ export default function CapturaCorregidaWidget({ dateRange }) {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Box
                   sx={{
                     p: 2,
@@ -185,7 +185,7 @@ export default function CapturaCorregidaWidget({ dateRange }) {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Box sx={{ p: 2, borderRadius: 3, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'grey.50', border: 1, borderColor: 'divider' }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block' }}>
                     Factor Ponderado Global
