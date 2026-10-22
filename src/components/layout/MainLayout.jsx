@@ -32,13 +32,12 @@ import api from '../../api/axiosConfig';
 
 const drawerWidth = 240;
 
+// TF.6: «Casos» y «Mapa» salen del menú hasta que existan implementaciones oficiales
 const menuItems = [
   { text: 'Inicio', icon: <HomeIcon />, path: '/dashboard' },
   { text: 'Consultas', icon: <SearchIcon />, path: '/consultas' },
   { text: 'Alertas', icon: <NotificationsIcon />, path: '/alertas' },
-  { text: 'Casos', icon: <FolderIcon />, path: '/casos' },
   { text: 'Reportes', icon: <BarChartIcon />, path: '/reportes' },
-  { text: 'Mapa', icon: <LocationIcon />, path: '/mapa' },
   { text: 'Administración', icon: <SettingsIcon />, path: '/administracion' },
 ];
 
