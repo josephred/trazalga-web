@@ -15,8 +15,15 @@ import {
   Tooltip, 
   Stack,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  Tabs,
+  Tab,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  useMediaQuery
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
@@ -40,6 +47,8 @@ import ViewSidebarIcon from '@mui/icons-material/ViewSidebar';
 import MapIcon from '@mui/icons-material/Map';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 import ReactFlow, { 
   MiniMap, 
@@ -50,7 +59,7 @@ import ReactFlow, {
   MarkerType
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -64,7 +73,43 @@ L.Icon.Default.mergeOptions({
 
 import api from '../../api/axiosConfig';
 
+/**
+ * Componente que invalida el tamaño del mapa cuando se hace visible o cambia el tamaño
+ * mediante ResizeObserver y al cambiar la pestaña activa (criterio TF.3).
+ */
+function MapResizer({ activeTab }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+    map.invalidateSize();
+    const t = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+    return () => clearTimeout(t);
+  }, [map, activeTab]);
+
+  useEffect(() => {
+    if (!map) return;
+    const container = map.getContainer();
+    if (!container || typeof ResizeObserver === 'undefined') return;
+
+    const ro = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [map]);
+
+  return null;
+}
+
 export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoReporte, row }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [mobileTab, setMobileTab] = useState('cadena'); // 'cadena' | 'mapa' | 'documentos' | 'grafo'
+
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   
@@ -533,6 +578,58 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
     return list;
   }, [row, nodes]);
 
+  // Clasificación de nodos por eslabón y documentos para vista móvil (TF.3)
+  const nodosClasificados = useMemo(() => {
+    const origenes = [];
+    const comercializadores = [];
+    const plantas = [];
+    const documentos = [];
+
+    const rawList = [];
+    nodes.forEach(nd => {
+      if (nd.data?.rawNode) rawList.push(nd.data.rawNode);
+    });
+
+    rawList.forEach(n => {
+      const tipo = String(n.tipoNodo || '').toLowerCase();
+      if (tipo.includes('recolector') || tipo.includes('armador') || tipo.includes('area') || tipo.includes('área') || tipo.includes('amerb')) {
+        origenes.push(n);
+      } else if (tipo.includes('comercializador')) {
+        comercializadores.push(n);
+      } else if (tipo.includes('planta') || tipo.includes('abastecimiento') || tipo.includes('destino') || tipo.includes('produccion')) {
+        plantas.push(n);
+      } else {
+        origenes.push(n);
+      }
+
+      if (n.docNumero || n.docTipo || n.voucherRomana || n.folio) {
+        documentos.push({
+          tipoDoc: n.docTipo || (n.voucherRomana ? 'VOUCHER ROMANA' : (n.tipoNodo || 'DECLARACIÓN')),
+          numero: n.docNumero || n.voucherRomana || n.folio,
+          fecha: n.docFecha || n.fecha,
+          emisor: n.nombreActor || 'Declarante',
+          rut: n.rutActor,
+          kilos: n.cantidad,
+          nodo: n
+        });
+      }
+    });
+
+    const totalKilosOrigenes = origenes.reduce((acc, curr) => acc + (Number(curr.cantidad) || 0), 0);
+    const totalKilosComercializadores = comercializadores.reduce((acc, curr) => acc + (Number(curr.cantidad) || 0), 0);
+    const totalKilosPlantas = plantas.reduce((acc, curr) => acc + (Number(curr.cantidad) || 0), 0);
+
+    return {
+      origenes,
+      comercializadores,
+      plantas,
+      documentos,
+      totalKilosOrigenes,
+      totalKilosComercializadores,
+      totalKilosPlantas
+    };
+  }, [nodes]);
+
   const mapCenter = useMemo(() => {
     if (mapPoints.length > 0) return [mapPoints[0].lat, mapPoints[0].lng];
     if (row?.latitud && row?.longitud) return [row.latitud, row.longitud];
@@ -547,153 +644,165 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
       onClose={onClose} 
       maxWidth="xl" 
       fullWidth 
+      fullScreen={isMobile}
       PaperProps={{ 
         sx: { 
-          borderRadius: 3.5, 
+          borderRadius: isMobile ? 0 : 3.5, 
           overflow: 'hidden',
-          height: isFullscreen ? '96vh' : '82vh',
-          maxHeight: isFullscreen ? '98vh' : '900px',
+          height: isMobile ? '100dvh' : (isFullscreen ? '96vh' : '82vh'),
+          maxHeight: isMobile ? '100dvh' : (isFullscreen ? '98vh' : '900px'),
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.45)',
           bgcolor: '#0f172a',
-          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          pt: isMobile ? 'env(safe-area-inset-top)' : 0,
+          pb: isMobile ? 'env(safe-area-inset-bottom)' : 0
         } 
       }}
     >
       {/* ========================================================================= */}
-      {/* CABECERA PRINCIPAL MODERNA (SLATE NAVY CON GLASSMORPHISM Y CONTROLES) */}
+      {/* CABECERA PRINCIPAL MODERNA (RESPONSIVA) */}
       {/* ========================================================================= */}
       <DialogTitle 
         sx={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between', 
-          py: 1.8, 
-          px: 3, 
+          py: { xs: 1.2, sm: 1.8 }, 
+          px: { xs: 1.5, sm: 3 }, 
           background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)', 
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           color: '#ffffff',
-          flexWrap: 'wrap',
-          gap: 2
+          gap: 1.5
         }}
       >
         {/* Título & Badge Icon */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, minWidth: 0, flex: 1 }}>
           <Box 
             sx={{ 
-              width: 44, 
-              height: 44, 
-              borderRadius: 2.5, 
+              width: { xs: 36, sm: 44 }, 
+              height: { xs: 36, sm: 44 }, 
+              borderRadius: 2, 
               background: 'linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%)', 
               color: '#ffffff', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(14, 165, 233, 0.35)'
+              boxShadow: '0 4px 14px rgba(14, 165, 233, 0.35)',
+              flexShrink: 0
             }}
           >
-            <AccountTreeIcon />
+            <AccountTreeIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
           </Box>
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: '1.1rem', sm: '1.25rem' }, color: '#ffffff', lineHeight: 1.2 }}>
-                Flujo de Trazabilidad Animado
+          <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.2 }}>
+              <Typography variant="h6" noWrap sx={{ fontWeight: 800, fontSize: { xs: '0.95rem', sm: '1.25rem' }, color: '#ffffff', lineHeight: 1.2 }}>
+                Traza del Lote
               </Typography>
               {row?.folio && (
                 <Chip 
                   size="small" 
-                  label={`Folio #${row.folio}`} 
+                  label={`#${row.folio}`} 
                   sx={{ 
                     fontFamily: 'monospace', 
                     fontWeight: 800, 
                     bgcolor: 'rgba(56, 189, 248, 0.15)', 
                     color: '#38bdf8',
                     border: '1px solid rgba(56, 189, 248, 0.3)',
-                    height: 22
+                    height: 20,
+                    fontSize: '0.7rem'
                   }} 
                 />
               )}
             </Box>
-            <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '0.78rem' }}>
-              Inspección interactiva de la cadena de custodia con geolocalización satelital
+            <Typography variant="caption" noWrap sx={{ color: '#94a3b8', fontSize: '0.72rem', display: 'block' }}>
+              {nodes.length} nodos en red · {mapPoints.length} GPS
             </Typography>
           </Box>
         </Box>
 
-        {/* Selector de Vistas (Grafo / Dividido / Mapa) */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={(e, next) => { if (next) setViewMode(next); }}
-            size="small"
-            sx={{
-              bgcolor: 'rgba(255, 255, 255, 0.08)',
-              borderRadius: 2.5,
-              p: 0.4,
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              '& .MuiToggleButton-root': {
-                color: '#94a3b8',
-                px: 1.6,
-                py: 0.5,
-                border: 'none',
-                borderRadius: 2,
-                fontWeight: 700,
-                fontSize: '0.72rem',
-                textTransform: 'none',
-                transition: 'all 0.2s ease',
-                '&.Mui-selected': {
-                  bgcolor: '#0284c7',
-                  color: '#ffffff',
-                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)',
-                  '&:hover': { bgcolor: '#0369a1' }
-                },
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
-                  color: '#ffffff'
+        {/* Acciones de Cabecera */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+          {/* Selector de Vistas visible sólo desde md */}
+          {!isMobile && (
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(e, next) => { if (next) setViewMode(next); }}
+              size="small"
+              sx={{
+                bgcolor: 'rgba(255, 255, 255, 0.08)',
+                borderRadius: 2.5,
+                p: 0.4,
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                '& .MuiToggleButton-root': {
+                  color: '#94a3b8',
+                  px: 1.6,
+                  py: 0.5,
+                  border: 'none',
+                  borderRadius: 2,
+                  fontWeight: 700,
+                  fontSize: '0.72rem',
+                  textTransform: 'none',
+                  '&.Mui-selected': {
+                    bgcolor: '#0284c7',
+                    color: '#ffffff',
+                    boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)',
+                    '&:hover': { bgcolor: '#0369a1' }
+                  },
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff'
+                  }
                 }
-              }
-            }}
-          >
-            <ToggleButton value="split">
-              <ViewSidebarIcon sx={{ fontSize: 16, mr: 0.6 }} />
-              Dividido
-            </ToggleButton>
-            <ToggleButton value="graph">
-              <AccountTreeIcon sx={{ fontSize: 16, mr: 0.6 }} />
-              Solo Grafo
-            </ToggleButton>
-            <ToggleButton value="map">
-              <MapIcon sx={{ fontSize: 16, mr: 0.6 }} />
-              Solo Mapa
-            </ToggleButton>
-          </ToggleButtonGroup>
-
-          {/* Botón Fullscreen */}
-          <Tooltip title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}>
-            <IconButton
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              sx={{ 
-                color: '#94a3b8', 
-                bgcolor: 'rgba(255, 255, 255, 0.05)', 
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                '&:hover': { color: '#ffffff', bgcolor: 'rgba(255, 255, 255, 0.15)' } 
               }}
             >
-              {isFullscreen ? <FullscreenExitIcon fontSize="small" /> : <FullscreenIcon fontSize="small" />}
-            </IconButton>
-          </Tooltip>
+              <ToggleButton value="split">
+                <ViewSidebarIcon sx={{ fontSize: 16, mr: 0.6 }} />
+                Dividido
+              </ToggleButton>
+              <ToggleButton value="graph">
+                <AccountTreeIcon sx={{ fontSize: 16, mr: 0.6 }} />
+                Solo Grafo
+              </ToggleButton>
+              <ToggleButton value="map">
+                <MapIcon sx={{ fontSize: 16, mr: 0.6 }} />
+                Solo Mapa
+              </ToggleButton>
+            </ToggleButtonGroup>
+          )}
 
-          {/* Botón Cerrar */}
+          {/* Botón Fullscreen (sólo desktop) */}
+          {!isMobile && (
+            <Tooltip title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}>
+              <IconButton
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                sx={{ 
+                  color: '#94a3b8', 
+                  bgcolor: 'rgba(255, 255, 255, 0.05)', 
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  '&:hover': { color: '#ffffff', bgcolor: 'rgba(255, 255, 255, 0.15)' } 
+                }}
+              >
+                {isFullscreen ? <FullscreenExitIcon fontSize="small" /> : <FullscreenIcon fontSize="small" />}
+              </IconButton>
+            </Tooltip>
+          )}
+
+          {/* Botón Cerrar (al menos 44x44 px según criterio TF.3) */}
           <IconButton
             aria-label="close"
             onClick={onClose}
             sx={{ 
+              minWidth: 44, 
+              minHeight: 44, 
+              width: 44, 
+              height: 44, 
               color: '#94a3b8', 
-              bgcolor: 'rgba(255, 255, 255, 0.05)', 
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              '&:hover': { color: '#ffffff', bgcolor: 'rgba(255, 255, 255, 0.15)' } 
+              bgcolor: 'rgba(255, 255, 255, 0.08)', 
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              '&:hover': { color: '#ffffff', bgcolor: 'rgba(255, 255, 255, 0.2)' } 
             }}
           >
             <CloseIcon fontSize="small" />
@@ -701,287 +810,696 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
         </Box>
       </DialogTitle>
 
+      {/* En móvil (< md): Barra de Pestañas (Cadena / Mapa / Documentos / Grafo) */}
+      {isMobile && (
+        <Tabs
+          value={mobileTab}
+          onChange={(e, val) => setMobileTab(val)}
+          variant="fullWidth"
+          textColor="inherit"
+          sx={{
+            bgcolor: '#1e293b',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            minHeight: 46,
+            '& .MuiTab-root': {
+              minHeight: 46,
+              py: 0.8,
+              px: 0.5,
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              color: '#94a3b8',
+              textTransform: 'none',
+              '&.Mui-selected': {
+                color: '#38bdf8'
+              }
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#38bdf8',
+              height: 3
+            }
+          }}
+        >
+          <Tab value="cadena" label={`Cadena (${nodes.length})`} icon={<AccountTreeIcon sx={{ fontSize: 16 }} />} iconPosition="start" />
+          <Tab value="mapa" label={`Mapa (${mapPoints.length})`} icon={<MapIcon sx={{ fontSize: 16 }} />} iconPosition="start" />
+          <Tab value="documentos" label={`Docs (${nodosClasificados.documentos.length})`} icon={<DescriptionIcon sx={{ fontSize: 16 }} />} iconPosition="start" />
+          <Tab value="grafo" label="Grafo" icon={<AccountTreeIcon sx={{ fontSize: 16 }} />} iconPosition="start" />
+        </Tabs>
+      )}
+
       {/* ========================================================================= */}
-      {/* CONTENIDO INTERACTIVO (GRAFO Y/O MAPA SEGÚN VIEWMODE) */}
+      {/* CONTENIDO INTERACTIVO (GRAFO, MAPA O PESTAÑAS SEGÚN RESOLUCIÓN) */}
       {/* ========================================================================= */}
       <DialogContent sx={{ p: 0, flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
-        {/* Panel Izquierdo: ReactFlow Canvas */}
-        {(viewMode === 'split' || viewMode === 'graph') && (
-          <Box 
-            sx={{ 
-              flex: viewMode === 'split' ? '1 1 55%' : '1 1 100%', 
-              borderRight: viewMode === 'split' ? '1px solid #e2e8f0' : 'none', 
-              position: 'relative',
-              bgcolor: '#f8fafc',
-              height: '100%'
-            }}
-          >
-            {/* Banner guía flotante */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 14,
-                left: 14,
-                zIndex: 5,
-                bgcolor: 'rgba(255, 255, 255, 0.94)',
-                backdropFilter: 'blur(8px)',
-                border: '1px solid #e2e8f0',
-                borderRadius: 2,
-                px: 1.6,
-                py: 0.6,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
-              }}
-            >
-              <InfoOutlinedIcon sx={{ fontSize: 16, color: '#0284c7' }} />
-              <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', fontSize: '0.73rem' }}>
-                Haz clic en cualquier tarjeta para abrir su declaración completa
-              </Typography>
-            </Box>
-
-            <ReactFlow 
-              nodes={nodes} 
-              edges={edges} 
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onNodeClick={(event, node) => {
-                if (node?.data?.rawNode) {
-                  handleOpenDetail(node.data.rawNode);
-                }
-              }}
-              fitView
-              fitViewOptions={{ padding: 0.2 }}
-              minZoom={0.2}
-              maxZoom={1.2}
-              attributionPosition="bottom-right"
-            >
-              <Background color="#cbd5e1" gap={18} size={1} />
-              <Controls style={{ borderRadius: 10, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
-              <MiniMap 
-                nodeStrokeWidth={2} 
-                zoomable 
-                pannable 
-                nodeColor={(n) => {
-                  const tipo = n.data?.rawNode?.tipoNodo || '';
-                  if (tipo.includes('Comercializador')) return '#d97706';
-                  if (tipo.includes('Planta')) return '#059669';
-                  return '#0284c7';
-                }}
-                style={{ 
-                  borderRadius: 10, 
-                  overflow: 'hidden', 
-                  border: '1px solid #cbd5e1', 
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.1)', 
-                  width: 140, 
-                  height: 95, 
-                  background: '#ffffff' 
-                }} 
-              />
-            </ReactFlow>
-          </Box>
-        )}
-
-        {/* Panel Derecho: Mapa Leaflet con Georreferenciación y Rutas */}
-        {(viewMode === 'split' || viewMode === 'map') && (
-          <Box 
-            sx={{ 
-              flex: viewMode === 'split' ? '1 1 45%' : '1 1 100%', 
-              position: 'relative',
-              height: '100%',
-              bgcolor: '#0f172a'
-            }}
-          >
-            {/* Overlay flotante informativo en mapa */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 14,
-                left: 14,
-                zIndex: 1000,
-                bgcolor: 'rgba(15, 23, 42, 0.88)',
-                backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: 2.5,
-                p: 1.4,
-                color: '#ffffff',
-                boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
-                maxWidth: 260
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <LocationOnIcon sx={{ fontSize: 17, color: '#38bdf8' }} />
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.72rem' }}>
-                  Ruta Geográfica
-                </Typography>
-              </Box>
-              <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', lineHeight: 1.3, fontSize: '0.7rem' }}>
-                {mapPoints.length > 0 
-                  ? `${mapPoints.length} punto(s) GPS trazado(s) en la costa`
-                  : 'Ubicación referencial de la declaración consultada'}
-              </Typography>
-            </Box>
-
-            <MapContainer 
-              center={mapCenter} 
-              zoom={row?.latitud ? 12 : 6} 
-              style={{ height: '100%', width: '100%' }}
-            >
-              <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
-              />
-
-              {/* Trazado de ruta conectando los puntos GPS de la cadena */}
-              {mapPoints.length >= 2 && (
-                <Polyline 
-                  positions={mapPoints.map(p => [p.lat, p.lng])}
-                  color="#0284c7"
-                  weight={3.5}
-                  dashArray="6, 8"
-                  opacity={0.85}
-                />
-              )}
-
-              {/* Marcadores de todos los hitos georreferenciados */}
-              {mapPoints.map((p, idx) => (
-                <Marker 
-                  key={idx} 
-                  position={[p.lat, p.lng]}
-                  icon={createCustomMapIcon(p.tipo)}
+        
+        {/* VISTA MÓVIL (< md) CON PESTAÑAS */}
+        {isMobile ? (
+          <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            
+            {/* 1. Pestaña Cadena (Lista vertical por eslabón) */}
+            {mobileTab === 'cadena' && (
+              <Box sx={{ flex: 1, overflow: 'auto', p: { xs: 1.5, sm: 2 }, bgcolor: '#0f172a' }}>
+                
+                {/* Eslabón 1: Orígenes */}
+                <Accordion 
+                  defaultExpanded 
+                  sx={{ 
+                    bgcolor: '#1e293b', 
+                    color: '#ffffff', 
+                    borderRadius: '12px !important', 
+                    mb: 1.5, 
+                    border: '1px solid rgba(56, 189, 248, 0.25)',
+                    '&:before': { display: 'none' } 
+                  }}
                 >
-                  <Popup>
-                    <Box sx={{ p: 0.5, minWidth: 170 }}>
-                      <Chip 
-                        size="small" 
-                        label={p.tipo} 
-                        sx={{ 
-                          fontSize: '0.68rem', 
-                          fontWeight: 700, 
-                          height: 20, 
-                          mb: 0.8,
-                          bgcolor: getNodeTheme(p.tipo).badgeBg,
-                          color: getNodeTheme(p.tipo).badgeColor,
-                          border: `1px solid ${getNodeTheme(p.tipo).border}`
-                        }} 
-                      />
-                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.25, mb: 0.3 }}>
-                        {p.title}
+                  <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#38bdf8' }} />}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%', justifyContent: 'space-between', pr: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PhishingIcon sx={{ color: '#38bdf8', fontSize: 20 }} />
+                        <Typography sx={{ fontWeight: 800, fontSize: '0.85rem' }}>
+                          Orígenes
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
+                        {nodosClasificados.origenes.length} decl. · {formatKg(nodosClasificados.totalKilosOrigenes)}
                       </Typography>
-                      {p.rut && (
-                        <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 0.5 }}>
-                          RUT: {p.rut}
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ pt: 0, pb: 1.5, px: 1.5 }}>
+                    <Stack spacing={1}>
+                      {nodosClasificados.origenes.length === 0 ? (
+                        <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
+                          No hay declaraciones de origen en esta traza.
                         </Typography>
+                      ) : (
+                        nodosClasificados.origenes.map((n, idx) => (
+                          <Paper
+                            key={idx}
+                            onClick={() => handleOpenDetail(n)}
+                            sx={{
+                              p: 1.25,
+                              bgcolor: '#0f172a',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              borderRadius: 2,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s',
+                              '&:active': { bgcolor: 'rgba(56, 189, 248, 0.08)' }
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                              <Chip
+                                size="small"
+                                label={`Folio #${n.folio || '-'}`}
+                                sx={{ height: 20, fontSize: '0.68rem', fontWeight: 800, bgcolor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}
+                              />
+                              <Typography sx={{ fontWeight: 800, fontSize: '0.85rem', color: '#4ade80' }}>
+                                {formatKg(n.cantidad)}
+                              </Typography>
+                            </Box>
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', mb: 0.25 }}>
+                              {n.nombreActor || '-'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, color: '#94a3b8', fontSize: '0.72rem' }}>
+                              <span>📅 {formatDate(n.fecha)}</span>
+                              <span>💧 {n.estadoHumedad || 'HÚMEDO'}</span>
+                              <span>📍 {n.caleta || n.comuna || n.varaderoOAmerb || 'S/D'}</span>
+                            </Box>
+                          </Paper>
+                        ))
                       )}
-                      {p.folio && (
-                        <Typography variant="caption" sx={{ fontFamily: 'monospace', color: '#0284c7', fontWeight: 800, display: 'block', mb: 0.5 }}>
-                          Folio: #{p.folio}
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+
+                {/* Eslabón 2: Comercializadores */}
+                <Accordion 
+                  defaultExpanded 
+                  sx={{ 
+                    bgcolor: '#1e293b', 
+                    color: '#ffffff', 
+                    borderRadius: '12px !important', 
+                    mb: 1.5, 
+                    border: '1px solid rgba(217, 119, 6, 0.25)',
+                    '&:before': { display: 'none' } 
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#d97706' }} />}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%', justifyContent: 'space-between', pr: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LocalShippingIcon sx={{ color: '#d97706', fontSize: 20 }} />
+                        <Typography sx={{ fontWeight: 800, fontSize: '0.85rem' }}>
+                          Comercializadores
                         </Typography>
-                      )}
-                      {p.cantidad && (
-                        <Typography variant="caption" sx={{ fontWeight: 800, color: '#0f172a', display: 'block', mb: 1 }}>
-                          {formatKg(p.cantidad)}
+                      </Box>
+                      <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
+                        {nodosClasificados.comercializadores.length} decl. · {formatKg(nodosClasificados.totalKilosComercializadores)}
+                      </Typography>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ pt: 0, pb: 1.5, px: 1.5 }}>
+                    <Stack spacing={1}>
+                      {nodosClasificados.comercializadores.length === 0 ? (
+                        <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
+                          No hay declaraciones de comercialización en esta traza.
                         </Typography>
+                      ) : (
+                        nodosClasificados.comercializadores.map((n, idx) => (
+                          <Paper
+                            key={idx}
+                            onClick={() => handleOpenDetail(n)}
+                            sx={{
+                              p: 1.25,
+                              bgcolor: '#0f172a',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              borderRadius: 2,
+                              cursor: 'pointer',
+                              '&:active': { bgcolor: 'rgba(217, 119, 6, 0.08)' }
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                              <Chip
+                                size="small"
+                                label={`Folio AC #${n.folio || '-'}`}
+                                sx={{ height: 20, fontSize: '0.68rem', fontWeight: 800, bgcolor: 'rgba(217, 119, 6, 0.15)', color: '#fbbf24' }}
+                              />
+                              <Typography sx={{ fontWeight: 800, fontSize: '0.85rem', color: '#4ade80' }}>
+                                {formatKg(n.cantidad)}
+                              </Typography>
+                            </Box>
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', mb: 0.25 }}>
+                              {n.nombreActor || '-'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, color: '#94a3b8', fontSize: '0.72rem' }}>
+                              <span>🚚 Chofer: {n.chofer || 'S/D'}</span>
+                              <span>🚗 Patente: <strong>{n.patente || n.patenteCarro || 'S/D'}</strong></span>
+                              {n.docNumero && <span>📄 Guía: #{n.docNumero}</span>}
+                            </Box>
+                          </Paper>
+                        ))
                       )}
-                      <Button
-                        size="small"
-                        fullWidth
-                        variant="contained"
-                        onClick={() => handleOpenDetail(p.rawNode)}
-                        sx={{
-                          py: 0.3,
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          textTransform: 'none',
-                          borderRadius: 1.5,
-                          bgcolor: getNodeTheme(p.tipo).primary,
-                          boxShadow: 'none'
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+
+                {/* Eslabón 3: Planta */}
+                <Accordion 
+                  defaultExpanded 
+                  sx={{ 
+                    bgcolor: '#1e293b', 
+                    color: '#ffffff', 
+                    borderRadius: '12px !important', 
+                    mb: 1.5, 
+                    border: '1px solid rgba(5, 150, 105, 0.25)',
+                    '&:before': { display: 'none' } 
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#10b981' }} />}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%', justifyContent: 'space-between', pr: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <FactoryIcon sx={{ color: '#10b981', fontSize: 20 }} />
+                        <Typography sx={{ fontWeight: 800, fontSize: '0.85rem' }}>
+                          Planta
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
+                        {nodosClasificados.plantas.length} decl. · {formatKg(nodosClasificados.totalKilosPlantas)}
+                      </Typography>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ pt: 0, pb: 1.5, px: 1.5 }}>
+                    <Stack spacing={1}>
+                      {nodosClasificados.plantas.length === 0 ? (
+                        <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
+                          No hay recepción en planta registrada en esta traza.
+                        </Typography>
+                      ) : (
+                        nodosClasificados.plantas.map((n, idx) => (
+                          <Paper
+                            key={idx}
+                            onClick={() => handleOpenDetail(n)}
+                            sx={{
+                              p: 1.25,
+                              bgcolor: '#0f172a',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              borderRadius: 2,
+                              cursor: 'pointer',
+                              '&:active': { bgcolor: 'rgba(5, 150, 105, 0.08)' }
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                              <Chip
+                                size="small"
+                                label={`A-PLA #${n.folio || '-'}`}
+                                sx={{ height: 20, fontSize: '0.68rem', fontWeight: 800, bgcolor: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}
+                              />
+                              <Typography sx={{ fontWeight: 800, fontSize: '0.85rem', color: '#4ade80' }}>
+                                {formatKg(n.cantidad)}
+                              </Typography>
+                            </Box>
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', mb: 0.25 }}>
+                              {n.nombreActor || '-'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, color: '#94a3b8', fontSize: '0.72rem' }}>
+                              <span>⚖ Romana / Voucher: #{n.voucherRomana || n.docNumero || 'VR-2026'}</span>
+                              <span>💧 Humedad: {n.estadoHumedad || 'SEMI SECO'}</span>
+                            </Box>
+                          </Paper>
+                        ))
+                      )}
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+              </Box>
+            )}
+
+            {/* 2. Pestaña Mapa a toda la altura con MapResizer */}
+            {mobileTab === 'mapa' && (
+              <Box sx={{ flex: 1, width: '100%', height: '100%', position: 'relative', bgcolor: '#0f172a' }}>
+                <MapContainer 
+                  center={mapCenter} 
+                  zoom={row?.latitud ? 12 : 6} 
+                  style={{ height: '100%', width: '100%' }}
+                >
+                  <MapResizer activeTab={mobileTab} />
+                  <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
+                  />
+                  {mapPoints.length >= 2 && (
+                    <Polyline 
+                      positions={mapPoints.map(p => [p.lat, p.lng])}
+                      color="#0284c7"
+                      weight={3.5}
+                      dashArray="6, 8"
+                      opacity={0.85}
+                    />
+                  )}
+                  {mapPoints.map((p, idx) => (
+                    <Marker key={idx} position={[p.lat, p.lng]} icon={createCustomMapIcon(p.tipo)}>
+                      <Popup>
+                        <Box sx={{ p: 0.5, minWidth: 170 }}>
+                          <Chip 
+                            size="small" 
+                            label={p.tipo} 
+                            sx={{ 
+                              fontSize: '0.68rem', 
+                              fontWeight: 700, 
+                              height: 20, 
+                              mb: 0.8,
+                              bgcolor: getNodeTheme(p.tipo).badgeBg,
+                              color: getNodeTheme(p.tipo).badgeColor,
+                              border: `1px solid ${getNodeTheme(p.tipo).border}`
+                            }} 
+                          />
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.25, mb: 0.3 }}>
+                            {p.title}
+                          </Typography>
+                          {p.rut && (
+                            <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 0.5 }}>
+                              RUT: {p.rut}
+                            </Typography>
+                          )}
+                          {p.folio && (
+                            <Typography variant="caption" sx={{ fontFamily: 'monospace', color: '#0284c7', fontWeight: 800, display: 'block', mb: 0.5 }}>
+                              Folio: #{p.folio}
+                            </Typography>
+                          )}
+                          {p.cantidad && (
+                            <Typography variant="caption" sx={{ fontWeight: 800, color: '#0f172a', display: 'block', mb: 1 }}>
+                              {formatKg(p.cantidad)}
+                            </Typography>
+                          )}
+                          <Button
+                            size="small"
+                            fullWidth
+                            variant="contained"
+                            onClick={() => handleOpenDetail(p.rawNode)}
+                            sx={{
+                              py: 0.3,
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              textTransform: 'none',
+                              borderRadius: 1.5,
+                              bgcolor: getNodeTheme(p.tipo).primary,
+                              boxShadow: 'none'
+                            }}
+                          >
+                            Ver Detalle Completo
+                          </Button>
+                        </Box>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </Box>
+            )}
+
+            {/* 3. Pestaña Documentos */}
+            {mobileTab === 'documentos' && (
+              <Box sx={{ flex: 1, overflow: 'auto', p: { xs: 1.5, sm: 2 }, bgcolor: '#0f172a' }}>
+                <Typography variant="subtitle2" sx={{ color: '#94a3b8', mb: 1.5, fontWeight: 700 }}>
+                  Guías y Documentos Tributarios de la Cadena
+                </Typography>
+                <Stack spacing={1.2}>
+                  {nodosClasificados.documentos.length === 0 ? (
+                    <Paper sx={{ p: 3, textAlign: 'center', bgcolor: '#1e293b', color: '#94a3b8', borderRadius: 2 }}>
+                      No hay documentos tributarios asociados explícitamente en este lote.
+                    </Paper>
+                  ) : (
+                    nodosClasificados.documentos.map((doc, idx) => (
+                      <Paper 
+                        key={idx} 
+                        onClick={() => handleOpenDetail(doc.nodo)}
+                        sx={{ 
+                          p: 1.5, 
+                          bgcolor: '#1e293b', 
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: 2, 
+                          color: '#ffffff',
+                          cursor: 'pointer',
+                          '&:active': { bgcolor: 'rgba(56, 189, 248, 0.08)' }
                         }}
                       >
-                        Ver Detalle Completo
-                      </Button>
-                    </Box>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <DescriptionIcon sx={{ color: '#38bdf8', fontSize: 18 }} />
+                            <Typography sx={{ fontWeight: 800, fontSize: '0.825rem', color: '#ffffff' }}>
+                              {doc.tipoDoc}: #{doc.numero}
+                            </Typography>
+                          </Box>
+                          <Chip size="small" label={formatKg(doc.kilos)} sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700, bgcolor: 'rgba(74, 222, 128, 0.15)', color: '#4ade80' }} />
+                        </Box>
+                        <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block' }}>
+                          Emisor: {doc.emisor} (RUT: {doc.rut || '-'})
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.25 }}>
+                          Fecha: {formatDate(doc.fecha)}
+                        </Typography>
+                      </Paper>
+                    ))
+                  )}
+                </Stack>
+              </Box>
+            )}
+
+            {/* 4. Pestaña Grafo en móvil (sin minimapa ni controles flotantes invasivos) */}
+            {mobileTab === 'grafo' && (
+              <Box sx={{ flex: 1, width: '100%', height: '100%', position: 'relative', bgcolor: '#f8fafc' }}>
+                <ReactFlow 
+                  nodes={nodes} 
+                  edges={edges} 
+                  onNodesChange={onNodesChange} 
+                  onEdgesChange={onEdgesChange} 
+                  onNodeClick={(event, node) => {
+                    if (node?.data?.rawNode) {
+                      handleOpenDetail(node.data.rawNode);
+                    }
+                  }}
+                  fitView
+                  fitViewOptions={{ padding: 0.2 }}
+                  minZoom={0.2}
+                  maxZoom={1.2}
+                >
+                  <Background color="#cbd5e1" gap={18} size={1} />
+                </ReactFlow>
+              </Box>
+            )}
+
           </Box>
+        ) : (
+          /* VISTA DESKTOP (>= md): Split, Grafo o Mapa según viewMode */
+          <>
+            {(viewMode === 'split' || viewMode === 'graph') && (
+              <Box 
+                sx={{ 
+                  flex: viewMode === 'split' ? '1 1 55%' : '1 1 100%', 
+                  borderRight: viewMode === 'split' ? '1px solid #e2e8f0' : 'none', 
+                  position: 'relative',
+                  bgcolor: '#f8fafc',
+                  height: '100%'
+                }}
+              >
+                {/* Banner guía flotante */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 14,
+                    left: 14,
+                    zIndex: 5,
+                    bgcolor: 'rgba(255, 255, 255, 0.94)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 2,
+                    px: 1.6,
+                    py: 0.6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  <InfoOutlinedIcon sx={{ fontSize: 16, color: '#0284c7' }} />
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', fontSize: '0.73rem' }}>
+                    Haz clic en cualquier tarjeta para abrir su declaración completa
+                  </Typography>
+                </Box>
+
+                <ReactFlow 
+                  nodes={nodes} 
+                  edges={edges} 
+                  onNodesChange={onNodesChange} 
+                  onEdgesChange={onEdgesChange} 
+                  onNodeClick={(event, node) => {
+                    if (node?.data?.rawNode) {
+                      handleOpenDetail(node.data.rawNode);
+                    }
+                  }}
+                  fitView
+                  fitViewOptions={{ padding: 0.2 }}
+                  minZoom={0.2}
+                  maxZoom={1.2}
+                  attributionPosition="bottom-right"
+                >
+                  <Background color="#cbd5e1" gap={18} size={1} />
+                  <Controls style={{ borderRadius: 10, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
+                  <MiniMap 
+                    nodeStrokeWidth={2} 
+                    zoomable 
+                    pannable 
+                    nodeColor={(n) => {
+                      const tipo = n.data?.rawNode?.tipoNodo || '';
+                      if (tipo.includes('Comercializador')) return '#d97706';
+                      if (tipo.includes('Planta')) return '#059669';
+                      return '#0284c7';
+                    }}
+                    style={{ 
+                      borderRadius: 10, 
+                      overflow: 'hidden', 
+                      border: '1px solid #cbd5e1', 
+                      boxShadow: '0 4px 14px rgba(0,0,0,0.1)', 
+                      width: 140, 
+                      height: 95, 
+                      background: '#ffffff' 
+                    }} 
+                  />
+                </ReactFlow>
+              </Box>
+            )}
+
+            {(viewMode === 'split' || viewMode === 'map') && (
+              <Box 
+                sx={{ 
+                  flex: viewMode === 'split' ? '1 1 45%' : '1 1 100%', 
+                  position: 'relative',
+                  height: '100%',
+                  bgcolor: '#0f172a'
+                }}
+              >
+                {/* Overlay flotante informativo en mapa */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 14,
+                    left: 14,
+                    zIndex: 1000,
+                    bgcolor: 'rgba(15, 23, 42, 0.88)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: 2.5,
+                    p: 1.4,
+                    color: '#ffffff',
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
+                    maxWidth: 260
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <LocationOnIcon sx={{ fontSize: 17, color: '#38bdf8' }} />
+                    <Typography variant="caption" sx={{ fontWeight: 800, color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.72rem' }}>
+                      Ruta Geográfica
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', lineHeight: 1.3, fontSize: '0.7rem' }}>
+                    {mapPoints.length > 0 
+                      ? `${mapPoints.length} punto(s) GPS trazado(s) en la costa`
+                      : 'Ubicación referencial de la declaración consultada'}
+                  </Typography>
+                </Box>
+
+                <MapContainer 
+                  center={mapCenter} 
+                  zoom={row?.latitud ? 12 : 6} 
+                  style={{ height: '100%', width: '100%' }}
+                >
+                  <MapResizer activeTab={viewMode} />
+                  <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
+                  />
+                  {mapPoints.length >= 2 && (
+                    <Polyline 
+                      positions={mapPoints.map(p => [p.lat, p.lng])}
+                      color="#0284c7"
+                      weight={3.5}
+                      dashArray="6, 8"
+                      opacity={0.85}
+                    />
+                  )}
+                  {mapPoints.map((p, idx) => (
+                    <Marker key={idx} position={[p.lat, p.lng]} icon={createCustomMapIcon(p.tipo)}>
+                      <Popup>
+                        <Box sx={{ p: 0.5, minWidth: 170 }}>
+                          <Chip 
+                            size="small" 
+                            label={p.tipo} 
+                            sx={{ 
+                              fontSize: '0.68rem', 
+                              fontWeight: 700, 
+                              height: 20, 
+                              mb: 0.8,
+                              bgcolor: getNodeTheme(p.tipo).badgeBg,
+                              color: getNodeTheme(p.tipo).badgeColor,
+                              border: `1px solid ${getNodeTheme(p.tipo).border}`
+                            }} 
+                          />
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.25, mb: 0.3 }}>
+                            {p.title}
+                          </Typography>
+                          {p.rut && (
+                            <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 0.5 }}>
+                              RUT: {p.rut}
+                            </Typography>
+                          )}
+                          {p.folio && (
+                            <Typography variant="caption" sx={{ fontFamily: 'monospace', color: '#0284c7', fontWeight: 800, display: 'block', mb: 0.5 }}>
+                              Folio: #{p.folio}
+                            </Typography>
+                          )}
+                          {p.cantidad && (
+                            <Typography variant="caption" sx={{ fontWeight: 800, color: '#0f172a', display: 'block', mb: 1 }}>
+                              {formatKg(p.cantidad)}
+                            </Typography>
+                          )}
+                          <Button
+                            size="small"
+                            fullWidth
+                            variant="contained"
+                            onClick={() => handleOpenDetail(p.rawNode)}
+                            sx={{
+                              py: 0.3,
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              textTransform: 'none',
+                              borderRadius: 1.5,
+                              bgcolor: getNodeTheme(p.tipo).primary,
+                              boxShadow: 'none'
+                            }}
+                          >
+                            Ver Detalle Completo
+                          </Button>
+                        </Box>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </Box>
+            )}
+          </>
         )}
       </DialogContent>
 
       {/* ========================================================================= */}
-      {/* BARRA INFERIOR / FOOTER RIBBON (LEYENDA Y MÉTRICAS) */}
+      {/* BARRA INFERIOR / FOOTER RIBBON (RESPONSIVA) */}
       {/* ========================================================================= */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          px: 3,
-          py: 1.5,
+          px: { xs: 1.5, sm: 3 },
+          py: { xs: 1, sm: 1.5 },
           bgcolor: '#0f172a',
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
           color: '#ffffff',
-          flexWrap: 'wrap',
-          gap: 2
+          gap: 1.5
         }}
       >
-        {/* Leyenda Visual */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap' }}>
-          <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.68rem' }}>
-            Eslabones:
+        {/* Leyenda Visual (Visible sólo desde sm) */}
+        {!isMobile && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap' }}>
+            <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.68rem' }}>
+              Eslabones:
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+              <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#0284c7' }} />
+              <Typography variant="caption" sx={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>
+                Origen
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+              <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#d97706' }} />
+              <Typography variant="caption" sx={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>
+                Comercializador
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+              <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#059669' }} />
+              <Typography variant="caption" sx={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>
+                Planta
+              </Typography>
+            </Box>
+          </Box>
+        )}
+
+        {/* Total Nodos en Red */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ScaleIcon sx={{ fontSize: 16, color: '#38bdf8' }} />
+          <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+            Total Nodos: <strong style={{ color: '#ffffff' }}>{nodes.length}</strong>
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#0284c7' }} />
-            <Typography variant="caption" sx={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>
-              Origen (Recolector / Armador / AMERB)
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#d97706' }} />
-            <Typography variant="caption" sx={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>
-              Comercializador
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#059669' }} />
-            <Typography variant="caption" sx={{ color: '#cbd5e1', fontWeight: 600, fontSize: '0.72rem' }}>
-              Planta (Abastecimiento / Prod. / Destino)
-            </Typography>
-          </Box>
         </Box>
 
-        {/* Resumen & Botón Cerrar */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ScaleIcon sx={{ fontSize: 16, color: '#38bdf8' }} />
-            <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>
-              Total Nodos en Red: <strong style={{ color: '#ffffff' }}>{nodes.length}</strong>
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={onClose}
-            sx={{
-              borderRadius: 2,
-              px: 2.5,
-              py: 0.5,
-              fontWeight: 700,
-              fontSize: '0.75rem',
-              textTransform: 'none',
-              bgcolor: 'rgba(255, 255, 255, 0.12)',
-              color: '#ffffff',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.22)'
-              }
-            }}
-          >
-            Cerrar Flujo
-          </Button>
-        </Box>
+        {/* Botón Cerrar Flujo */}
+        <Button
+          variant="contained"
+          size="small"
+          onClick={onClose}
+          sx={{
+            borderRadius: 2,
+            px: 2.5,
+            py: 0.8,
+            minHeight: 40,
+            fontWeight: 700,
+            fontSize: '0.75rem',
+            textTransform: 'none',
+            bgcolor: 'rgba(255, 255, 255, 0.12)',
+            color: '#ffffff',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.22)'
+            }
+          }}
+        >
+          Cerrar Flujo
+        </Button>
       </Box>
 
       {/* ========================================================================= */}
@@ -992,11 +1510,13 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
         onClose={handleCloseDetail} 
         maxWidth="md" 
         fullWidth
+        fullScreen={isSmallMobile}
         PaperProps={{ 
           sx: { 
-            borderRadius: 3.5, 
+            borderRadius: isSmallMobile ? 0 : 3.5, 
             overflow: 'hidden',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)'
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+            maxHeight: isSmallMobile ? '100dvh' : '90vh'
           } 
         }}
       >
@@ -1082,12 +1602,17 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                   aria-label="close"
                   onClick={handleCloseDetail}
                   sx={{ 
+                    minWidth: 44,
+                    minHeight: 44,
+                    width: 44,
+                    height: 44,
                     color: '#94a3b8', 
-                    bgcolor: 'rgba(255, 255, 255, 0.05)',
-                    '&:hover': { color: '#ffffff', bgcolor: 'rgba(255, 255, 255, 0.15)' } 
+                    bgcolor: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    '&:hover': { color: '#ffffff', bgcolor: 'rgba(255, 255, 255, 0.2)' } 
                   }}
                 >
-                  <CloseIcon />
+                  <CloseIcon fontSize="small" />
                 </IconButton>
               </Box>
             </Box>
