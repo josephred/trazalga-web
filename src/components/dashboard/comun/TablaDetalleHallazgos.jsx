@@ -248,20 +248,23 @@ export default function TablaDetalleHallazgos({
           maxHeight: maxHeight,
           width: '100%',
           overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
           // Garantiza que en pantallas estrechas (360px) la columna 1 quede fija
           '& th:first-of-type, & td:first-of-type': {
             position: 'sticky',
             left: 0,
             zIndex: 2,
-            bgcolor: 'background.paper'
+            bgcolor: 'background.paper',
+            boxShadow: (t) => `2px 0 4px -1px ${t.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.08)'}`,
           },
           '& thead th:first-of-type': {
             zIndex: 3,
-            bgcolor: 'background.default'
+            bgcolor: 'background.default',
+            boxShadow: (t) => `2px 0 4px -1px ${t.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.08)'}`,
           }
         }}
       >
-        <Table size="small" stickyHeader>
+        <Table size="small" stickyHeader sx={{ minWidth: 600 }}>
           <TableHead>
             <TableRow>
               {columnas.map((col, idx) => (

@@ -32,6 +32,8 @@ import {
   Radio,
   FormControl,
   FormLabel,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Gavel as GavelIcon,
@@ -139,6 +141,9 @@ const MARCA_CONFIG = {
 };
 
 export default function ConsolaHallazgos() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const perfil = getPerfil();
   const puedeResolver = puedeHacer(perfil, 'RESOLVER_HALLAZGO');
 
@@ -361,7 +366,7 @@ export default function ConsolaHallazgos() {
               </Typography>
             </Box>
 
-            <Stack direction="row" spacing={1.5}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ width: { xs: '100%', sm: 'auto' } }}>
               <Button
                 variant="outlined"
                 startIcon={<RefreshIcon />}
@@ -372,6 +377,8 @@ export default function ConsolaHallazgos() {
                   borderColor: 'rgba(255, 255, 255, 0.3)',
                   textTransform: 'none',
                   fontWeight: 600,
+                  minHeight: 44,
+                  width: { xs: '100%', sm: 'auto' },
                   '&:hover': { borderColor: '#ffffff', bgcolor: 'rgba(255, 255, 255, 0.08)' },
                 }}
               >
@@ -386,6 +393,8 @@ export default function ConsolaHallazgos() {
                   bgcolor: '#3b82f6',
                   textTransform: 'none',
                   fontWeight: 600,
+                  minHeight: 44,
+                  width: { xs: '100%', sm: 'auto' },
                   '&:hover': { bgcolor: '#2563eb' },
                 }}
               >
@@ -595,13 +604,32 @@ export default function ConsolaHallazgos() {
 
       {/* Tabla de Hallazgos */}
       <Card elevation={0} sx={{ borderRadius: 3, border: 1, borderColor: 'divider', overflow: 'hidden' }}>
-        <TableContainer>
-          <Table size="small">
+        <TableContainer
+          sx={{
+            width: '100%',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            // TF.6 / TA.4: Columna de folio/origen fija en pantallas estrechas
+            '& th:first-of-type, & td:first-of-type': {
+              position: 'sticky',
+              left: 0,
+              zIndex: 2,
+              bgcolor: 'background.paper',
+              boxShadow: (t) => `2px 0 4px -1px ${t.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.08)'}`,
+            },
+            '& thead th:first-of-type': {
+              zIndex: 3,
+              bgcolor: (t) => (t.palette.mode === 'dark' ? '#1e293b' : '#f8fafc'),
+              boxShadow: (t) => `2px 0 4px -1px ${t.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.08)'}`,
+            }
+          }}
+        >
+          <Table size="small" sx={{ minWidth: { xs: 750, md: '100%' } }}>
             <TableHead sx={{ bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)') }}>
               <TableRow>
+                <TableCell sx={{ fontWeight: 700, minWidth: 140 }}>Origen / Folio</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Marca Formal</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Origen / Faena</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Detalle Nominal del Hallazgo</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Regla / Ref.</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Detección</TableCell>
@@ -645,7 +673,28 @@ export default function ConsolaHallazgos() {
 
                     return (
                       <TableRow key={h.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                        {/* Estado */}
+                        {/* 1. Origen / Folio (Columna Fija TA.4 / TF.6) */}
+                        <TableCell sx={{ minWidth: 140 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+                            {h.declaracionTipo || 'Faena'}
+                          </Typography>
+                          {esBloqueado ? (
+                            <Chip
+                              icon={<BlockIcon sx={{ fontSize: 12 }} />}
+                              label="Bloqueado (422)"
+                              size="small"
+                              color="error"
+                              variant="outlined"
+                              sx={{ fontSize: '0.65rem', height: 20, mt: 0.3 }}
+                            />
+                          ) : (
+                            <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600, display: 'block', fontFamily: 'monospace' }}>
+                              {h.folio ? `Folio: ${h.folio}` : `Faena #${h.declaracionId}`}
+                            </Typography>
+                          )}
+                        </TableCell>
+
+                        {/* 2. Estado */}
                         <TableCell>
                           {h.estadoGestion === 'DERIVADA_CITACION' ? (
                             <Chip
@@ -677,7 +726,7 @@ export default function ConsolaHallazgos() {
                           )}
                         </TableCell>
 
-                        {/* Marca */}
+                        {/* 3. Marca */}
                         <TableCell>
                           <Stack direction="row" alignItems="center" spacing={1}>
                             <Box sx={{ color: cfg.color, display: 'flex' }}>
@@ -692,27 +741,6 @@ export default function ConsolaHallazgos() {
                               </Typography>
                             </Box>
                           </Stack>
-                        </TableCell>
-
-                        {/* Origen Faena */}
-                        <TableCell>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {h.declaracionTipo}
-                          </Typography>
-                          {esBloqueado ? (
-                            <Chip
-                              icon={<BlockIcon sx={{ fontSize: 12 }} />}
-                              label="Intento Bloqueado (422)"
-                              size="small"
-                              color="error"
-                              variant="outlined"
-                              sx={{ fontSize: '0.65rem', height: 20, mt: 0.3 }}
-                            />
-                          ) : (
-                            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                              Faena ID: #{h.declaracionId}
-                            </Typography>
-                          )}
                         </TableCell>
 
                         {/* Detalle Nominal */}
@@ -842,6 +870,7 @@ export default function ConsolaHallazgos() {
         onClose={() => !resolviendoLoading && setDialogResolverOpen(false)}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
           Resolver Hallazgo #{marcaSeleccionada?.id} — {marcaSeleccionada?.marca}
@@ -961,7 +990,8 @@ export default function ConsolaHallazgos() {
         onClose={() => !citandoLoading && setDialogCitacionOpen(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        fullScreen={isMobile}
+        PaperProps={{ sx: { borderRadius: isMobile ? 0 : 3 } }}
       >
         <DialogTitle sx={{ fontWeight: 800, fontFamily: 'Outfit', pb: 1 }}>
           Derivar a Citación y Fiscalización

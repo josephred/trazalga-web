@@ -265,8 +265,27 @@ export default function OrigenGeoWidget({ dateRange }) {
                     </Typography>
                   </Box>
                 ) : (
-                  <TableContainer sx={{ maxHeight: 360 }}>
-                    <Table size="small" stickyHeader>
+                  <TableContainer
+                    sx={{
+                      maxHeight: 360,
+                      width: '100%',
+                      overflowX: 'auto',
+                      WebkitOverflowScrolling: 'touch',
+                      '& th:first-of-type, & td:first-of-type': {
+                        position: 'sticky',
+                        left: 0,
+                        zIndex: 2,
+                        bgcolor: 'background.paper',
+                        boxShadow: (theme) => `2px 0 4px -1px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.08)'}`,
+                      },
+                      '& thead th:first-of-type': {
+                        zIndex: 3,
+                        bgcolor: 'background.default',
+                        boxShadow: (theme) => `2px 0 4px -1px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.08)'}`,
+                      }
+                    }}
+                  >
+                    <Table size="small" stickyHeader sx={{ minWidth: 650 }}>
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Usuario / RUT</TableCell>
@@ -365,8 +384,27 @@ export default function OrigenGeoWidget({ dateRange }) {
                     </Typography>
                   </Box>
                 ) : (
-                  <TableContainer sx={{ maxHeight: 360 }}>
-                    <Table size="small" stickyHeader>
+                  <TableContainer
+                    sx={{
+                      maxHeight: 360,
+                      width: '100%',
+                      overflowX: 'auto',
+                      WebkitOverflowScrolling: 'touch',
+                      '& th:first-of-type, & td:first-of-type': {
+                        position: 'sticky',
+                        left: 0,
+                        zIndex: 2,
+                        bgcolor: 'background.paper',
+                        boxShadow: (theme) => `2px 0 4px -1px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.08)'}`,
+                      },
+                      '& thead th:first-of-type': {
+                        zIndex: 3,
+                        bgcolor: 'background.default',
+                        boxShadow: (theme) => `2px 0 4px -1px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.08)'}`,
+                      }
+                    }}
+                  >
+                    <Table size="small" stickyHeader sx={{ minWidth: 700 }}>
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Folio / Fecha</TableCell>
