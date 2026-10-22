@@ -5,6 +5,7 @@ const K_TOKEN = 'token';
 const K_PERFIL = 'perfil';
 const K_NOMBRE = 'nombre';
 const K_USUARIO_ID = 'usuarioId';
+const K_REGION = 'region';
 
 export const parseJwt = (token) => {
   if (!token || typeof token !== 'string') return null;
@@ -26,7 +27,7 @@ export const parseJwt = (token) => {
   }
 };
 
-export const guardarSesion = ({ token, perfil, nombre, usuarioId }) => {
+export const guardarSesion = ({ token, perfil, nombre, usuarioId, region }) => {
   if (!token) return;
   localStorage.setItem(K_TOKEN, token);
 
@@ -34,10 +35,12 @@ export const guardarSesion = ({ token, perfil, nombre, usuarioId }) => {
   const perfilFinal = perfil || payload?.perfil;
   const nombreFinal = nombre || payload?.nombre;
   const usuarioIdFinal = usuarioId || payload?.usuarioId;
+  const regionFinal = region || payload?.region;
 
   if (perfilFinal) localStorage.setItem(K_PERFIL, String(perfilFinal));
   if (nombreFinal) localStorage.setItem(K_NOMBRE, String(nombreFinal));
   if (usuarioIdFinal) localStorage.setItem(K_USUARIO_ID, String(usuarioIdFinal));
+  if (regionFinal) localStorage.setItem(K_REGION, String(regionFinal));
 };
 
 export const getToken = () => localStorage.getItem(K_TOKEN);
@@ -84,8 +87,22 @@ export const getUsuarioId = () => {
   return null;
 };
 
+export const getRegion = () => {
+  const guardado = localStorage.getItem(K_REGION);
+  if (guardado) return guardado;
+  const token = getToken();
+  if (token) {
+    const payload = parseJwt(token);
+    if (payload?.region) {
+      localStorage.setItem(K_REGION, payload.region);
+      return payload.region;
+    }
+  }
+  return null;
+};
+
 export const cerrarSesion = () => {
-  [K_TOKEN, K_PERFIL, K_NOMBRE, K_USUARIO_ID, 'user'].forEach((k) => localStorage.removeItem(k));
+  [K_TOKEN, K_PERFIL, K_NOMBRE, K_USUARIO_ID, K_REGION, 'user'].forEach((k) => localStorage.removeItem(k));
 };
 
 export const revalidarPerfilServidor = async (apiInstance) => {
@@ -94,10 +111,11 @@ export const revalidarPerfilServidor = async (apiInstance) => {
   try {
     const res = await apiInstance.get('/usuarios/me');
     if (res.data) {
-      const { perfil, nombre, id } = res.data;
+      const { perfil, nombre, id, region } = res.data;
       if (perfil) localStorage.setItem(K_PERFIL, perfil);
       if (nombre) localStorage.setItem(K_NOMBRE, nombre);
       if (id) localStorage.setItem(K_USUARIO_ID, String(id));
+      if (region) localStorage.setItem(K_REGION, region);
       return res.data;
     }
   } catch (err) {
@@ -106,6 +124,9 @@ export const revalidarPerfilServidor = async (apiInstance) => {
     const payload = parseJwt(token);
     if (payload?.perfil) {
       localStorage.setItem(K_PERFIL, payload.perfil);
+    }
+    if (payload?.region) {
+      localStorage.setItem(K_REGION, payload.region);
     }
   }
   return null;

@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { 
   Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, 
   ListItemButton, ListItemIcon, ListItemText, Avatar, Button, IconButton,
-  Menu, MenuItem, Divider, Badge, Snackbar, Alert
+  Menu, MenuItem, Divider, Badge, Snackbar, Alert, Popover, Tooltip, useMediaQuery
 } from '@mui/material';
 import { 
   Home as HomeIcon,
@@ -18,14 +18,15 @@ import {
   Logout as LogoutIcon,
   Person as PersonIcon,
   LightMode as LightModeIcon,
-  DarkMode as DarkModeIcon
+  DarkMode as DarkModeIcon,
+  Menu as MenuIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { ColorModeContext } from '../../theme/ThemeContext';
 import sernapescaLogo from '../../assets/sernapesca.png';
 import { onMessageListener } from '../../firebase';
-import { getPerfil, getNombre, cerrarSesion, revalidarPerfilServidor } from '../../auth/sesion';
+import { getPerfil, getNombre, getUsuarioId, getRegion, cerrarSesion, revalidarPerfilServidor } from '../../auth/sesion';
 import { puedeVer } from '../../auth/perfiles';
 import api from '../../api/axiosConfig';
 
@@ -41,14 +42,23 @@ const menuItems = [
   { text: 'Administración', icon: <SettingsIcon />, path: '/administracion' },
 ];
 
+import { getDefaultDateRange, loadUserDateRange, saveUserDateRange } from '../../utils/fechas';
+
+export { getDefaultDateRange };
 
 export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const colorMode = useContext(ColorModeContext);
+
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  // Popover fecha en móvil
+  const [datePopoverEl, setDatePopoverEl] = useState(null);
 
   // Notifications State
   const [notifAnchorEl, setNotifAnchorEl] = useState(null);
@@ -56,12 +66,18 @@ export default function MainLayout() {
   const [notifications, setNotifications] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', title: '' });
 
+  const usuarioId = getUsuarioId();
   const perfil = getPerfil();
   const nombre = getNombre();
+  const [region, setRegion] = useState(() => getRegion());
   const itemsVisibles = menuItems.filter((item) => puedeVer(perfil, item.path));
 
   useEffect(() => {
-    revalidarPerfilServidor(api);
+    revalidarPerfilServidor(api).then((data) => {
+      if (data?.region) {
+        setRegion(data.region);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -79,18 +95,30 @@ export default function MainLayout() {
     };
   }, []);
 
-  // Inicializa por defecto en el mes de evaluación: 01-07-2026 a 31-07-2026
-  const [dateRange, setDateRange] = useState({
-    startDate: '2026-07-01',
-    endDate: '2026-07-31'
-  });
+  // Rango de fechas por defecto: mes en curso en America/Santiago, recordado por usuario
+  const [dateRange, setDateRange] = useState(() => loadUserDateRange(usuarioId));
 
   const handleStartDateChange = (e) => {
-    setDateRange({ ...dateRange, startDate: e.target.value });
+    const next = { ...dateRange, startDate: e.target.value };
+    setDateRange(next);
+    saveUserDateRange(usuarioId, next);
   };
   
   const handleEndDateChange = (e) => {
-    setDateRange({ ...dateRange, endDate: e.target.value });
+    const next = { ...dateRange, endDate: e.target.value };
+    setDateRange(next);
+    saveUserDateRange(usuarioId, next);
+  };
+
+  const handleDrawerToggle = () => {
+    setMobileOpen((prev) => !prev);
+  };
+
+  const handleNavClick = (path) => {
+    navigate(path);
+    if (isMobile) {
+      setMobileOpen(false);
+    }
   };
 
   const handleUserMenuClick = (event) => {
@@ -139,11 +167,16 @@ export default function MainLayout() {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
         
-        {/* ═══════════ SIDEBAR (MENÚ LATERAL) ═══════════ */}
+        {/* ═══════════ SIDEBAR (MENÚ LATERAL RESPONSIVO) ═══════════ */}
         <Drawer
-          variant="permanent"
+          variant={isMobile ? 'temporary' : 'permanent'}
+          open={isMobile ? mobileOpen : true}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true, // Optimiza renderizado en dispositivos móviles
+          }}
           sx={{
-            width: drawerWidth,
+            width: isMobile ? 'auto' : drawerWidth,
             flexShrink: 0,
             '& .MuiDrawer-paper': {
               width: drawerWidth,
@@ -157,28 +190,38 @@ export default function MainLayout() {
             },
           }}
         >
-          {/* Header del Menú / Logo */}
+          {/* Header del Menú / Logo (< 60px en móvil vs escritorio) */}
           <Box sx={{ 
-            p: 2, 
+            p: { xs: 1.25, md: 2 }, 
             display: 'flex', 
             justifyContent: 'center', 
             alignItems: 'center',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
-            bgcolor: 'rgba(0,0,0,0.12)'
+            bgcolor: 'rgba(0,0,0,0.12)',
+            minHeight: { xs: 58, md: 120 }
           }}>
-            <img src={sernapescaLogo} alt="Sernapesca" style={{ height: 130, objectFit: 'contain' }} />
+            <img 
+              src={sernapescaLogo} 
+              alt="Sernapesca" 
+              style={{ 
+                height: isMobile ? 48 : 100, 
+                maxHeight: isMobile ? 54 : 120, 
+                objectFit: 'contain',
+                transition: 'all 0.2s ease'
+              }} 
+            />
           </Box>
 
           {/* Enlaces del Menú */}
-          <List sx={{ flex: 1, pt: 2, px: 0 }}>
+          <List sx={{ flex: 1, pt: 1.5, px: 0 }}>
             {itemsVisibles.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <ListItem key={item.text} disablePadding>
                   <ListItemButton 
-                    onClick={() => navigate(item.path)}
+                    onClick={() => handleNavClick(item.path)}
                     sx={{
-                      py: 1.5,
+                      py: 1.25,
                       px: 3,
                       bgcolor: isActive ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
                       borderLeft: isActive ? '4px solid #0ea5e9' : '4px solid transparent',
@@ -187,7 +230,7 @@ export default function MainLayout() {
                       '&:hover': {
                         bgcolor: 'rgba(255, 255, 255, 0.04)',
                         color: '#fff',
-                        pl: 3.5, // Micro-animación de deslizamiento
+                        pl: 3.5,
                         '& .MuiListItemIcon-root': {
                           color: 'secondary.main',
                         }
@@ -222,9 +265,9 @@ export default function MainLayout() {
           <List sx={{ px: 0, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <ListItem disablePadding>
               <ListItemButton 
-                onClick={() => navigate('/ayuda')}
+                onClick={() => handleNavClick('/ayuda')}
                 sx={{
-                  py: 1.5,
+                  py: 1.25,
                   px: 3,
                   color: location.pathname === '/ayuda' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
                   bgcolor: location.pathname === '/ayuda' ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
@@ -259,9 +302,21 @@ export default function MainLayout() {
         </Drawer>
 
         {/* ═══════════ ÁREA DE CONTENIDO PRINCIPAL ═══════════ */}
-        <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+        <Box 
+          component="main" 
+          sx={{ 
+            flexGrow: 1, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100vh', 
+            overflow: 'hidden', 
+            position: 'relative',
+            width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
+            maxWidth: '100vw'
+          }}
+        >
           
-          {/* ═══════════ HEADER (BARRA SUPERIOR) ═══════════ */}
+          {/* ═══════════ HEADER (BARRA SUPERIOR RESPONSIVA) ═══════════ */}
           <AppBar 
             position="static" 
             color="transparent" 
@@ -273,38 +328,91 @@ export default function MainLayout() {
               backgroundImage: 'none',
             }}
           >
-            <Toolbar sx={{ px: 3, py: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Toolbar 
+              sx={{ 
+                px: { xs: 1.5, sm: 2.5, md: 3 }, 
+                py: 1, 
+                minHeight: { xs: 56, sm: 64 },
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
               
-              {/* Sección Izquierda: Marca y Región */}
-              <Box sx={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                <Box>
+              {/* Sección Izquierda: Botón Menú Móvil + Marca / Título */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2, md: 3 }, minWidth: 0, flex: 1 }}>
+                
+                {/* Botón hamburguesa visible bajo md */}
+                <IconButton
+                  color="inherit"
+                  aria-label="Abrir menú de navegación"
+                  edge="start"
+                  onClick={handleDrawerToggle}
+                  sx={{ 
+                    display: { xs: 'flex', md: 'none' }, 
+                    color: 'text.primary',
+                    p: 1
+                  }}
+                >
+                  <MenuIcon />
+                </IconButton>
+
+                {/* Marca visible en md en adelante */}
+                <Box sx={{ display: { xs: 'none', md: 'block' } }}>
                   <Typography variant="h6" sx={{ fontWeight: 900, color: 'text.primary', fontFamily: 'Outfit', lineHeight: 1.1, letterSpacing: '0.5px' }}>
                     TRAZALGA
                   </Typography>
                   <Typography sx={{ fontSize: '0.625rem', color: 'text.secondary', fontFamily: 'Inter', lineHeight: 1.2, mt: 0.25 }}>
                     Portal de Control de Trazabilidad<br/>de Algas Pardas
                   </Typography>
-                  <Typography sx={{ fontSize: '0.625rem', color: 'secondary.main', fontWeight: 700, fontFamily: 'Inter', mt: 0.5 }}>
-                    IV Región de Coquimbo
-                  </Typography>
+                  {region && (
+                    <Typography sx={{ fontSize: '0.625rem', color: 'secondary.main', fontWeight: 700, fontFamily: 'Inter', mt: 0.5 }}>
+                      {region}
+                    </Typography>
+                  )}
                 </Box>
 
                 {/* Título de Página y Subtítulo */}
-                <Box sx={{ borderLeft: 1, borderColor: 'divider', pl: 4 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', fontFamily: 'Outfit', lineHeight: 1.2 }}>
+                <Box sx={{ 
+                  borderLeft: { xs: 'none', md: 1 }, 
+                  borderColor: 'divider', 
+                  pl: { xs: 0, md: 3 },
+                  minWidth: 0,
+                  overflow: 'hidden'
+                }}>
+                  <Typography 
+                    variant="h6" 
+                    noWrap
+                    sx={{ 
+                      fontWeight: 800, 
+                      color: 'text.primary', 
+                      fontFamily: 'Outfit', 
+                      lineHeight: 1.2,
+                      fontSize: { xs: '1rem', sm: '1.25rem' }
+                    }}
+                  >
                     {title}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.725rem', color: 'text.secondary', fontFamily: 'Inter' }}>
+                  <Typography 
+                    noWrap
+                    sx={{ 
+                      fontSize: { xs: '0.675rem', sm: '0.725rem' }, 
+                      color: 'text.secondary', 
+                      fontFamily: 'Inter',
+                      display: { xs: 'none', sm: 'block' }
+                    }}
+                  >
                     {subtitle}
                   </Typography>
                 </Box>
               </Box>
 
               {/* Sección Derecha: Acciones Rápidas y Usuario */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1.5, md: 2 } }}>
                 
-                {/* Filtro de Fecha Rápido */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                {/* Filtro de Fecha Rápido (Desktop >= md) */}
+                <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
                   <Box sx={{ 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -324,6 +432,7 @@ export default function MainLayout() {
                       type="date" 
                       value={dateRange.startDate} 
                       onChange={handleStartDateChange} 
+                      aria-label="Fecha inicio"
                       style={{ 
                         border: 'none', 
                         outline: 'none', 
@@ -340,6 +449,7 @@ export default function MainLayout() {
                       type="date" 
                       value={dateRange.endDate} 
                       onChange={handleEndDateChange} 
+                      aria-label="Fecha fin"
                       style={{ 
                         border: 'none', 
                         outline: 'none', 
@@ -357,6 +467,7 @@ export default function MainLayout() {
                     size="small" 
                     startIcon={<FilterListIcon />}
                     sx={{ 
+                      display: { xs: 'none', lg: 'inline-flex' },
                       textTransform: 'none', 
                       bgcolor: 'primary.main', 
                       '&:hover': { bgcolor: 'primary.light' },
@@ -372,18 +483,105 @@ export default function MainLayout() {
                   </Button>
                 </Box>
 
-                {/* Theme Toggle Button */}
-                <IconButton color="inherit" onClick={colorMode.toggleColorMode} sx={{ color: 'text.secondary' }}>
-                  {theme.palette.mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+                {/* Filtro de Fecha Móvil (< md): Botón compacto con Popover */}
+                <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+                  <IconButton 
+                    color="inherit" 
+                    onClick={(e) => setDatePopoverEl(e.currentTarget)} 
+                    sx={{ color: 'text.secondary' }}
+                    aria-label="Filtrar por fechas"
+                  >
+                    <CalendarTodayIcon fontSize="small" />
+                  </IconButton>
+
+                  <Popover
+                    open={Boolean(datePopoverEl)}
+                    anchorEl={datePopoverEl}
+                    onClose={() => setDatePopoverEl(null)}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    slotProps={{
+                      paper: {
+                        elevation: 4,
+                        sx: { p: 2, mt: 1, borderRadius: 2, width: 280, border: 1, borderColor: 'divider' }
+                      }
+                    }}
+                  >
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit', mb: 1.5 }}>
+                      Rango de Fechas
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+                          Desde:
+                        </Typography>
+                        <input 
+                          type="date" 
+                          value={dateRange.startDate} 
+                          onChange={handleStartDateChange} 
+                          style={{ 
+                            width: '100%',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            border: `1px solid ${theme.palette.divider}`,
+                            color: theme.palette.text.primary, 
+                            fontSize: '0.85rem', 
+                            backgroundColor: theme.palette.background.default,
+                            fontFamily: 'Inter',
+                            fontWeight: 600,
+                            colorScheme: theme.palette.mode,
+                            boxSizing: 'border-box'
+                          }} 
+                        />
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+                          Hasta:
+                        </Typography>
+                        <input 
+                          type="date" 
+                          value={dateRange.endDate} 
+                          onChange={handleEndDateChange} 
+                          style={{ 
+                            width: '100%',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            border: `1px solid ${theme.palette.divider}`,
+                            color: theme.palette.text.primary, 
+                            fontSize: '0.85rem', 
+                            backgroundColor: theme.palette.background.default,
+                            fontFamily: 'Inter',
+                            fontWeight: 600,
+                            colorScheme: theme.palette.mode,
+                            boxSizing: 'border-box'
+                          }} 
+                        />
+                      </Box>
+                      <Button 
+                        variant="contained" 
+                        size="small" 
+                        onClick={() => setDatePopoverEl(null)} 
+                        sx={{ mt: 0.5, textTransform: 'none', fontFamily: 'Outfit' }}
+                      >
+                        Listo
+                      </Button>
+                    </Box>
+                  </Popover>
+                </Box>
+
+                {/* Toggle Modo Oscuro/Claro */}
+                <IconButton color="inherit" onClick={colorMode.toggleColorMode} sx={{ color: 'text.secondary' }} aria-label="Cambiar tema claro/oscuro">
+                  {theme.palette.mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
                 </IconButton>
 
                 {/* Campana de Notificaciones */}
-                <IconButton color="inherit" onClick={handleNotifClick} sx={{ color: 'text.secondary' }}>
+                <IconButton color="inherit" onClick={handleNotifClick} sx={{ color: 'text.secondary' }} aria-label="Notificaciones">
                   <Badge badgeContent={notifications.length} color="error">
-                    <NotificationsIcon />
+                    <NotificationsIcon fontSize="small" />
                   </Badge>
                 </IconButton>
                 
+                {/* Popover / Menú Notificaciones */}
                 <Menu
                   anchorEl={notifAnchorEl}
                   open={openNotif}
@@ -425,9 +623,9 @@ export default function MainLayout() {
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: 1.5, 
-                    borderLeft: 1,
+                    borderLeft: { xs: 'none', sm: 1 },
                     borderColor: 'divider', 
-                    pl: 3,
+                    pl: { xs: 0.5, sm: 2 },
                     cursor: 'pointer',
                     '&:hover': {
                       '& .MuiAvatar-root': {
@@ -436,7 +634,7 @@ export default function MainLayout() {
                     }
                   }}
                 >
-                  <Box sx={{ textAlign: 'right' }}>
+                  <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
                     <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary', fontFamily: 'Outfit' }}>
                       {nombre || 'Usuario Sernapesca'}
                     </Typography>
@@ -447,8 +645,9 @@ export default function MainLayout() {
                   <Avatar 
                     sx={{ 
                       bgcolor: 'primary.main', 
-                      width: 36, 
-                      height: 36, 
+                      width: 34, 
+                      height: 34, 
+                      fontSize: '0.85rem',
                       transition: 'all 0.3s',
                       border: '2px solid transparent'
                     }} 
@@ -515,7 +714,7 @@ export default function MainLayout() {
           </AppBar>
 
           {/* ═══════════ CONTENIDO DE PÁGINAS (Outlet) ═══════════ */}
-          <Box sx={{ flexGrow: 1, overflow: 'auto', p: 3, bgcolor: 'background.default' }}>
+          <Box sx={{ flexGrow: 1, overflow: 'auto', p: { xs: 1.5, sm: 2, md: 3 }, bgcolor: 'background.default', maxWidth: '100%' }}>
             <Outlet context={{ dateRange }} />
           </Box>
 
