@@ -72,6 +72,7 @@ L.Icon.Default.mergeOptions({
 });
 
 import api from '../../api/axiosConfig';
+import MapaDobleGeorreferencia from '../comun/MapaDobleGeorreferencia';
 
 /**
  * Componente que invalida el tamaño del mapa cuando se hace visible o cambia el tamaño
@@ -1071,85 +1072,15 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
               </Box>
             )}
 
-            {/* 2. Pestaña Mapa a toda la altura con MapResizer */}
+            {/* 2. Pestaña Mapa a toda la altura con MapaDobleGeorreferencia (TG.4) */}
             {mobileTab === 'mapa' && (
               <Box sx={{ flex: 1, width: '100%', height: '100%', position: 'relative', bgcolor: '#0f172a' }}>
-                <MapContainer 
-                  center={mapCenter} 
-                  zoom={row?.latitud ? 12 : 6} 
-                  style={{ height: '100%', width: '100%' }}
-                >
-                  <MapResizer activeTab={mobileTab} />
-                  <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                    attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
-                  />
-                  {mapPoints.length >= 2 && (
-                    <Polyline 
-                      positions={mapPoints.map(p => [p.lat, p.lng])}
-                      color="#0284c7"
-                      weight={3.5}
-                      dashArray="6, 8"
-                      opacity={0.85}
-                    />
-                  )}
-                  {mapPoints.map((p, idx) => (
-                    <Marker key={idx} position={[p.lat, p.lng]} icon={createCustomMapIcon(p.tipo)}>
-                      <Popup>
-                        <Box sx={{ p: 0.5, minWidth: 170 }}>
-                          <Chip 
-                            size="small" 
-                            label={p.tipo} 
-                            sx={{ 
-                              fontSize: '0.68rem', 
-                              fontWeight: 700, 
-                              height: 20, 
-                              mb: 0.8,
-                              bgcolor: getNodeTheme(p.tipo).badgeBg,
-                              color: getNodeTheme(p.tipo).badgeColor,
-                              border: `1px solid ${getNodeTheme(p.tipo).border}`
-                            }} 
-                          />
-                          <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.25, mb: 0.3 }}>
-                            {p.title}
-                          </Typography>
-                          {p.rut && (
-                            <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 0.5 }}>
-                              RUT: {p.rut}
-                            </Typography>
-                          )}
-                          {p.folio && (
-                            <Typography variant="caption" sx={{ fontFamily: 'monospace', color: '#0284c7', fontWeight: 800, display: 'block', mb: 0.5 }}>
-                              Folio: #{p.folio}
-                            </Typography>
-                          )}
-                          {p.cantidad && (
-                            <Typography variant="caption" sx={{ fontWeight: 800, color: '#0f172a', display: 'block', mb: 1 }}>
-                              {formatKg(p.cantidad)}
-                            </Typography>
-                          )}
-                          <Button
-                            size="small"
-                            fullWidth
-                            variant="contained"
-                            onClick={() => handleOpenDetail(p.rawNode)}
-                            sx={{
-                              py: 0.3,
-                              fontSize: '0.7rem',
-                              fontWeight: 700,
-                              textTransform: 'none',
-                              borderRadius: 1.5,
-                              bgcolor: getNodeTheme(p.tipo).primary,
-                              boxShadow: 'none'
-                            }}
-                          >
-                            Ver Detalle Completo
-                          </Button>
-                        </Box>
-                      </Popup>
-                    </Marker>
-                  ))}
-                </MapContainer>
+                <MapaDobleGeorreferencia
+                  modoEmbebido
+                  nodos={nodes}
+                  triggerKey={mobileTab}
+                  onSelectNode={handleOpenDetail}
+                />
               </Box>
             )}
 
@@ -1314,112 +1245,12 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                   bgcolor: '#0f172a'
                 }}
               >
-                {/* Overlay flotante informativo en mapa */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 14,
-                    left: 14,
-                    zIndex: 1000,
-                    bgcolor: 'rgba(15, 23, 42, 0.88)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: 2.5,
-                    p: 1.4,
-                    color: '#ffffff',
-                    boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
-                    maxWidth: 260
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <LocationOnIcon sx={{ fontSize: 17, color: '#38bdf8' }} />
-                    <Typography variant="caption" sx={{ fontWeight: 800, color: '#ffffff', textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.72rem' }}>
-                      Ruta Geográfica
-                    </Typography>
-                  </Box>
-                  <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', lineHeight: 1.3, fontSize: '0.7rem' }}>
-                    {mapPoints.length > 0 
-                      ? `${mapPoints.length} punto(s) GPS trazado(s) en la costa`
-                      : 'Ubicación referencial de la declaración consultada'}
-                  </Typography>
-                </Box>
-
-                <MapContainer 
-                  center={mapCenter} 
-                  zoom={row?.latitud ? 12 : 6} 
-                  style={{ height: '100%', width: '100%' }}
-                >
-                  <MapResizer activeTab={viewMode} />
-                  <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                    attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
-                  />
-                  {mapPoints.length >= 2 && (
-                    <Polyline 
-                      positions={mapPoints.map(p => [p.lat, p.lng])}
-                      color="#0284c7"
-                      weight={3.5}
-                      dashArray="6, 8"
-                      opacity={0.85}
-                    />
-                  )}
-                  {mapPoints.map((p, idx) => (
-                    <Marker key={idx} position={[p.lat, p.lng]} icon={createCustomMapIcon(p.tipo)}>
-                      <Popup>
-                        <Box sx={{ p: 0.5, minWidth: 170 }}>
-                          <Chip 
-                            size="small" 
-                            label={p.tipo} 
-                            sx={{ 
-                              fontSize: '0.68rem', 
-                              fontWeight: 700, 
-                              height: 20, 
-                              mb: 0.8,
-                              bgcolor: getNodeTheme(p.tipo).badgeBg,
-                              color: getNodeTheme(p.tipo).badgeColor,
-                              border: `1px solid ${getNodeTheme(p.tipo).border}`
-                            }} 
-                          />
-                          <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.25, mb: 0.3 }}>
-                            {p.title}
-                          </Typography>
-                          {p.rut && (
-                            <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 0.5 }}>
-                              RUT: {p.rut}
-                            </Typography>
-                          )}
-                          {p.folio && (
-                            <Typography variant="caption" sx={{ fontFamily: 'monospace', color: '#0284c7', fontWeight: 800, display: 'block', mb: 0.5 }}>
-                              Folio: #{p.folio}
-                            </Typography>
-                          )}
-                          {p.cantidad && (
-                            <Typography variant="caption" sx={{ fontWeight: 800, color: '#0f172a', display: 'block', mb: 1 }}>
-                              {formatKg(p.cantidad)}
-                            </Typography>
-                          )}
-                          <Button
-                            size="small"
-                            fullWidth
-                            variant="contained"
-                            onClick={() => handleOpenDetail(p.rawNode)}
-                            sx={{
-                              py: 0.3,
-                              fontSize: '0.7rem',
-                              fontWeight: 700,
-                              textTransform: 'none',
-                              borderRadius: 1.5,
-                              bgcolor: getNodeTheme(p.tipo).primary,
-                              boxShadow: 'none'
-                            }}
-                          >
-                            Ver Detalle Completo
-                          </Button>
-                        </Box>
-                      </Popup>
-                    </Marker>
-                  ))}
-                </MapContainer>
+                <MapaDobleGeorreferencia
+                  modoEmbebido
+                  nodos={nodes}
+                  triggerKey={viewMode}
+                  onSelectNode={handleOpenDetail}
+                />
               </Box>
             )}
           </>
