@@ -138,6 +138,15 @@ const MARCA_CONFIG = {
     indicador: 'Indicador 3',
     descripcion: 'Declaración ingresada fuera de los días de gracia permitidos',
   },
+  HUMEDAD_INCOHERENTE: {
+    label: 'Humedad Incoherente',
+    color: '#0284c7',
+    bg: 'rgba(2, 132, 199, 0.1)',
+    border: 'rgba(2, 132, 199, 0.3)',
+    icon: WarningIcon,
+    indicador: 'Indicador 2',
+    descripcion: 'Estado de humedad declarado incompatible con la edad desde la extracción (Res. Ex. 3602)',
+  },
 };
 
 export default function ConsolaHallazgos() {

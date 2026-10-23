@@ -302,7 +302,7 @@ export const INDICADORES_METADATA = {
     periodoFechas: 'Fecha de la extracción/declaración confrontada con la vigencia temporal del factor de conversión.',
     formula: 'Captura Biológica = Desembarque Físico (kg) × Factor de Conversión Vigente',
     criterioFiscalizacion:
-      'El factor aplicado queda congelado en los campos `factor_aplicado` (DECIMAL 8,4) y `factor_conversion_id` de cada declaración. Esto garantiza inviolabilidad histórica: si Subpesca modifica un factor en el futuro, las declaraciones anteriores conservan inalterado su valor legal de auditoría.'
+      'El factor aplicado queda congelado en los campos `factor_aplicado` (DECIMAL 8,4) y `factor_conversion_id` de cada declaración. Esto garantiza inviolabilidad histórica: si Subpesca modifica un factor en el futuro, las declaraciones anteriores conservan inalterado su valor legal de auditoría. Adicionalmente, cuando la regla de coherencia de humedad (Res. Ex. 3602/2017) detecta que el estado declarado es incompatible por ser más húmedo que la edad mínima transcurrida desde la fecha de extracción, registra la marca no bloqueante HUMEDAD_INCOHERENTE.'
   },
 
   controlCuotas: {

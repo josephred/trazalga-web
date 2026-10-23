@@ -922,8 +922,18 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, color: '#94a3b8', fontSize: '0.72rem' }}>
                               <span>📅 {formatDate(n.fecha)}</span>
                               <span>💧 {n.estadoHumedad || 'HÚMEDO'}</span>
+                              {n.edadExtraccionHoras != null && (
+                                <span>⏱ Edad: {Number(n.edadExtraccionHoras).toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} h (esp.: {n.estadoEsperadoHumedad || '-'})</span>
+                              )}
                               <span>📍 {n.caleta || n.comuna || n.varaderoOAmerb || 'S/D'}</span>
                             </Box>
+                            {n.resultadoCoherenciaHumedad === 'INCOHERENTE' && (
+                              <Chip
+                                size="small"
+                                label="HUMEDAD_INCOHERENTE"
+                                sx={{ mt: 0.5, height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24' }}
+                              />
+                            )}
                           </Paper>
                         ))
                       )}
@@ -1532,6 +1542,19 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                     <Typography variant="caption" sx={{ color: '#94a3b8' }}>
                       {detailData.estadoHumedad || 'Humedad s/d'}
                     </Typography>
+                    {detailData.edadExtraccionHoras != null && (
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}>
+                        Edad: {Number(detailData.edadExtraccionHoras).toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} h · Esp.: {detailData.estadoEsperadoHumedad || '-'}
+                      </Typography>
+                    )}
+                    {detailData.resultadoCoherenciaHumedad === 'INCOHERENTE' && (
+                      <Chip
+                        size="small"
+                        label="HUMEDAD_INCOHERENTE"
+                        color="warning"
+                        sx={{ mt: 0.5, height: 18, fontSize: '0.65rem', fontWeight: 700 }}
+                      />
+                    )}
                   </Paper>
                 </Grid>
 

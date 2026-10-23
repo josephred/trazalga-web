@@ -195,9 +195,9 @@ export default function RetencionBodegaWidget({ dateRange }) {
     },
     {
       id: 'tramoReal',
-      label: 'Tramo Real',
+      label: 'Estado esperado por edad (Res. 3602)',
       render: (row) => (
-        <Tooltip title={row.inconsistenciaHumedad ? `Inconsistencia biológica: declarado como ${row.estadoDeclarado}, pero por tiempo transcurrido (${row.horasTranscurridas} h) ya corresponde a ${row.tramoReal}.` : 'Consistente'}>
+        <Tooltip title={row.inconsistenciaHumedad ? `Incoherencia de humedad (Res. 3602): declarado como ${row.estadoDeclarado}, pero según la edad desde la extracción ya corresponde al menos a ${row.tramoReal}.` : 'Coherente con la edad desde la extracción (Res. 3602)'}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
             <Typography
               variant="caption"

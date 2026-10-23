@@ -26,7 +26,8 @@ const VALID_MARCAS = new Set([
   'DOBLE_OPERACION',
   'ORIGEN_GEO_INCONSISTENTE',
   'RETENCION_EXCEDIDA',
-  'DECLARACION_EXTEMPORANEA'
+  'DECLARACION_EXTEMPORANEA',
+  'HUMEDAD_INCOHERENTE'
 ]);
 
 // 2. Términos expresamente prohibidos / obsoletos según plan RX.3

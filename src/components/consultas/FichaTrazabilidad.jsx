@@ -374,6 +374,34 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                             {formatKg(orig.desembarqueKg)}
                           </Typography>
                         </Stack>
+                        {/* TH.5: Edad desde extracción, estado esperado y marca */}
+                        {orig.edadExtraccionHoras !== null && orig.edadExtraccionHoras !== undefined && (
+                          <Box sx={{ mt: 0.8, pt: 0.8, borderTop: '1px dashed', borderColor: 'divider' }}>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
+                              Edad desde extracción: <strong>{Number(orig.edadExtraccionHoras).toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} h</strong>
+                              {orig.estadoEsperadoHumedad ? ` · Estado esperado: ` : ''}
+                              {orig.estadoEsperadoHumedad && <strong>{orig.estadoEsperadoHumedad}</strong>}
+                            </Typography>
+                            {orig.resultadoCoherenciaHumedad === 'INCOHERENTE' && (
+                              <Chip
+                                icon={<WarningIcon sx={{ fontSize: '0.85rem !important' }} />}
+                                label="HUMEDAD_INCOHERENTE"
+                                size="small"
+                                color="warning"
+                                sx={{ mt: 0.5, fontWeight: 700, fontSize: '0.68rem', height: 20 }}
+                              />
+                            )}
+                          </Box>
+                        )}
+                        {orig.marcas && orig.marcas.some((m) => m.marca === 'HUMEDAD_INCOHERENTE') && orig.resultadoCoherenciaHumedad !== 'INCOHERENTE' && (
+                          <Chip
+                            icon={<WarningIcon sx={{ fontSize: '0.85rem !important' }} />}
+                            label="HUMEDAD_INCOHERENTE"
+                            size="small"
+                            color="warning"
+                            sx={{ mt: 0.5, fontWeight: 700, fontSize: '0.68rem', height: 20 }}
+                          />
+                        )}
                       </Box>
 
                       {/* Folios */}
@@ -597,6 +625,21 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                                   {formatKg(com.cantidadKg)}
                                 </Typography>
                               </Stack>
+
+                              {/* TH.4 / TH.5: Estado esperado al despacho (informativo) */}
+                              {(com.estadoEsperadoAlDespacho || com.edadExtraccionAlDespachoHoras != null) && (
+                                <Box sx={{ pt: 0.5, borderTop: '1px dashed', borderColor: 'divider' }}>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
+                                    Humedad en despacho: <strong>{com.estadoHumedadDeclarado || 'Heredada'}</strong>
+                                    {com.edadExtraccionAlDespachoHoras != null ? ` · Edad extracción: ${Number(com.edadExtraccionAlDespachoHoras).toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} h` : ''}
+                                  </Typography>
+                                  {com.estadoEsperadoAlDespacho && (
+                                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
+                                      Estado esperado al despacho (Res. 3602): <strong>{com.estadoEsperadoAlDespacho}</strong>
+                                    </Typography>
+                                  )}
+                                </Box>
+                              )}
                             </Stack>
                           </Paper>
                         )}
@@ -735,6 +778,22 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                         <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.8 }}>
                           Higrómetro en planta: <strong>{planta.humedadHigrometro}%</strong>
                         </Typography>
+                      )}
+                      {planta.edadExtraccionEnPlantaHoras != null && (
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.6, fontSize: '0.7rem' }}>
+                          Edad desde extracción: <strong>{Number(planta.edadExtraccionEnPlantaHoras).toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} h</strong>
+                          {planta.estadoEsperadoEnPlanta ? ` · Estado esperado: ` : ''}
+                          {planta.estadoEsperadoEnPlanta && <strong>{planta.estadoEsperadoEnPlanta}</strong>}
+                        </Typography>
+                      )}
+                      {(planta.resultadoCoherenciaEnPlanta === 'INCOHERENTE' || (planta.marcas && planta.marcas.some((m) => m.marca === 'HUMEDAD_INCOHERENTE'))) && (
+                        <Chip
+                          icon={<WarningIcon sx={{ fontSize: '0.85rem !important' }} />}
+                          label="HUMEDAD_INCOHERENTE"
+                          size="small"
+                          color="warning"
+                          sx={{ mt: 0.6, fontWeight: 700, fontSize: '0.68rem', height: 20 }}
+                        />
                       )}
                     </Paper>
 
