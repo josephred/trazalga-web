@@ -44,7 +44,8 @@ import {
   Clear as ClearIcon,
   ChevronRight as ChevronRightIcon,
   GridView as GridViewIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  LocalShipping as TruckIcon
 } from '@mui/icons-material';
 import api from '../api/axiosConfig';
 import { getTareasProgramadas } from '../services/adminService';
@@ -58,6 +59,7 @@ import AmerbEspeciesMaestro from '../components/admin/AmerbEspeciesMaestro';
 import MacrozonasMaestro from '../components/admin/MacrozonasMaestro';
 import CaletasMaestro from '../components/admin/CaletasMaestro';
 import MonitoreoVersionesApp from '../components/admin/MonitoreoVersionesApp';
+import TransporteMaestro from '../components/admin/TransporteMaestro';
 import FactoryIcon from '@mui/icons-material/Factory';
 import ScaleIcon from '@mui/icons-material/Scale';
 import BlockIcon from '@mui/icons-material/Block';
@@ -198,6 +200,17 @@ export const ADMIN_MODULES = [
     badge: 'Coordenadas',
     color: '#0284c7',
     icon: <AnchorIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'transporte',
+    tabIndex: 10,
+    categoria: 'sistema',
+    titulo: 'Transportistas y Vehículos',
+    nombreCorto: 'Transportistas',
+    descripcion: 'Registro unificado de choferes, vehículos, alias declarados, revisión de pendientes y fusión de duplicados (TT.5).',
+    badge: 'Transporte',
+    color: '#059669',
+    icon: <TruckIcon sx={{ fontSize: 26 }} />,
   }
 ];
 
@@ -205,7 +218,7 @@ export const ADMIN_MODULES = [
 export const resolveAdminTab = (param) => {
   if (!param || param === 'hub') return 'hub';
   const num = parseInt(param, 10);
-  if (!isNaN(num) && num >= 0 && num <= 9) return num;
+  if (!isNaN(num) && num >= 0 && num <= 10) return num;
   const mod = ADMIN_MODULES.find(m => m.id === param);
   if (mod) return mod.tabIndex;
   return 'hub';
@@ -1819,6 +1832,9 @@ export default function Administracion() {
 
         {/* Renderizado de Pestaña 9: Mantenedor de Caletas y Coordenadas Maestras (T9.1) */}
         {activeTab === 9 && <CaletasMaestro />}
+
+        {/* Renderizado de Pestaña 10: Mantenedor de Transportistas y Vehículos (TT.5) */}
+        {activeTab === 10 && <TransporteMaestro />}
 
       </Box>
   );

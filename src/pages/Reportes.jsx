@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Typography, Container, Grid, Box, CircularProgress, Alert, Button } from '@mui/material';
-import { Assessment as AssessmentIcon, FileDownload as DownloadIcon } from '@mui/icons-material';
+import { Typography, Container, Grid, Box, CircularProgress, Alert, Button, Tabs, Tab } from '@mui/material';
+import { Assessment as AssessmentIcon, FileDownload as DownloadIcon, LocalShipping as TruckIcon } from '@mui/icons-material';
 import { getReportes } from '../services/reportesService';
 import DataTable from '../components/dashboard/DataTable';
 import ReportFilter from '../components/dashboard/ReportFilter';
 import TrazabilidadDialog from '../components/dashboard/TrazabilidadDialog';
+import ReporteTransporteTab from '../components/reportes/ReporteTransporteTab';
 import exportarCsv from '../utils/exportarCsv';
-
 
 export default function Reportes() {
   const [reportData, setReportData] = useState([]);
@@ -15,6 +15,7 @@ export default function Reportes() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [tabActual, setTabActual] = useState(0); // 0: Planillas Masivas, 1: Transporte
 
   const handleDescargarCsv = () => {
     if (!reportData || reportData.length === 0) return;
@@ -151,11 +152,11 @@ export default function Reportes() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
               <AssessmentIcon sx={{ fontSize: 36, color: 'secondary.main' }} />
               <Typography variant="h5" sx={{ fontWeight: 800, fontFamily: 'Outfit', m: 0 }}>
-                Reportes: Planillas Masivas
+                Reportes y Trazabilidad Masiva
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ opacity: 0.85, maxWidth: 650, fontFamily: 'Inter', lineHeight: 1.6 }}>
-              Extracción y descarga de planillas masivas de transacciones declaradas para fiscalización y conciliación tributaria y pesquera. Para búsqueda puntual en terreno por folio o patente, utilice el módulo Consultas.
+              Extracción y descarga de planillas masivas de transacciones declaradas y relaciones de transporte para fiscalización. Para búsqueda puntual en terreno por folio o patente, utilice el módulo Consultas.
             </Typography>
           </Box>
 
@@ -205,80 +206,94 @@ export default function Reportes() {
           </Box>
         </Box>
 
-        {/* Filtros de Reporte */}
-        <Box sx={{ mb: 4 }}>
-          <ReportFilter onGenerate={handleGenerateReport} />
+        {/* Selector de Pestañas de Reportes */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs value={tabActual} onChange={(_, val) => setTabActual(val)}>
+            <Tab icon={<AssessmentIcon />} iconPosition="start" label="Planillas Masivas" sx={{ fontWeight: 700 }} />
+            <Tab icon={<TruckIcon />} iconPosition="start" label="Transporte" sx={{ fontWeight: 700 }} />
+          </Tabs>
         </Box>
 
-        {error && (
-          <Alert 
-            severity="error" 
-            sx={{ 
-              mb: 4, 
-              borderRadius: 3,
-              fontFamily: 'Inter',
-              border: '1px solid #fecaca',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.01)'
-            }}
-          >
-            {error}
-          </Alert>
-        )}
-
-        {loading ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 10, gap: 2 }}>
-            <CircularProgress size={45} />
-            <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
-              Generando reporte de transacciones...
-            </Typography>
-          </Box>
+        {tabActual === 1 ? (
+          <ReporteTransporteTab />
         ) : (
-          <Box sx={{ width: '100%' }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12 }}>
-                <Box sx={{ width: '100%', '& .MuiCard-root': { width: '100%' } }}>
-                  <DataTable
-                    title="Resultados del Reporte de Trazabilidad"
-                    data={reportData}
-                    onRowClick={handleRowClick}
-                    actions={
-                      <Button
-                        id="btn-descargar-csv"
-                        variant="contained"
-                        color="primary"
-                        startIcon={<DownloadIcon />}
-                        onClick={handleDescargarCsv}
-                        disabled={reportData.length === 0 || loading}
-                        sx={{
-                          borderRadius: 2.5,
-                          fontWeight: 700,
-                          textTransform: 'none',
-                          fontFamily: 'Outfit',
-                          px: 2.5,
-                          py: 1,
-                          minHeight: 44,
-                          width: { xs: '100%', sm: 'auto' },
-                          boxShadow: '0 4px 14px rgba(14, 165, 233, 0.25)',
-                        }}
-                      >
-                        Descargar planilla (CSV)
-                      </Button>
-                    }
-                  />
-                </Box>
-              </Grid>
-            </Grid>
-          </Box>
-        )}
+          <>
+            {/* Filtros de Reporte */}
+            <Box sx={{ mb: 4 }}>
+              <ReportFilter onGenerate={handleGenerateReport} />
+            </Box>
 
-        {selectedRow && (
-          <TrazabilidadDialog
-            open={dialogOpen}
-            onClose={() => setDialogOpen(false)}
-            declaracionId={selectedRow.id}
-            tipoReporte={selectedRow.tipoReporte}
-            row={selectedRow}
-          />
+            {error && (
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 4, 
+                  borderRadius: 3,
+                  fontFamily: 'Inter',
+                  border: '1px solid #fecaca',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.01)'
+                }}
+              >
+                {error}
+              </Alert>
+            )}
+
+            {loading ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 10, gap: 2 }}>
+                <CircularProgress size={45} />
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter' }}>
+                  Generando reporte de transacciones...
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ width: '100%' }}>
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12 }}>
+                    <Box sx={{ width: '100%', '& .MuiCard-root': { width: '100%' } }}>
+                      <DataTable
+                        title="Resultados del Reporte de Trazabilidad"
+                        data={reportData}
+                        onRowClick={handleRowClick}
+                        actions={
+                          <Button
+                            id="btn-descargar-csv"
+                            variant="contained"
+                            color="primary"
+                            startIcon={<DownloadIcon />}
+                            onClick={handleDescargarCsv}
+                            disabled={reportData.length === 0 || loading}
+                            sx={{
+                              borderRadius: 2.5,
+                              fontWeight: 700,
+                              textTransform: 'none',
+                              fontFamily: 'Outfit',
+                              px: 2.5,
+                              py: 1,
+                              minHeight: 44,
+                              width: { xs: '100%', sm: 'auto' },
+                              boxShadow: '0 4px 14px rgba(14, 165, 233, 0.25)',
+                            }}
+                          >
+                            Descargar planilla (CSV)
+                          </Button>
+                        }
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+
+            {selectedRow && (
+              <TrazabilidadDialog
+                open={dialogOpen}
+                onClose={() => setDialogOpen(false)}
+                declaracionId={selectedRow.id}
+                tipoReporte={selectedRow.tipoReporte}
+                row={selectedRow}
+              />
+            )}
+          </>
         )}
       </Container>
   );
