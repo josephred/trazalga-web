@@ -24,9 +24,10 @@ import {
 import api from '../api/axiosConfig';
 import ResultadosBusqueda from '../components/consultas/ResultadosBusqueda';
 import FichaTrazabilidad from '../components/consultas/FichaTrazabilidad';
+import VistaConsultaPatente from '../components/consultas/VistaConsultaPatente';
 
 export default function Consultas() {
-  const { tipo, id } = useParams();
+  const { tipo, id, patente } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -37,30 +38,55 @@ export default function Consultas() {
   // Estados de vista
   const [resultados, setResultados] = useState(null);
   const [fichaActual, setFichaActual] = useState(null);
+  const [patenteData, setPatenteData] = useState(null);
   const [busquedaEjecutada, setBusquedaEjecutada] = useState(false);
 
   const inputRef = useRef(null);
 
   // Al montar la página, dar foco automático al campo de búsqueda
   useEffect(() => {
-    if (!tipo && !id && inputRef.current) {
+    if (!tipo && !id && !patente && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [tipo, id]);
+  }, [tipo, id, patente]);
 
-  // Si la ruta trae parámetros directos (/consultas/:tipo/:id), cargar la ficha de inmediato
+  // Si la ruta trae parámetros directos (/consultas/patente/:patente o /consultas/:tipo/:id), cargar de inmediato
   useEffect(() => {
-    if (tipo && id) {
+    if (patente) {
+      cargarPatenteFiscalizador(patente);
+    } else if (tipo && id) {
       cargarFichaDirecta(tipo, id);
     } else if (searchParams.get('q')) {
       ejecutarBusqueda(searchParams.get('q'));
     }
-  }, [tipo, id]);
+  }, [tipo, id, patente]);
+
+  const cargarPatenteFiscalizador = async (pat) => {
+    setLoading(true);
+    setError(null);
+    setResultados(null);
+    setFichaActual(null);
+    try {
+      const res = await api.get(`/consultas/patentes/${encodeURIComponent(pat)}`);
+      setPatenteData(res.data);
+    } catch (err) {
+      console.error('Error al cargar datos de patente:', err);
+      setError(
+        err.response?.status === 404
+          ? `No se encontró información para la patente ${pat}`
+          : 'Ocurrió un error al cargar los datos de la patente.'
+      );
+      setPatenteData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const cargarFichaDirecta = async (t, declId) => {
     setLoading(true);
     setError(null);
     setResultados(null);
+    setPatenteData(null);
     try {
       const res = await api.get(`/consultas/ficha/${t}/${declId}`);
       setFichaActual(res.data);
@@ -81,9 +107,17 @@ export default function Consultas() {
     const qTerm = (textoABuscar !== undefined ? textoABuscar : query).trim();
     if (!qTerm) return;
 
+    const normalizada = qTerm.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const esPatenteChilena = /^[A-Z]{2}\d{4}$|^[A-Z]{4}\d{2}$/.test(normalizada);
+    if (esPatenteChilena) {
+      navigate(`/consultas/patente/${normalizada}`);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setFichaActual(null);
+    setPatenteData(null);
     setBusquedaEjecutada(true);
 
     try {
@@ -125,6 +159,7 @@ export default function Consultas() {
 
   const handleVolverAlBuscador = () => {
     setFichaActual(null);
+    setPatenteData(null);
     setResultados(null);
     setBusquedaEjecutada(false);
     navigate('/consultas', { replace: false });
@@ -137,6 +172,7 @@ export default function Consultas() {
     setQuery('');
     setResultados(null);
     setFichaActual(null);
+    setPatenteData(null);
     setBusquedaEjecutada(false);
     if (inputRef.current) inputRef.current.focus();
   };
@@ -151,8 +187,10 @@ export default function Consultas() {
         boxSizing: 'border-box',
       }}
     >
-      {/* Si hay una ficha cargada, renderizarla */}
-      {fichaActual ? (
+      {/* Si hay datos de patente cargados, renderizar la vista de fiscalizador */}
+      {patenteData ? (
+        <VistaConsultaPatente data={patenteData} onVolver={handleVolverAlBuscador} />
+      ) : fichaActual ? (
         <FichaTrazabilidad ficha={fichaActual} onVolver={handleVolverAlBuscador} />
       ) : (
         <Box sx={{ maxWidth: 850, mx: 'auto', mt: { xs: 2, sm: 4 } }}>

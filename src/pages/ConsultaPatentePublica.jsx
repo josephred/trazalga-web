@@ -12,19 +12,21 @@ import {
   Alert,
   CircularProgress,
   CardContent,
+  Link,
 } from '@mui/material';
 import {
   Search,
   CheckCircle,
   Cancel,
   WarningAmber,
-  Shield,
   LocalShipping,
   ArrowBack,
   AccessTime,
   DirectionsCar,
+  LocationOn,
+  Spa,
 } from '@mui/icons-material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import sernapescaLogo from '../assets/sernapesca.png';
 
@@ -98,19 +100,32 @@ export default function ConsultaPatentePublica() {
     }
   }, [searchParams]);
 
+  const esAutorizado = resultado && (resultado.resultado === 'AUTORIZADO' || resultado.vigente === true);
+  const patenteActiva = (resultado?.patente || patenteInput || '').trim();
+  const linkFiscalizador = patenteActiva
+    ? `/login?next=${encodeURIComponent(`/consultas/patente/${patenteActiva}`)}`
+    : '/login?next=%2Fconsultas';
+
+  const textoProteccion = resultado?.texto && String(resultado.texto).trim() !== ''
+    ? String(resultado.texto).trim()
+    : '';
+  const graficaArchivo = resultado?.grafica && String(resultado.grafica).trim() !== ''
+    ? String(resultado.grafica).trim()
+    : '';
+
   return (
     <Box
       sx={{
         minHeight: '100vh',
         bgcolor: '#f1f5f9',
-        py: { xs: 3, md: 5 },
-        px: 2,
+        py: { xs: 2.5, md: 5 },
+        px: { xs: 1.5, sm: 2 },
         backgroundImage: 'radial-gradient(at 0% 0%, rgba(26, 58, 92, 0.05) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(76, 175, 80, 0.05) 0px, transparent 50%)',
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="md" disableGutters sx={{ px: { xs: 0.5, sm: 2 } }}>
         {/* Barra superior de navegación / identidad */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 1 }}>
           <Button
             variant="text"
             startIcon={<ArrowBack />}
@@ -119,6 +134,7 @@ export default function ConsultaPatentePublica() {
               textTransform: 'none',
               fontWeight: 700,
               color: '#1a3a5c',
+              minHeight: 44,
               '&:hover': { bgcolor: 'rgba(26, 58, 92, 0.08)' },
             }}
           >
@@ -130,7 +146,7 @@ export default function ConsultaPatentePublica() {
               component="img"
               src={sernapescaLogo}
               alt="Sernapesca"
-              sx={{ height: 38, objectFit: 'contain' }}
+              sx={{ height: 36, objectFit: 'contain' }}
             />
             <Box sx={{ textAlign: 'right' }}>
               <Typography sx={{ fontSize: '0.85rem', fontWeight: 900, color: '#1a3a5c', lineHeight: 1.1 }}>
@@ -148,7 +164,7 @@ export default function ConsultaPatentePublica() {
           ref={searchCardRef}
           elevation={3}
           sx={{
-            p: { xs: 3, md: 4 },
+            p: { xs: 2.5, md: 4 },
             borderRadius: 3,
             bgcolor: '#ffffff',
             boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
@@ -171,50 +187,47 @@ export default function ConsultaPatentePublica() {
             >
               <LocalShipping sx={{ fontSize: 32 }} />
             </Box>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mb: 0.5 }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mb: 0.5, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
               Consulta Pública de Patentes de Transporte
             </Typography>
-            <Typography variant="body2" sx={{ color: '#64748b', maxWidth: 640, mx: 'auto' }}>
-              Verifique en tiempo real la vigencia y legalidad del traslado de algas pardas por camión o carro de arrastre, conforme a la normativa pesquera de trazabilidad.
+            <Typography variant="body2" sx={{ color: '#64748b', maxWidth: 600, mx: 'auto' }}>
+              Verifique si un camión o carro cuenta con traslado de algas pardas autorizado vigente.
             </Typography>
           </Box>
 
           {/* Formulario de Consulta */}
           <Box component="form" onSubmit={(e) => { e.preventDefault(); handleConsultar(); }}>
             <Grid container spacing={2} alignItems="center" justifyContent="center">
-              <Grid size={{ xs: 12, sm: 8, md: 6 }}>
-                <Box sx={{ position: 'relative' }}>
-                  <TextField
-                    fullWidth
-                    id="patente-input"
-                    label="Placa Patente (Camión o Carro)"
-                    placeholder="Ej: ZZXX00 o LLKK99"
-                    value={patenteInput}
-                    onChange={handleInputChange}
-                    onKeyDown={handleKeyDown}
-                    disabled={loading}
-                    inputProps={{
-                      maxLength: 10,
-                      style: {
-                        fontSize: '1.25rem',
-                        fontWeight: 800,
-                        letterSpacing: '2px',
-                        textTransform: 'uppercase',
-                        textAlign: 'center',
-                        fontFamily: 'monospace, sans-serif',
-                      },
-                    }}
-                    InputProps={{
-                      startAdornment: (
-                        <DirectionsCar sx={{ color: '#64748b', mr: 1, fontSize: 24 }} />
-                      ),
-                    }}
-                    helperText="Formato estándar chileno (se normaliza automáticamente)"
-                  />
-                </Box>
+              <Grid size={{ xs: 12, sm: 8 }}>
+                <TextField
+                  fullWidth
+                  id="patente-input"
+                  label="Placa Patente (Camión o Carro)"
+                  placeholder="Ej: ABCD12"
+                  value={patenteInput}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  disabled={loading}
+                  inputProps={{
+                    maxLength: 10,
+                    style: {
+                      fontSize: '1.2rem',
+                      fontWeight: 800,
+                      letterSpacing: '2px',
+                      textTransform: 'uppercase',
+                      textAlign: 'center',
+                      fontFamily: 'monospace, sans-serif',
+                    },
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <DirectionsCar sx={{ color: '#64748b', mr: 1, fontSize: 24 }} />
+                    ),
+                  }}
+                />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 4, md: 3 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Button
                   fullWidth
                   id="btn-consultar-patente"
@@ -224,7 +237,8 @@ export default function ConsultaPatentePublica() {
                   disabled={loading || !patenteInput.trim()}
                   startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Search />}
                   sx={{
-                    py: 1.8,
+                    py: 1.7,
+                    minHeight: 48,
                     fontWeight: 700,
                     fontSize: '1rem',
                     borderRadius: 2,
@@ -253,7 +267,7 @@ export default function ConsultaPatentePublica() {
         </Paper>
 
         {/* ======================================================== */}
-        {/* RESULTADO DE LA CONSULTA */}
+        {/* RESULTADO DE LA CONSULTA (TN.3) */}
         {/* ======================================================== */}
         {resultado && (
           <Paper
@@ -264,215 +278,187 @@ export default function ConsultaPatentePublica() {
               overflow: 'hidden',
               bgcolor: '#ffffff',
               boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.1)',
-              mb: 4,
+              mb: 3,
             }}
           >
-            {/* Banner de Estado Prominente */}
-            {resultado.vigente ? (
-              <Box
-                sx={{
-                  bgcolor: '#15803d',
-                  color: '#ffffff',
-                  p: { xs: 2.5, md: 3 },
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  backgroundImage: 'linear-gradient(135deg, #15803d 0%, #16a34a 100%)',
-                }}
-              >
-                <CheckCircle sx={{ fontSize: { xs: 44, md: 54 }, flexShrink: 0 }} />
-                <Box sx={{ flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: 0.5 }}>
-                      TRASLADO VIGENTE
+            {esAutorizado ? (
+              <>
+                <Box
+                  sx={{
+                    bgcolor: '#15803d',
+                    color: '#ffffff',
+                    p: { xs: 2.5, md: 3 },
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    backgroundImage: 'linear-gradient(135deg, #15803d 0%, #16a34a 100%)',
+                  }}
+                >
+                  <CheckCircle sx={{ fontSize: { xs: 42, md: 52 }, flexShrink: 0 }} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.5 }}>
+                      <Chip
+                        label={resultado.patente}
+                        size="small"
+                        sx={{
+                          bgcolor: 'rgba(255, 255, 255, 0.22)',
+                          color: '#fff',
+                          fontWeight: 900,
+                          fontFamily: 'monospace',
+                          fontSize: '0.8rem',
+                        }}
+                      />
+                      <Chip
+                        label="AUTORIZADO"
+                        size="small"
+                        sx={{
+                          bgcolor: 'rgba(255, 255, 255, 0.25)',
+                          color: '#fff',
+                          fontWeight: 800,
+                          fontSize: '0.72rem',
+                        }}
+                      />
+                    </Box>
+                    <Typography variant="h5" sx={{ fontWeight: 900, fontSize: { xs: '1.15rem', sm: '1.4rem' }, lineHeight: 1.25 }}>
+                      Vehículo con traslado de algas autorizado
                     </Typography>
-                    <Chip
-                      label="AUTORIZADO"
-                      size="small"
-                      sx={{
-                        bgcolor: 'rgba(255, 255, 255, 0.25)',
-                        color: '#fff',
-                        fontWeight: 800,
-                        fontSize: '0.75rem',
-                      }}
-                    />
                   </Box>
-                  <Typography variant="body2" sx={{ opacity: 0.95, mt: 0.5 }}>
-                    La patente <strong>{resultado.patente}</strong> cuenta con un movimiento de transporte de algas registrado y autorizado dentro del plazo reglamentario ({resultado.horasTranscurridas} hrs transcurridas).
-                  </Typography>
                 </Box>
-              </Box>
-            ) : resultado.sinRegistros ? (
-              <Box
-                sx={{
-                  bgcolor: '#b91c1c',
-                  color: '#ffffff',
-                  p: { xs: 2.5, md: 3 },
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  backgroundImage: 'linear-gradient(135deg, #b91c1c 0%, #dc2626 100%)',
-                }}
-              >
-                <Cancel sx={{ fontSize: { xs: 44, md: 54 }, flexShrink: 0 }} />
-                <Box sx={{ flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: 0.5 }}>
-                      SIN REGISTROS EN EL SISTEMA
-                    </Typography>
-                    <Chip
-                      label="NO REGISTRADA"
-                      size="small"
-                      sx={{
-                        bgcolor: 'rgba(255, 255, 255, 0.25)',
-                        color: '#fff',
-                        fontWeight: 800,
-                        fontSize: '0.75rem',
-                      }}
-                    />
-                  </Box>
-                  <Typography variant="body2" sx={{ opacity: 0.95, mt: 0.5 }}>
-                    La patente <strong>{resultado.patente}</strong> no registra ninguna declaración de traslado de algas en el sistema oficial de TrazAlga.
-                  </Typography>
-                </Box>
-              </Box>
+
+                <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <AccessTime sx={{ fontSize: 18, color: '#0284c7' }} />
+                          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700 }}>
+                            Fecha y hora de autorización
+                          </Typography>
+                        </Box>
+                        <Typography variant="body1" sx={{ fontWeight: 800, color: '#0f172a' }}>
+                          {resultado.fechaHoraAutorizacion
+                            ? new Date(resultado.fechaHoraAutorizacion).toLocaleString('es-CL', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : '-'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <LocationOn sx={{ fontSize: 18, color: '#16a34a' }} />
+                          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700 }}>
+                            Comuna de destino
+                          </Typography>
+                        </Box>
+                        <Typography variant="body1" sx={{ fontWeight: 800, color: '#0f172a', wordBreak: 'break-word' }}>
+                          {resultado.comunaDestino || 'Comuna no informada'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', height: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Spa sx={{ fontSize: 18, color: '#0d9488' }} />
+                          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700 }}>
+                            Tipo de alga
+                          </Typography>
+                        </Box>
+                        <Typography variant="body1" sx={{ fontWeight: 800, color: '#0f172a', wordBreak: 'break-word' }}>
+                          {resultado.tipoAlga || 'Alga parda'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </>
             ) : (
               <Box
                 sx={{
-                  bgcolor: '#c2410c',
+                  bgcolor: '#475569',
                   color: '#ffffff',
-                  p: { xs: 2.5, md: 3 },
+                  p: { xs: 2.5, md: 3.5 },
                   display: 'flex',
                   alignItems: 'center',
                   gap: 2,
-                  backgroundImage: 'linear-gradient(135deg, #c2410c 0%, #ea580c 100%)',
+                  backgroundImage: 'linear-gradient(135deg, #475569 0%, #334155 100%)',
                 }}
               >
-                <WarningAmber sx={{ fontSize: { xs: 44, md: 54 }, flexShrink: 0 }} />
-                <Box sx={{ flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: 0.5 }}>
-                      SIN MOVIMIENTO VIGENTE
-                    </Typography>
-                    <Chip
-                      label="PLAZO VENCIDO"
-                      size="small"
-                      sx={{
-                        bgcolor: 'rgba(255, 255, 255, 0.25)',
-                        color: '#fff',
-                        fontWeight: 800,
-                        fontSize: '0.75rem',
-                      }}
-                    />
-                  </Box>
-                  <Typography variant="body2" sx={{ opacity: 0.95, mt: 0.5 }}>
-                    El último movimiento registrado para la patente <strong>{resultado.patente}</strong> ocurrió hace {resultado.horasTranscurridas} horas, superando el límite de vigencia autorizado.
+                <Cancel sx={{ fontSize: { xs: 42, md: 52 }, flexShrink: 0, color: '#cbd5e1' }} />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Chip
+                    label={resultado.patente || patenteActiva}
+                    size="small"
+                    sx={{
+                      bgcolor: 'rgba(255, 255, 255, 0.18)',
+                      color: '#fff',
+                      fontWeight: 900,
+                      fontFamily: 'monospace',
+                      fontSize: '0.8rem',
+                      mb: 0.8,
+                    }}
+                  />
+                  <Typography variant="h5" sx={{ fontWeight: 900, fontSize: { xs: '1.15rem', sm: '1.4rem' }, lineHeight: 1.25 }}>
+                    No registra un traslado de algas autorizado vigente
                   </Typography>
                 </Box>
               </Box>
-            )}
-
-            {/* Ficha de Detalles Operativos Sanitizada (Sin datos personales ni comerciales) */}
-            {!resultado.sinRegistros && (
-              <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#334155', mb: 2, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  Detalle del Último Movimiento Verificado
-                </Typography>
-
-                <Grid container spacing={2}>
-                  {/* Patente */}
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0' }}>
-                      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                        Placa Patente
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 900, color: '#0f172a', fontFamily: 'monospace' }}>
-                        {resultado.patente}
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  {/* Especie */}
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0' }}>
-                      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                        Especie Declarada
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a' }}>
-                        {resultado.especie || 'Alga Parda'}
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  {/* Fecha y Hora del movimiento */}
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                      <AccessTime sx={{ color: '#f59e0b', mt: 0.5 }} />
-                      <Box>
-                        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                          Fecha y Hora de Salida / Registro
-                        </Typography>
-                        <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                          {resultado.fechaHoraMovimiento ? new Date(resultado.fechaHoraMovimiento).toLocaleString('es-CL', {
-                            day: '2-digit', month: '2-digit', year: 'numeric',
-                            hour: '2-digit', minute: '2-digit'
-                          }) : 'N/A'}
-                        </Typography>
-                        {!resultado.horaInformada && (
-                          <Typography variant="caption" sx={{ color: '#94a3b8', fontStyle: 'italic', display: 'block' }}>
-                            (Hora no precisada en origen; calculada a las 00:00)
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </Grid>
-
-                  {/* Antigüedad del Movimiento / Vigencia */}
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                      <LocalShipping sx={{ color: '#64748b', mt: 0.5 }} />
-                      <Box>
-                        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                          Antigüedad del Movimiento
-                        </Typography>
-                        <Typography variant="body1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                          {resultado.horasTranscurridas} horas transcurridas
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: resultado.vigente ? '#15803d' : '#b91c1c', fontWeight: 700 }}>
-                          {resultado.vigente ? '● Dentro del límite de vigencia reglamentario' : '● Supera el límite de vigencia reglamentario'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
             )}
           </Paper>
         )}
 
-        {/* Declaración de Privacidad y Cumplimiento Normativo (Ley 21.719 / Ley 19.628) */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2.5,
-            borderRadius: 2.5,
-            bgcolor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 2,
-          }}
-        >
-          <Shield sx={{ color: '#0369a1', fontSize: 26, mt: 0.3, flexShrink: 0 }} />
-          <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a', mb: 0.5 }}>
-              Protección de Datos y Privacidad Ciudadana
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#475569', fontSize: '0.82rem', lineHeight: 1.6 }}>
-              Esta consulta pública muestra exclusivamente la condición de vigencia y legalidad del traslado de alga transportada. En cumplimiento de la normativa de protección de datos personales (Ley 19.628 y Ley 21.719), el resultado individual de verificación ciudadana <strong>no exhibe nombres de conductores, comercializadores, RUTs, teléfonos, volúmenes de carga, folios ni puntos de origen o destino comercial</strong>. Toda consulta queda registrada de manera anónima con fines de auditoría y prevención de abusos.
-            </Typography>
-          </Box>
-        </Paper>
+        {/* Sección opcional de texto y gráfica de protección del recurso (D1: oculta si ambos vienen vacíos) */}
+        {(textoProteccion || graficaArchivo) && (
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2.5, md: 3 },
+              borderRadius: 3,
+              bgcolor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              mb: 3,
+            }}
+          >
+            {textoProteccion && (
+              <Typography variant="body1" sx={{ color: '#1e293b', lineHeight: 1.6, mb: graficaArchivo ? 2 : 0 }}>
+                {textoProteccion}
+              </Typography>
+            )}
+            {graficaArchivo && (
+              <Box
+                component="img"
+                src={`/consulta-publica/${graficaArchivo}`}
+                alt="Protección del recurso"
+                sx={{ width: '100%', maxHeight: 360, objectFit: 'contain', borderRadius: 2 }}
+              />
+            )}
+          </Paper>
+        )}
+
+        {/* Enlace para fiscalizadores (TN.3) */}
+        <Box sx={{ textAlign: 'center', mt: 2, mb: 4 }}>
+          <Link
+            component={RouterLink}
+            to={linkFiscalizador}
+            underline="hover"
+            sx={{
+              fontWeight: 700,
+              color: '#1a3a5c',
+              fontSize: '0.92rem',
+              display: 'inline-block',
+              py: 1,
+            }}
+          >
+            ¿Es fiscalizador? Ingrese para ver la traza completa
+          </Link>
+        </Box>
       </Container>
     </Box>
   );

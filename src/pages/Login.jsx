@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Box, TextField, Button, Typography, InputAdornment, IconButton, Stack } from '@mui/material';
 import { Visibility, VisibilityOff, Lock, HelpOutline, MenuBook, Language, Warning, BarChart, CheckCircle, VerifiedUser, Security, Analytics, LocalShipping } from '@mui/icons-material';
 import api from '../api/axiosConfig';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { validateRut } from '../utils/rutValidator';
 import { Alert, Snackbar } from '@mui/material';
 import sernapescaLogo from '../assets/sernapesca.png';
@@ -52,6 +52,15 @@ export default function Login() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const resolveSafeNextPath = () => {
+    const rawNext = searchParams.get('next');
+    if (typeof rawNext === 'string' && rawNext.startsWith('/') && !rawNext.startsWith('//')) {
+      return rawNext;
+    }
+    return '/dashboard';
+  };
 
   const handleLogin = async (e, customRut, customClave) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -81,7 +90,7 @@ export default function Login() {
 
       const response = await api.post('/auth/login', { rut: rutBody, clave: targetClave });
       guardarSesion(response.data);
-      navigate('/dashboard');
+      navigate(resolveSafeNextPath());
     } catch (error) {
       console.error('Error en Login:', error);
       setSnackbar({ open: true, message: "RUT o Clave incorrectos", severity: 'error' });
