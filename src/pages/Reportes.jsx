@@ -208,7 +208,13 @@ export default function Reportes() {
 
         {/* Selector de Pestañas de Reportes */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={tabActual} onChange={(_, val) => setTabActual(val)}>
+          <Tabs 
+            value={tabActual} 
+            onChange={(_, val) => setTabActual(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+          >
             <Tab icon={<AssessmentIcon />} iconPosition="start" label="Planillas Masivas" sx={{ fontWeight: 700 }} />
             <Tab icon={<TruckIcon />} iconPosition="start" label="Transporte" sx={{ fontWeight: 700 }} />
           </Tabs>

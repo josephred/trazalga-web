@@ -73,7 +73,7 @@ export default function Dashboard() {
         </Box>
 
         {/* Malla de Indicadores Clave (KPIs) */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={{ xs: 1.5, sm: 2, md: 2.5, lg: 3 }} sx={{ mb: 4 }}>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <StatCard
               title="Declaraciones totales"

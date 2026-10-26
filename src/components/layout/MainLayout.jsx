@@ -2,15 +2,13 @@ import { useState, useEffect, useContext } from 'react';
 import { 
   Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, 
   ListItemButton, ListItemIcon, ListItemText, Avatar, Button, IconButton,
-  Menu, MenuItem, Divider, Badge, Snackbar, Alert, Popover, Tooltip, useMediaQuery
+  Menu, MenuItem, Divider, Badge, Snackbar, Alert, Popover, Tooltip, useMediaQuery, Chip
 } from '@mui/material';
 import { 
   Home as HomeIcon,
   Search as SearchIcon,
   Notifications as NotificationsIcon,
-  Folder as FolderIcon,
   BarChart as BarChartIcon,
-  LocationOn as LocationIcon,
   Settings as SettingsIcon,
   HelpOutline as HelpIcon,
   FilterList as FilterListIcon,
@@ -19,7 +17,10 @@ import {
   Person as PersonIcon,
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
-  Menu as MenuIcon
+  Menu as MenuIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
@@ -29,8 +30,13 @@ import { onMessageListener } from '../../firebase';
 import { getPerfil, getNombre, getUsuarioId, getRegion, cerrarSesion, revalidarPerfilServidor } from '../../auth/sesion';
 import { puedeVer } from '../../auth/perfiles';
 import api from '../../api/axiosConfig';
+import { getDefaultDateRange, loadUserDateRange, saveUserDateRange } from '../../utils/fechas';
 
-const drawerWidth = 240;
+export { getDefaultDateRange };
+
+const DRAWER_WIDTH_EXPANDED = 240;
+const DRAWER_WIDTH_COLLAPSED = 72;
+const COLLAPSED_STORAGE_KEY = 'trazalga_sidebar_collapsed';
 
 // TF.6: «Casos» y «Mapa» salen del menú hasta que existan implementaciones oficiales
 const menuItems = [
@@ -41,25 +47,46 @@ const menuItems = [
   { text: 'Administración', icon: <SettingsIcon />, path: '/administracion' },
 ];
 
-import { getDefaultDateRange, loadUserDateRange, saveUserDateRange } from '../../utils/fechas';
-
-export { getDefaultDateRange };
-
 export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const colorMode = useContext(ColorModeContext);
 
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
+  // Breakpoints responsivos
+  // isMobile: teléfonos y pantallas ultra compactas (< 600px / xs)
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // isTabletOrSmall: tablets y pantallas medianas (600px - 1199px / sm & md)
+  const isTabletOrSmall = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
 
-  // Popover fecha en móvil
+  // Estado del drawer temporal en móviles (< 600px)
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Estado de colapso a solo íconos (rail) para >= 600px.
+  // En pantallas chicas y medianas (< 1200px), por defecto se reduce a solo íconos
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      const saved = localStorage.getItem(COLLAPSED_STORAGE_KEY);
+      if (saved !== null) return saved === 'true';
+    } catch {
+      // Ignorar error de almacenamiento
+    }
+    return window.innerWidth < 1200;
+  });
+
+  // Ajuste automático al cambiar tamaño de pantalla a rango tablet/mediano
+  useEffect(() => {
+    if (isTabletOrSmall) {
+      setCollapsed(true);
+    }
+  }, [isTabletOrSmall]);
+
+  // Popover fecha en móvil y pantallas medianas
   const [datePopoverEl, setDatePopoverEl] = useState(null);
 
-  // Notifications State
+  // Estados de notificaciones y usuario
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
   const [notifAnchorEl, setNotifAnchorEl] = useState(null);
   const openNotif = Boolean(notifAnchorEl);
   const [notifications, setNotifications] = useState([]);
@@ -109,8 +136,21 @@ export default function MainLayout() {
     saveUserDateRange(usuarioId, next);
   };
 
-  const handleDrawerToggle = () => {
-    setMobileOpen((prev) => !prev);
+  // Conmutador del menú: en móviles abre/cierra el drawer overlay, en escritorio/tablet expande o colapsa a íconos
+  const handleToggleSidebar = () => {
+    if (isMobile) {
+      setMobileOpen((prev) => !prev);
+    } else {
+      setCollapsed((prev) => {
+        const next = !prev;
+        try {
+          localStorage.setItem(COLLAPSED_STORAGE_KEY, String(next));
+        } catch {
+          // Ignorar error de almacenamiento
+        }
+        return next;
+      });
+    }
   };
 
   const handleNavClick = (path) => {
@@ -146,143 +186,340 @@ export default function MainLayout() {
     navigate('/login');
   };
 
-  // Helper to get current page title
+  // Helper para título y subtítulo dinámico
   const getCurrentPageTitle = () => {
     switch (location.pathname) {
       case '/dashboard': return { title: 'Dashboard Ejecutivo', subtitle: 'Resumen general de indicadores y alertas' };
       case '/consultas': return { title: 'Consultas', subtitle: 'Búsqueda puntual en terreno por folio o patente' };
-      case '/alertas': return { title: 'Alertas', subtitle: 'Gestión y monitoreo de alertas' };
+      case '/alertas': return { title: 'Alertas', subtitle: 'Gestión y monitoreo de alertas normativas' };
       case '/casos': return { title: 'Casos', subtitle: 'Seguimiento de casos registrados' };
-      case '/reportes': return { title: 'Reportes', subtitle: 'Planillas masivas de transacciones para fiscalización' };
+      case '/reportes': return { title: 'Reportes', subtitle: 'Planillas masivas y relaciones de transporte' };
       case '/mapa': return { title: 'Mapa SIG', subtitle: 'Distribución geográfica del recurso' };
-      case '/administracion': return { title: 'Configuración de Parámetros', subtitle: 'Ajustes globales de alertas y rastreo móvil' };
+      case '/administracion': return { title: 'Configuración de Parámetros', subtitle: 'Ajustes globales de alertas, cuotas y maestros' };
       case '/ayuda': return { title: 'Ayuda', subtitle: 'Documentación y soporte técnico' };
-      default: return { title: 'TRAZALGA', subtitle: '' };
+      default: return { title: 'TRAZALGA', subtitle: 'Portal de Control de Trazabilidad' };
     }
   };
 
   const { title, subtitle } = getCurrentPageTitle();
 
-  return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
+  // Ancho efectivo del sidebar permanente
+  const currentDrawerWidth = isMobile
+    ? 260
+    : (collapsed ? DRAWER_WIDTH_COLLAPSED : DRAWER_WIDTH_EXPANDED);
+
+  // Renderizador unificado del contenido del menú lateral
+  const renderSidebarContent = (isTemporaryDrawer = false) => {
+    const isIconOnly = !isTemporaryDrawer && collapsed;
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
         
-        {/* ═══════════ SIDEBAR (MENÚ LATERAL RESPONSIVO) ═══════════ */}
-        <Drawer
-          variant={isMobile ? 'temporary' : 'permanent'}
-          open={isMobile ? mobileOpen : true}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Optimiza renderizado en dispositivos móviles
-          }}
-          sx={{
-            width: isMobile ? 'auto' : drawerWidth,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              boxSizing: 'border-box',
-              bgcolor: theme.palette.mode === 'light' ? 'primary.main' : 'background.paper',
-              color: '#fff',
-              display: 'flex',
-              flexDirection: 'column',
-              borderRight: '1px solid',
-              borderColor: 'divider',
-            },
+        {/* Cabecera del Sidebar con Logo e Interacción */}
+        <Box 
+          sx={{ 
+            height: 68,
+            minHeight: 68,
+            px: isIconOnly ? 1 : 2, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: isIconOnly ? 'center' : 'space-between',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            bgcolor: 'rgba(0,0,0,0.18)',
+            transition: 'padding 200ms ease'
           }}
         >
-          {/* Header del Menú / Logo (< 60px en móvil vs escritorio) */}
-          <Box sx={{ 
-            p: { xs: 1.25, md: 2 }, 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            bgcolor: 'rgba(0,0,0,0.12)',
-            minHeight: { xs: 58, md: 120 }
-          }}>
-            <img 
-              src={sernapescaLogo} 
-              alt="Sernapesca" 
-              style={{ 
-                height: isMobile ? 48 : 100, 
-                maxHeight: isMobile ? 54 : 120, 
-                objectFit: 'contain',
-                transition: 'all 0.2s ease'
-              }} 
-            />
-          </Box>
-
-          {/* Enlaces del Menú */}
-          <List sx={{ flex: 1, pt: 1.5, px: 0 }}>
-            {itemsVisibles.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <ListItem key={item.text} disablePadding>
-                  <ListItemButton 
-                    onClick={() => handleNavClick(item.path)}
-                    sx={{
-                      py: 1.25,
-                      px: 3,
-                      bgcolor: isActive ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
-                      borderLeft: isActive ? '4px solid #0ea5e9' : '4px solid transparent',
-                      color: isActive ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                      '&:hover': {
-                        bgcolor: 'rgba(255, 255, 255, 0.04)',
-                        color: '#fff',
-                        pl: 3.5,
-                        '& .MuiListItemIcon-root': {
-                          color: 'secondary.main',
-                        }
-                      }
+          {isIconOnly ? (
+            <Tooltip title="Expandir menú lateral (TRAZALGA)" placement="right" arrow>
+              <Box 
+                onClick={handleToggleSidebar} 
+                sx={{ 
+                  cursor: 'pointer', 
+                  p: 0.75, 
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background-color 180ms ease, transform 180ms ease',
+                  '&:hover': { 
+                    bgcolor: 'rgba(255,255,255,0.08)',
+                    transform: 'scale(1.06)'
+                  } 
+                }}
+              >
+                <img 
+                  src={sernapescaLogo} 
+                  alt="Sernapesca" 
+                  style={{ 
+                    height: 34, 
+                    width: 34, 
+                    objectFit: 'contain' 
+                  }} 
+                />
+              </Box>
+            </Tooltip>
+          ) : (
+            <>
+              <Box 
+                onClick={() => handleNavClick('/dashboard')} 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1.5, 
+                  cursor: 'pointer',
+                  minWidth: 0,
+                  flex: 1
+                }}
+              >
+                <img 
+                  src={sernapescaLogo} 
+                  alt="Sernapesca" 
+                  style={{ 
+                    height: 42, 
+                    maxHeight: 46, 
+                    objectFit: 'contain' 
+                  }} 
+                />
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography 
+                    variant="subtitle1" 
+                    noWrap
+                    sx={{ 
+                      fontWeight: 900, 
+                      color: '#fff', 
+                      fontFamily: 'Outfit', 
+                      lineHeight: 1.1,
+                      letterSpacing: '0.6px'
                     }}
                   >
-                    <ListItemIcon sx={{ 
-                      color: isActive ? 'secondary.main' : 'rgba(255, 255, 255, 0.6)', 
-                      minWidth: 36,
-                      transition: 'color 0.2s ease',
-                    }}>
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary={item.text} 
-                      sx={{ 
-                        margin: 0,
-                        '& .MuiListItemText-primary': { 
-                          fontWeight: isActive ? 700 : 500,
-                          fontSize: '0.9rem',
-                          fontFamily: 'Outfit',
-                        } 
-                      }} 
-                    />
-                  </ListItemButton>
-                </ListItem>
-              );
-            })}
-          </List>
+                    TRAZALGA
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    noWrap
+                    sx={{ 
+                      color: '#38bdf8', 
+                      fontFamily: 'Inter', 
+                      fontWeight: 700,
+                      fontSize: '0.65rem',
+                      display: 'block',
+                      letterSpacing: '0.3px'
+                    }}
+                  >
+                    SERNAPESCA
+                  </Typography>
+                </Box>
+              </Box>
 
-          {/* Item Ayuda al final */}
-          <List sx={{ px: 0, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <ListItem disablePadding>
+              {/* Botón de cierre en móvil o colapso en escritorio */}
+              {isTemporaryDrawer ? (
+                <IconButton 
+                  onClick={() => setMobileOpen(false)} 
+                  size="small" 
+                  aria-label="Cerrar menú"
+                  sx={{ 
+                    color: 'rgba(255,255,255,0.7)', 
+                    bgcolor: 'rgba(255,255,255,0.06)',
+                    borderRadius: '8px',
+                    '&:hover': { color: '#fff', bgcolor: 'rgba(255,255,255,0.12)' } 
+                  }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              ) : (
+                <Tooltip title="Contraer a solo íconos" placement="bottom" arrow>
+                  <IconButton 
+                    onClick={handleToggleSidebar} 
+                    size="small" 
+                    aria-label="Contraer menú a solo íconos"
+                    sx={{ 
+                      color: 'rgba(255,255,255,0.6)', 
+                      bgcolor: 'rgba(255,255,255,0.06)',
+                      borderRadius: '8px',
+                      p: 0.6,
+                      '&:hover': { color: '#fff', bgcolor: 'rgba(255,255,255,0.12)' } 
+                    }}
+                  >
+                    <ChevronLeftIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </>
+          )}
+        </Box>
+
+        {/* Lista de Navegación Principal */}
+        <List sx={{ flex: 1, py: 1.5, px: isIconOnly ? 0.75 : 1.25, overflowY: 'auto' }}>
+          {itemsVisibles.map((item) => {
+            const isActive = location.pathname === item.path;
+
+            const buttonContent = (
               <ListItemButton 
-                onClick={() => handleNavClick('/ayuda')}
+                onClick={() => handleNavClick(item.path)}
+                aria-label={item.text}
                 sx={{
-                  py: 1.25,
-                  px: 3,
-                  color: location.pathname === '/ayuda' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                  bgcolor: location.pathname === '/ayuda' ? 'rgba(14, 165, 233, 0.12)' : 'transparent',
-                  borderLeft: location.pathname === '/ayuda' ? '4px solid #0ea5e9' : '4px solid transparent',
+                  minHeight: 46,
+                  height: 46,
+                  justifyContent: isIconOnly ? 'center' : 'flex-start',
+                  px: isIconOnly ? 0 : 2,
+                  mb: 0.75,
+                  borderRadius: '12px',
+                  bgcolor: isActive ? 'rgba(14, 165, 233, 0.16)' : 'transparent',
+                  color: isActive ? '#fff' : 'rgba(255, 255, 255, 0.7)',
+                  border: isActive ? '1px solid rgba(14, 165, 233, 0.35)' : '1px solid transparent',
+                  boxShadow: isActive ? '0 0 16px rgba(14, 165, 233, 0.2)' : 'none',
+                  transition: 'background-color 180ms ease, color 180ms ease, border-color 180ms ease, transform 180ms ease',
                   '&:hover': {
-                    bgcolor: 'rgba(255, 255, 255, 0.04)',
+                    bgcolor: isActive ? 'rgba(14, 165, 233, 0.22)' : 'rgba(255, 255, 255, 0.08)',
                     color: '#fff',
-                    pl: 3.5,
+                    transform: isIconOnly ? 'scale(1.06)' : 'none',
                     '& .MuiListItemIcon-root': {
-                      color: 'secondary.main',
+                      color: '#38bdf8',
+                      transform: 'scale(1.08)',
                     }
                   }
                 }}
               >
-                <ListItemIcon sx={{ color: location.pathname === '/ayuda' ? 'secondary.main' : 'rgba(255, 255, 255, 0.6)', minWidth: 36 }}>
-                  <HelpIcon />
+                <ListItemIcon 
+                  sx={{ 
+                    minWidth: 0,
+                    mr: isIconOnly ? 0 : 1.75,
+                    justifyContent: 'center',
+                    color: isActive ? '#38bdf8' : 'rgba(255, 255, 255, 0.7)', 
+                    transition: 'color 180ms ease, transform 180ms ease',
+                    '& .MuiSvgIcon-root': {
+                      fontSize: 22
+                    }
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                {!isIconOnly && (
+                  <ListItemText 
+                    primary={item.text} 
+                    sx={{ 
+                      margin: 0,
+                      opacity: 1,
+                      whiteSpace: 'nowrap',
+                      '& .MuiListItemText-primary': { 
+                        fontWeight: isActive ? 700 : 500,
+                        fontSize: '0.885rem',
+                        fontFamily: 'Outfit',
+                        color: isActive ? '#fff' : 'inherit',
+                        letterSpacing: '0.2px'
+                      } 
+                    }} 
+                  />
+                )}
+              </ListItemButton>
+            );
+
+            return (
+              <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
+                {isIconOnly ? (
+                  <Tooltip 
+                    title={item.text} 
+                    placement="right" 
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          bgcolor: '#0f172a',
+                          color: '#f8fafc',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                          fontFamily: 'Outfit',
+                          fontWeight: 600,
+                          fontSize: '0.825rem',
+                          px: 1.5,
+                          py: 0.75,
+                          borderRadius: '8px'
+                        }
+                      },
+                      arrow: { sx: { color: '#0f172a' } }
+                    }}
+                  >
+                    {buttonContent}
+                  </Tooltip>
+                ) : (
+                  buttonContent
+                )}
+              </ListItem>
+            );
+          })}
+        </List>
+
+        {/* Sección Inferior: Ayuda y Toggle de Expansión */}
+        <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.08)', p: isIconOnly ? 0.75 : 1.25 }}>
+          <ListItem disablePadding sx={{ display: 'block' }}>
+            {isIconOnly ? (
+              <Tooltip 
+                title="Ayuda y Soporte" 
+                placement="right" 
+                arrow
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      bgcolor: '#0f172a',
+                      color: '#f8fafc',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      fontFamily: 'Outfit',
+                      fontWeight: 600,
+                      fontSize: '0.825rem',
+                      px: 1.5,
+                      py: 0.75,
+                      borderRadius: '8px'
+                    }
+                  },
+                  arrow: { sx: { color: '#0f172a' } }
+                }}
+              >
+                <ListItemButton 
+                  onClick={() => handleNavClick('/ayuda')}
+                  aria-label="Ayuda"
+                  sx={{
+                    minHeight: 44,
+                    height: 44,
+                    justifyContent: 'center',
+                    px: 0,
+                    borderRadius: '12px',
+                    color: location.pathname === '/ayuda' ? '#fff' : 'rgba(255, 255, 255, 0.7)',
+                    bgcolor: location.pathname === '/ayuda' ? 'rgba(14, 165, 233, 0.16)' : 'transparent',
+                    border: location.pathname === '/ayuda' ? '1px solid rgba(14, 165, 233, 0.35)' : '1px solid transparent',
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.08)',
+                      color: '#fff',
+                      transform: 'scale(1.06)'
+                    }
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center', color: location.pathname === '/ayuda' ? '#38bdf8' : 'inherit' }}>
+                    <HelpIcon sx={{ fontSize: 22 }} />
+                  </ListItemIcon>
+                </ListItemButton>
+              </Tooltip>
+            ) : (
+              <ListItemButton 
+                onClick={() => handleNavClick('/ayuda')}
+                aria-label="Ayuda"
+                sx={{
+                  minHeight: 44,
+                  height: 44,
+                  justifyContent: 'flex-start',
+                  px: 2,
+                  borderRadius: '10px',
+                  color: location.pathname === '/ayuda' ? '#fff' : 'rgba(255, 255, 255, 0.7)',
+                  bgcolor: location.pathname === '/ayuda' ? 'rgba(14, 165, 233, 0.16)' : 'transparent',
+                  border: location.pathname === '/ayuda' ? '1px solid rgba(14, 165, 233, 0.35)' : '1px solid transparent',
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.08)',
+                    color: '#fff',
+                    '& .MuiListItemIcon-root': { color: '#38bdf8' }
+                  }
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 0, mr: 1.75, justifyContent: 'center', color: location.pathname === '/ayuda' ? '#38bdf8' : 'rgba(255,255,255,0.7)' }}>
+                  <HelpIcon sx={{ fontSize: 22 }} />
                 </ListItemIcon>
                 <ListItemText 
                   primary="Ayuda" 
@@ -291,95 +528,240 @@ export default function MainLayout() {
                     '& .MuiListItemText-primary': { 
                       fontFamily: 'Outfit',
                       fontWeight: location.pathname === '/ayuda' ? 700 : 500,
-                      fontSize: '0.9rem',
+                      fontSize: '0.885rem',
                     } 
                   }} 
                 />
               </ListItemButton>
-            </ListItem>
-          </List>
-        </Drawer>
+            )}
+          </ListItem>
 
-        {/* ═══════════ ÁREA DE CONTENIDO PRINCIPAL ═══════════ */}
-        <Box 
-          component="main" 
-          sx={{ 
-            flexGrow: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            height: '100vh', 
-            overflow: 'hidden', 
-            position: 'relative',
-            width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
-            maxWidth: '100vw'
-          }}
-        >
-          
-          {/* ═══════════ HEADER (BARRA SUPERIOR RESPONSIVA) ═══════════ */}
-          <AppBar 
-            position="static" 
-            color="transparent" 
-            elevation={0} 
-            sx={{ 
-              borderBottom: 1,
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-              backgroundImage: 'none',
-            }}
-          >
-            <Toolbar 
-              sx={{ 
-                px: { xs: 1.5, sm: 2.5, md: 3 }, 
-                py: 1, 
-                minHeight: { xs: 56, sm: 64 },
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                gap: 1
-              }}
-            >
-              
-              {/* Sección Izquierda: Botón Menú Móvil + Marca / Título */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2, md: 3 }, minWidth: 0, flex: 1 }}>
-                
-                {/* Botón hamburguesa visible bajo md */}
-                <IconButton
-                  color="inherit"
-                  aria-label="Abrir menú de navegación"
-                  edge="start"
-                  onClick={handleDrawerToggle}
-                  sx={{ 
-                    display: { xs: 'flex', md: 'none' }, 
-                    color: 'text.primary',
-                    p: 1
+          {/* Botón rápido para alternar colapso en pantallas de escritorio y tablets */}
+          {!isTemporaryDrawer && (
+            <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <Tooltip 
+                title={collapsed ? "Expandir barra lateral" : "Contraer a solo íconos"} 
+                placement="right" 
+                arrow 
+                disableHoverListener={!collapsed}
+              >
+                <ListItemButton
+                  onClick={handleToggleSidebar}
+                  aria-label={collapsed ? "Expandir barra lateral" : "Contraer a solo íconos"}
+                  sx={{
+                    minHeight: 38,
+                    height: 38,
+                    justifyContent: isIconOnly ? 'center' : 'flex-start',
+                    px: isIconOnly ? 0 : 2,
+                    borderRadius: '10px',
+                    color: 'rgba(255,255,255,0.5)',
+                    transition: 'all 180ms ease',
+                    '&:hover': {
+                      color: '#fff',
+                      bgcolor: 'rgba(255,255,255,0.06)'
+                    }
                   }}
                 >
-                  <MenuIcon />
-                </IconButton>
+                  <ListItemIcon sx={{ minWidth: 0, mr: isIconOnly ? 0 : 1.75, justifyContent: 'center', color: 'inherit' }}>
+                    {collapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+                  </ListItemIcon>
+                  {!isIconOnly && (
+                    <ListItemText
+                      primary="Contraer menú"
+                      sx={{
+                        margin: 0,
+                        '& .MuiListItemText-primary': {
+                          fontSize: '0.75rem',
+                          fontFamily: 'Inter',
+                          color: 'inherit',
+                          fontWeight: 600
+                        }
+                      }}
+                    />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            </Box>
+          )}
+        </Box>
 
-                {/* Marca visible en md en adelante */}
-                <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                  <Typography variant="h6" sx={{ fontWeight: 900, color: 'text.primary', fontFamily: 'Outfit', lineHeight: 1.1, letterSpacing: '0.5px' }}>
+      </Box>
+    );
+  };
+
+  return (
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
+        
+      {/* ═══════════ SIDEBAR RESPONSIVO ═══════════ */}
+
+      {/* 1. Modo Móvil (< 600px): Drawer temporal desplegable con backdrop blur */}
+      {isMobile ? (
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+          ModalProps={{
+            keepMounted: true, // Optimización de renderizado en dispositivos móviles
+          }}
+          slotProps={{
+            backdrop: {
+              sx: {
+                backdropFilter: 'blur(6px)',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }}
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': {
+              width: 270,
+              boxSizing: 'border-box',
+              bgcolor: theme.palette.mode === 'light' ? '#0a192f' : '#070d18',
+              backgroundImage: 'linear-gradient(180deg, #0a192f 0%, #06101e 100%)',
+              color: '#fff',
+              borderRight: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '8px 0 32px rgba(0,0,0,0.3)',
+            },
+          }}
+        >
+          {renderSidebarContent(true)}
+        </Drawer>
+      ) : (
+        /* 2. Modo Tablet y Escritorio (>= 600px): Drawer permanente adaptable (72px solo íconos vs 240px expandido) */
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', sm: 'block' },
+            width: currentDrawerWidth,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+              width: currentDrawerWidth,
+              boxSizing: 'border-box',
+              bgcolor: theme.palette.mode === 'light' ? '#0a192f' : '#070d18',
+              backgroundImage: theme.palette.mode === 'light'
+                ? 'linear-gradient(180deg, #0a192f 0%, #06101e 100%)'
+                : 'linear-gradient(180deg, #09101d 0%, #040810 100%)',
+              color: '#fff',
+              borderRight: '1px solid',
+              borderColor: 'divider',
+              overflowX: 'hidden',
+              transition: theme.transitions.create(['width'], {
+                easing: theme.transitions.easing.easeInOut,
+                duration: 220,
+              }),
+              boxShadow: '4px 0 24px rgba(0,0,0,0.06)'
+            },
+          }}
+        >
+          {renderSidebarContent(false)}
+        </Drawer>
+      )}
+
+      {/* ═══════════ ÁREA DE CONTENIDO PRINCIPAL ═══════════ */}
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          height: '100vh', 
+          overflow: 'hidden', 
+          position: 'relative',
+          width: { 
+            xs: '100%', 
+            sm: `calc(100% - ${currentDrawerWidth}px)` 
+          },
+          maxWidth: '100vw',
+          transition: theme.transitions.create(['width', 'margin-left'], {
+            easing: theme.transitions.easing.easeInOut,
+            duration: 220,
+          }),
+        }}
+      >
+        
+        {/* ═══════════ HEADER (BARRA SUPERIOR CON GLASSMORPHISM) ═══════════ */}
+        <AppBar 
+          position="static" 
+          color="transparent" 
+          elevation={0} 
+          sx={{ 
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: (t) => t.palette.mode === 'light' ? 'rgba(255, 255, 255, 0.88)' : 'rgba(15, 23, 42, 0.88)',
+            backdropFilter: 'blur(12px)',
+            backgroundImage: 'none',
+            zIndex: (t) => t.zIndex.drawer - 1,
+          }}
+        >
+          <Toolbar 
+            sx={{ 
+              px: { xs: 1.25, sm: 2, md: 3 }, 
+              py: 0.75, 
+              minHeight: { xs: 56, sm: 64 },
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            
+            {/* Sección Izquierda: Botón Hamburguesa + Identificador y Título */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5, md: 2 }, minWidth: 0, flex: 1 }}>
+              
+              {/* Botón de Hamburguesa Inteligente:
+                  - En móviles (< 600px): Abre/cierra el drawer overlay
+                  - En tablets y pantallas medianas (600px - 1199px) y escritorio: Alterna entre solo íconos (72px) y expandido (240px)
+              */}
+              <Tooltip title={isMobile ? (mobileOpen ? "Cerrar menú" : "Abrir menú de navegación") : (collapsed ? "Expandir barra lateral" : "Contraer a solo íconos")}>
+                <IconButton
+                  color="inherit"
+                  aria-label={isMobile ? "Abrir menú de navegación" : (collapsed ? "Expandir barra lateral" : "Contraer barra lateral")}
+                  edge="start"
+                  onClick={handleToggleSidebar}
+                  sx={{ 
+                    color: 'text.primary',
+                    bgcolor: (t) => t.palette.mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                    borderRadius: '10px',
+                    p: 1,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      bgcolor: (t) => t.palette.mode === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)',
+                      transform: 'scale(1.05)'
+                    }
+                  }}
+                >
+                  <MenuIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+
+              {/* Marca compacta visible en tablets/medianas cuando el sidebar está contraído a íconos */}
+              {collapsed && !isMobile && (
+                <Box sx={{ display: { xs: 'none', sm: 'block' }, mr: 0.5 }}>
+                  <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                      fontWeight: 900, 
+                      color: 'text.primary', 
+                      fontFamily: 'Outfit', 
+                      lineHeight: 1,
+                      letterSpacing: '0.5px',
+                      fontSize: '1.05rem'
+                    }}
+                  >
                     TRAZALGA
                   </Typography>
-                  <Typography sx={{ fontSize: '0.625rem', color: 'text.secondary', fontFamily: 'Inter', lineHeight: 1.2, mt: 0.25 }}>
-                    Portal de Control de Trazabilidad<br/>de Algas Pardas
-                  </Typography>
-                  {region && (
-                    <Typography sx={{ fontSize: '0.625rem', color: 'secondary.main', fontWeight: 700, fontFamily: 'Inter', mt: 0.5 }}>
-                      {region}
-                    </Typography>
-                  )}
                 </Box>
+              )}
 
-                {/* Título de Página y Subtítulo */}
-                <Box sx={{ 
-                  borderLeft: { xs: 'none', md: 1 }, 
-                  borderColor: 'divider', 
-                  pl: { xs: 0, md: 3 },
-                  minWidth: 0,
-                  overflow: 'hidden'
-                }}>
+              {/* Título de Página, Subtítulo y Badge Regional */}
+              <Box sx={{ 
+                borderLeft: { xs: 'none', sm: collapsed ? 1 : 'none', md: 1 }, 
+                borderColor: 'divider', 
+                pl: { xs: 0, sm: collapsed ? 1.5 : 0, md: 2 },
+                minWidth: 0,
+                overflow: 'hidden'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography 
                     variant="h6" 
                     noWrap
@@ -388,359 +770,447 @@ export default function MainLayout() {
                       color: 'text.primary', 
                       fontFamily: 'Outfit', 
                       lineHeight: 1.2,
-                      fontSize: { xs: '1rem', sm: '1.25rem' }
+                      fontSize: { xs: '0.95rem', sm: '1.15rem', md: '1.25rem' }
                     }}
                   >
                     {title}
                   </Typography>
-                  <Typography 
-                    noWrap
-                    sx={{ 
-                      fontSize: { xs: '0.675rem', sm: '0.725rem' }, 
-                      color: 'text.secondary', 
-                      fontFamily: 'Inter',
-                      display: { xs: 'none', sm: 'block' }
-                    }}
-                  >
-                    {subtitle}
-                  </Typography>
+                  {region && (
+                    <Chip 
+                      label={region} 
+                      size="small" 
+                      sx={{ 
+                        height: 22, 
+                        fontSize: '0.675rem', 
+                        fontWeight: 700, 
+                        bgcolor: 'rgba(14, 165, 233, 0.1)', 
+                        color: 'secondary.main', 
+                        border: '1px solid rgba(14, 165, 233, 0.25)',
+                        display: { xs: 'none', md: 'inline-flex' }
+                      }} 
+                    />
+                  )}
                 </Box>
+                <Typography 
+                  noWrap
+                  sx={{ 
+                    fontSize: { xs: '0.675rem', sm: '0.725rem' }, 
+                    color: 'text.secondary', 
+                    fontFamily: 'Inter',
+                    display: { xs: 'none', md: 'block' }
+                  }}
+                >
+                  {subtitle}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Sección Derecha: Acciones Rápidas, Fechas y Perfil de Usuario */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1, md: 1.5 } }}>
+              
+              {/* Filtro de Fechas:
+                  - En pantallas grandes (>= 1200px / lg): Input visual directo integrado en cápsula
+                  - En pantallas chicas y medianas (< 1200px): Botón cápsula estilizado que abre popover compacto
+              */}
+              <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  bgcolor: (t) => t.palette.mode === 'light' ? '#f1f5f9' : 'rgba(255,255,255,0.04)', 
+                  border: '1px solid',
+                  borderColor: 'divider', 
+                  borderRadius: '24px', 
+                  px: 1.75, 
+                  py: 0.45,
+                  transition: 'border-color 0.2s',
+                  '&:focus-within': {
+                    borderColor: 'primary.main'
+                  }
+                }}>
+                  <CalendarTodayIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '0.85rem' }} />
+                  <input 
+                    type="date" 
+                    value={dateRange.startDate} 
+                    onChange={handleStartDateChange} 
+                    aria-label="Fecha inicio"
+                    style={{ 
+                      border: 'none', 
+                      outline: 'none', 
+                      color: theme.palette.text.primary, 
+                      fontSize: '0.785rem', 
+                      backgroundColor: 'transparent',
+                      fontFamily: 'Inter',
+                      fontWeight: 600,
+                      colorScheme: theme.palette.mode
+                    }} 
+                  />
+                  <Typography sx={{ color: 'text.secondary', mx: 0.75, fontSize: '0.8rem' }}> - </Typography>
+                  <input 
+                    type="date" 
+                    value={dateRange.endDate} 
+                    onChange={handleEndDateChange} 
+                    aria-label="Fecha fin"
+                    style={{ 
+                      border: 'none', 
+                      outline: 'none', 
+                      color: theme.palette.text.primary, 
+                      fontSize: '0.785rem', 
+                      backgroundColor: 'transparent',
+                      fontFamily: 'Inter',
+                      fontWeight: 600,
+                      colorScheme: theme.palette.mode
+                    }} 
+                  />
+                </Box>
+                <Button 
+                  variant="contained" 
+                  size="small" 
+                  startIcon={<FilterListIcon sx={{ fontSize: '0.9rem' }} />}
+                  sx={{ 
+                    display: { xs: 'none', xl: 'inline-flex' },
+                    textTransform: 'none', 
+                    bgcolor: 'primary.main', 
+                    '&:hover': { bgcolor: 'primary.light' },
+                    borderRadius: '24px',
+                    px: 2,
+                    py: 0.6,
+                    fontFamily: 'Outfit',
+                    fontSize: '0.8rem',
+                    boxShadow: 'none',
+                  }}
+                >
+                  Filtros
+                </Button>
               </Box>
 
-              {/* Sección Derecha: Acciones Rápidas y Usuario */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1.5, md: 2 } }}>
-                
-                {/* Filtro de Fecha Rápido (Desktop >= md) */}
-                <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    bgcolor: 'background.default', 
-                    border: '1px solid',
-                    borderColor: 'divider', 
-                    borderRadius: '24px', 
-                    px: 2, 
-                    py: 0.5,
-                    transition: 'border-color 0.2s',
-                    '&:focus-within': {
-                      borderColor: 'primary.main'
-                    }
-                  }}>
-                    <CalendarTodayIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '0.9rem' }} />
-                    <input 
-                      type="date" 
-                      value={dateRange.startDate} 
-                      onChange={handleStartDateChange} 
-                      aria-label="Fecha inicio"
-                      style={{ 
-                        border: 'none', 
-                        outline: 'none', 
-                        color: theme.palette.text.primary, 
-                        fontSize: '0.8rem', 
-                        backgroundColor: 'transparent',
-                        fontFamily: 'Inter',
-                        fontWeight: 600,
-                        colorScheme: theme.palette.mode
-                      }} 
-                    />
-                    <Typography sx={{ color: 'text.secondary', mx: 1, fontSize: '0.8rem' }}> - </Typography>
-                    <input 
-                      type="date" 
-                      value={dateRange.endDate} 
-                      onChange={handleEndDateChange} 
-                      aria-label="Fecha fin"
-                      style={{ 
-                        border: 'none', 
-                        outline: 'none', 
-                        color: theme.palette.text.primary, 
-                        fontSize: '0.8rem', 
-                        backgroundColor: 'transparent',
-                        fontFamily: 'Inter',
-                        fontWeight: 600,
-                        colorScheme: theme.palette.mode
-                      }} 
-                    />
-                  </Box>
+              {/* Botón de Fechas Adaptativo para Móviles, Tablets y Pantallas Medianas (< lg) */}
+              <Box sx={{ display: { xs: 'block', lg: 'none' } }}>
+                <Tooltip title="Filtrar por rango de fechas">
                   <Button 
-                    variant="contained" 
-                    size="small" 
-                    startIcon={<FilterListIcon />}
-                    sx={{ 
-                      display: { xs: 'none', lg: 'inline-flex' },
-                      textTransform: 'none', 
-                      bgcolor: 'primary.main', 
-                      '&:hover': { bgcolor: 'primary.light' },
-                      borderRadius: '24px',
-                      px: 2.5,
-                      py: 0.75,
-                      fontFamily: 'Outfit',
-                      fontSize: '0.825rem',
-                      boxShadow: 'none',
-                    }}
-                  >
-                    Filtros
-                  </Button>
-                </Box>
-
-                {/* Filtro de Fecha Móvil (< md): Botón compacto con Popover */}
-                <Box sx={{ display: { xs: 'block', md: 'none' } }}>
-                  <IconButton 
-                    color="inherit" 
+                    size="small"
+                    variant="outlined"
                     onClick={(e) => setDatePopoverEl(e.currentTarget)} 
-                    sx={{ color: 'text.secondary' }}
-                    aria-label="Filtrar por fechas"
-                  >
-                    <CalendarTodayIcon fontSize="small" />
-                  </IconButton>
-
-                  <Popover
-                    open={Boolean(datePopoverEl)}
-                    anchorEl={datePopoverEl}
-                    onClose={() => setDatePopoverEl(null)}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                    slotProps={{
-                      paper: {
-                        elevation: 4,
-                        sx: { p: 2, mt: 1, borderRadius: 2, width: 280, border: 1, borderColor: 'divider' }
+                    startIcon={<CalendarTodayIcon sx={{ fontSize: '0.85rem', color: 'secondary.main' }} />}
+                    sx={{ 
+                      borderRadius: '20px',
+                      textTransform: 'none',
+                      px: { xs: 1, sm: 1.5 },
+                      py: 0.4,
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      color: 'text.primary',
+                      borderColor: 'divider',
+                      bgcolor: (t) => t.palette.mode === 'light' ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        bgcolor: (t) => t.palette.mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)'
                       }
                     }}
+                    aria-label="Filtrar por fechas"
                   >
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit', mb: 1.5 }}>
-                      Rango de Fechas
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                      <Box>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
-                          Desde:
-                        </Typography>
-                        <input 
-                          type="date" 
-                          value={dateRange.startDate} 
-                          onChange={handleStartDateChange} 
-                          style={{ 
-                            width: '100%',
-                            padding: '6px 10px',
-                            borderRadius: '6px',
-                            border: `1px solid ${theme.palette.divider}`,
-                            color: theme.palette.text.primary, 
-                            fontSize: '0.85rem', 
-                            backgroundColor: theme.palette.background.default,
-                            fontFamily: 'Inter',
-                            fontWeight: 600,
-                            colorScheme: theme.palette.mode,
-                            boxSizing: 'border-box'
-                          }} 
-                        />
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
-                          Hasta:
-                        </Typography>
-                        <input 
-                          type="date" 
-                          value={dateRange.endDate} 
-                          onChange={handleEndDateChange} 
-                          style={{ 
-                            width: '100%',
-                            padding: '6px 10px',
-                            borderRadius: '6px',
-                            border: `1px solid ${theme.palette.divider}`,
-                            color: theme.palette.text.primary, 
-                            fontSize: '0.85rem', 
-                            backgroundColor: theme.palette.background.default,
-                            fontFamily: 'Inter',
-                            fontWeight: 600,
-                            colorScheme: theme.palette.mode,
-                            boxSizing: 'border-box'
-                          }} 
-                        />
-                      </Box>
-                      <Button 
-                        variant="contained" 
-                        size="small" 
-                        onClick={() => setDatePopoverEl(null)} 
-                        sx={{ mt: 0.5, textTransform: 'none', fontFamily: 'Outfit' }}
-                      >
-                        Listo
-                      </Button>
+                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                      {dateRange.startDate ? `${dateRange.startDate.slice(5)} al ${dateRange.endDate.slice(5)}` : 'Fechas'}
                     </Box>
-                  </Popover>
-                </Box>
+                    <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                      Fechas
+                    </Box>
+                  </Button>
+                </Tooltip>
 
-                {/* Toggle Modo Oscuro/Claro */}
-                <IconButton color="inherit" onClick={colorMode.toggleColorMode} sx={{ color: 'text.secondary' }} aria-label="Cambiar tema claro/oscuro">
+                <Popover
+                  open={Boolean(datePopoverEl)}
+                  anchorEl={datePopoverEl}
+                  onClose={() => setDatePopoverEl(null)}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  slotProps={{
+                    paper: {
+                      elevation: 6,
+                      sx: { 
+                        p: 2.5, 
+                        mt: 1, 
+                        borderRadius: 3, 
+                        width: 300, 
+                        border: 1, 
+                        borderColor: 'divider',
+                        boxShadow: '0 12px 32px rgba(0,0,0,0.12)' 
+                      }
+                    }
+                  }}
+                >
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'Outfit', mb: 1.5 }}>
+                    Rango de Fechas
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5, fontWeight: 600 }}>
+                        Desde:
+                      </Typography>
+                      <input 
+                        type="date" 
+                        value={dateRange.startDate} 
+                        onChange={handleStartDateChange} 
+                        style={{ 
+                          width: '100%',
+                          padding: '7px 10px',
+                          borderRadius: '8px',
+                          border: `1px solid ${theme.palette.divider}`,
+                          color: theme.palette.text.primary, 
+                          fontSize: '0.85rem', 
+                          backgroundColor: theme.palette.background.default,
+                          fontFamily: 'Inter',
+                          fontWeight: 600,
+                          colorScheme: theme.palette.mode,
+                          boxSizing: 'border-box'
+                        }} 
+                      />
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5, fontWeight: 600 }}>
+                        Hasta:
+                      </Typography>
+                      <input 
+                        type="date" 
+                        value={dateRange.endDate} 
+                        onChange={handleEndDateChange} 
+                        style={{ 
+                          width: '100%',
+                          padding: '7px 10px',
+                          borderRadius: '8px',
+                          border: `1px solid ${theme.palette.divider}`,
+                          color: theme.palette.text.primary, 
+                          fontSize: '0.85rem', 
+                          backgroundColor: theme.palette.background.default,
+                          fontFamily: 'Inter',
+                          fontWeight: 600,
+                          colorScheme: theme.palette.mode,
+                          boxSizing: 'border-box'
+                        }} 
+                      />
+                    </Box>
+                    <Button 
+                      variant="contained" 
+                      size="small" 
+                      onClick={() => setDatePopoverEl(null)} 
+                      sx={{ 
+                        mt: 0.5, 
+                        textTransform: 'none', 
+                        fontFamily: 'Outfit',
+                        fontWeight: 700,
+                        borderRadius: '8px'
+                      }}
+                    >
+                      Aplicar Rango
+                    </Button>
+                  </Box>
+                </Popover>
+              </Box>
+
+              {/* Alternador de Tema Claro / Oscuro */}
+              <Tooltip title={theme.palette.mode === 'dark' ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}>
+                <IconButton 
+                  color="inherit" 
+                  onClick={colorMode.toggleColorMode} 
+                  sx={{ color: 'text.secondary', p: 0.9 }} 
+                  aria-label="Cambiar tema claro/oscuro"
+                >
                   {theme.palette.mode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
                 </IconButton>
+              </Tooltip>
 
-                {/* Campana de Notificaciones */}
-                <IconButton color="inherit" onClick={handleNotifClick} sx={{ color: 'text.secondary' }} aria-label="Notificaciones">
+              {/* Campana de Notificaciones con Badge */}
+              <Tooltip title="Notificaciones">
+                <IconButton 
+                  color="inherit" 
+                  onClick={handleNotifClick} 
+                  sx={{ color: 'text.secondary', p: 0.9 }} 
+                  aria-label="Notificaciones"
+                >
                   <Badge badgeContent={notifications.length} color="error">
                     <NotificationsIcon fontSize="small" />
                   </Badge>
                 </IconButton>
-                
-                {/* Popover / Menú Notificaciones */}
-                <Menu
-                  anchorEl={notifAnchorEl}
-                  open={openNotif}
-                  onClose={handleNotifClose}
-                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                  slotProps={{
-                    paper: {
-                      elevation: 3,
-                      sx: { width: 300, maxHeight: 400, mt: 1.5, borderRadius: 3, border: 1, borderColor: 'divider' }
-                    }
-                  }}
-                >
-                  <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Notificaciones</Typography>
-                  </Box>
-                  {notifications.length === 0 ? (
-                    <MenuItem disabled sx={{ py: 2, fontFamily: 'Inter', fontSize: '0.85rem' }}>No hay notificaciones recientes</MenuItem>
-                  ) : (
-                    notifications.map((notif, index) => (
-                      <MenuItem key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 1.5 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>{notif.title}</Typography>
-                        <Typography variant="caption" color="text.secondary" noWrap sx={{ width: '100%', fontFamily: 'Inter' }}>{notif.body}</Typography>
-                        <Typography variant="caption" sx={{ color: 'text.disabled', alignSelf: 'flex-end', fontSize: '0.65rem', mt: 0.5 }}>{notif.time}</Typography>
-                      </MenuItem>
-                    ))
-                  )}
-                  {notifications.length > 0 && (
-                    <Box sx={{ p: 1, textAlign: 'center', borderTop: 1, borderColor: 'divider' }}>
-                      <Button size="small" onClick={() => setNotifications([])} sx={{ textTransform: 'none', fontFamily: 'Outfit' }}>Limpiar todas</Button>
-                    </Box>
-                  )}
-                </Menu>
-
-                {/* Perfil del Usuario */}
-                <Box 
-                  onClick={handleUserMenuClick}
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 1.5, 
-                    borderLeft: { xs: 'none', sm: 1 },
-                    borderColor: 'divider', 
-                    pl: { xs: 0.5, sm: 2 },
-                    cursor: 'pointer',
-                    '&:hover': {
-                      '& .MuiAvatar-root': {
-                        borderColor: 'primary.main',
-                      }
-                    }
-                  }}
-                >
-                  <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
-                    <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary', fontFamily: 'Outfit' }}>
-                      {nombre || 'Usuario Sernapesca'}
-                    </Typography>
-                    <Typography sx={{ fontSize: '0.65rem', color: 'primary.main', fontFamily: 'Inter', fontWeight: 700 }}>
-                      {perfil || 'CONSULTA'}
-                    </Typography>
-                  </Box>
-                  <Avatar 
-                    sx={{ 
-                      bgcolor: 'primary.main', 
-                      width: 34, 
-                      height: 34, 
-                      fontSize: '0.85rem',
-                      transition: 'all 0.3s',
-                      border: '2px solid transparent'
-                    }} 
-                  />
+              </Tooltip>
+              
+              {/* Menú de Notificaciones */}
+              <Menu
+                anchorEl={notifAnchorEl}
+                open={openNotif}
+                onClose={handleNotifClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                slotProps={{
+                  paper: {
+                    elevation: 4,
+                    sx: { width: 300, maxHeight: 400, mt: 1.5, borderRadius: 3, border: 1, borderColor: 'divider' }
+                  }
+                }}
+              >
+                <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'Outfit' }}>Notificaciones</Typography>
                 </Box>
+                {notifications.length === 0 ? (
+                  <MenuItem disabled sx={{ py: 2, fontFamily: 'Inter', fontSize: '0.85rem' }}>No hay notificaciones recientes</MenuItem>
+                ) : (
+                  notifications.map((notif, index) => (
+                    <MenuItem key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 1.5 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>{notif.title}</Typography>
+                      <Typography variant="caption" color="text.secondary" noWrap sx={{ width: '100%', fontFamily: 'Inter' }}>{notif.body}</Typography>
+                      <Typography variant="caption" sx={{ color: 'text.disabled', alignSelf: 'flex-end', fontSize: '0.65rem', mt: 0.5 }}>{notif.time}</Typography>
+                    </MenuItem>
+                  ))
+                )}
+                {notifications.length > 0 && (
+                  <Box sx={{ p: 1, textAlign: 'center', borderTop: 1, borderColor: 'divider' }}>
+                    <Button size="small" onClick={() => setNotifications([])} sx={{ textTransform: 'none', fontFamily: 'Outfit' }}>Limpiar todas</Button>
+                  </Box>
+                )}
+              </Menu>
 
-                <Menu
-                  anchorEl={anchorEl}
-                  open={open}
-                  onClose={handleClose}
-                  onClick={handleClose}
-                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                  slotProps={{
-                    paper: {
-                      elevation: 3,
-                      sx: {
-                        overflow: 'visible',
-                        mt: 1.5,
-                        borderRadius: 3,
-                        border: 1, borderColor: 'divider',
-                        '& .MuiAvatar-root': {
-                          width: 32,
-                          height: 32,
-                          ml: -0.5,
-                          mr: 1,
-                        },
-                        '&::before': {
-                          content: '""',
-                          display: 'block',
-                          position: 'absolute',
-                          top: 0,
-                          right: 14,
-                          width: 10,
-                          height: 10,
-                          bgcolor: 'background.paper',
-                          transform: 'translateY(-50%) rotate(45deg)',
-                          zIndex: 0,
-                          borderLeft: 1, 
-                          borderTop: 1, 
-                          borderColor: 'divider',
-                        },
-                      },
+              {/* Perfil del Usuario Responsivo */}
+              <Box 
+                onClick={handleUserMenuClick}
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1.25, 
+                  borderLeft: { xs: 'none', sm: 1 },
+                  borderColor: 'divider', 
+                  pl: { xs: 0.5, sm: 1.5 },
+                  cursor: 'pointer',
+                  py: 0.5,
+                  borderRadius: 2,
+                  transition: 'background-color 0.2s',
+                  '&:hover': {
+                    bgcolor: (t) => t.palette.mode === 'light' ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.04)',
+                    '& .MuiAvatar-root': {
+                      borderColor: 'primary.main',
                     }
-                  }}
+                  }
+                }}
+              >
+                <Box sx={{ textAlign: 'right', display: { xs: 'none', md: 'block' } }}>
+                  <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary', fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                    {nombre || 'Usuario Sernapesca'}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.65rem', color: 'primary.main', fontFamily: 'Inter', fontWeight: 700, mt: 0.25 }}>
+                    {perfil || 'CONSULTA'}
+                  </Typography>
+                </Box>
+                <Avatar 
+                  sx={{ 
+                    bgcolor: 'primary.main', 
+                    width: 34, 
+                    height: 34, 
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    transition: 'all 0.3s',
+                    border: '2px solid transparent'
+                  }} 
                 >
-                  <MenuItem onClick={() => navigate('/perfil')} sx={{ fontFamily: 'Inter', fontSize: '0.875rem' }}>
-                    <ListItemIcon>
-                      <PersonIcon fontSize="small" />
-                    </ListItemIcon>
-                    Mi Perfil
-                  </MenuItem>
-                  <Divider sx={{ borderColor: 'divider' }} />
-                  <MenuItem onClick={handleLogout} sx={{ color: 'error.main', fontFamily: 'Inter', fontSize: '0.875rem' }}>
-                    <ListItemIcon>
-                      <LogoutIcon fontSize="small" sx={{ color: 'error.main' }} />
-                    </ListItemIcon>
-                    Cerrar sesión
-                  </MenuItem>
-                </Menu>
-
+                  {(nombre || 'U').charAt(0).toUpperCase()}
+                </Avatar>
               </Box>
-            </Toolbar>
-          </AppBar>
 
-          {/* ═══════════ CONTENIDO DE PÁGINAS (Outlet) ═══════════ */}
-          <Box sx={{ flexGrow: 1, overflow: 'auto', p: { xs: 1.5, sm: 2, md: 3 }, bgcolor: 'background.default', maxWidth: '100%' }}>
-            <Outlet context={{ dateRange }} />
-          </Box>
+              <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                onClick={handleClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                slotProps={{
+                  paper: {
+                    elevation: 4,
+                    sx: {
+                      overflow: 'visible',
+                      mt: 1.5,
+                      borderRadius: 3,
+                      border: 1, 
+                      borderColor: 'divider',
+                      minWidth: 180,
+                      '& .MuiAvatar-root': {
+                        width: 32,
+                        height: 32,
+                        ml: -0.5,
+                        mr: 1,
+                      },
+                      '&::before': {
+                        content: '""',
+                        display: 'block',
+                        position: 'absolute',
+                        top: 0,
+                        right: 14,
+                        width: 10,
+                        height: 10,
+                        bgcolor: 'background.paper',
+                        transform: 'translateY(-50%) rotate(45deg)',
+                        zIndex: 0,
+                        borderLeft: 1, 
+                        borderTop: 1, 
+                        borderColor: 'divider',
+                      },
+                    },
+                  }
+                }}
+              >
+                <MenuItem onClick={() => navigate('/perfil')} sx={{ fontFamily: 'Inter', fontSize: '0.875rem' }}>
+                  <ListItemIcon>
+                    <PersonIcon fontSize="small" />
+                  </ListItemIcon>
+                  Mi Perfil
+                </MenuItem>
+                <Divider sx={{ borderColor: 'divider' }} />
+                <MenuItem onClick={handleLogout} sx={{ color: 'error.main', fontFamily: 'Inter', fontSize: '0.875rem' }}>
+                  <ListItemIcon>
+                    <LogoutIcon fontSize="small" sx={{ color: 'error.main' }} />
+                  </ListItemIcon>
+                  Cerrar sesión
+                </MenuItem>
+              </Menu>
 
-          {/* Alerta de notificación flotante global */}
-          <Snackbar 
-            open={snackbar.open} 
-            autoHideDuration={6000} 
-            onClose={handleSnackbarClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          >
-            <Alert 
-              onClose={handleSnackbarClose} 
-              severity="info" 
-              sx={{ 
-                width: '100%', 
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)', 
-                borderRadius: 3, 
-                border: '1px solid #bfdbfe',
-                fontFamily: 'Inter' 
-              }}
-            >
-              <strong style={{ fontFamily: 'Outfit' }}>{snackbar.title}</strong><br/>
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
+            </Box>
+          </Toolbar>
+        </AppBar>
 
+        {/* ═══════════ CONTENIDO DE PÁGINAS (Outlet) ═══════════ */}
+        <Box 
+          sx={{ 
+            flexGrow: 1, 
+            overflow: 'auto', 
+            p: { xs: 1.5, sm: 2, md: 3 }, 
+            bgcolor: 'background.default', 
+            maxWidth: '100%',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          <Outlet context={{ dateRange }} />
         </Box>
+
+        {/* Alerta de notificación flotante global */}
+        <Snackbar 
+          open={snackbar.open} 
+          autoHideDuration={6000} 
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert 
+            onClose={handleSnackbarClose} 
+            severity="info" 
+            sx={{ 
+              width: '100%', 
+              boxShadow: '0 10px 25px -3px rgba(0,0,0,0.1)', 
+              borderRadius: 3, 
+              border: '1px solid #bfdbfe',
+              fontFamily: 'Inter' 
+            }}
+          >
+            <strong style={{ fontFamily: 'Outfit' }}>{snackbar.title}</strong><br/>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+
       </Box>
+    </Box>
   );
 }
