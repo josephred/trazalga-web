@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Typography, Container, Grid, Box, CircularProgress, Alert, Button, Tabs, Tab } from '@mui/material';
 import { Assessment as AssessmentIcon, FileDownload as DownloadIcon, LocalShipping as TruckIcon } from '@mui/icons-material';
 import { getReportes } from '../services/reportesService';
@@ -9,6 +10,7 @@ import ReporteTransporteTab from '../components/reportes/ReporteTransporteTab';
 import exportarCsv from '../utils/exportarCsv';
 
 export default function Reportes() {
+  const { dateRange } = useOutletContext() || { dateRange: null };
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -16,6 +18,7 @@ export default function Reportes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [tabActual, setTabActual] = useState(0); // 0: Planillas Masivas, 1: Transporte
+  const [lastFilters, setLastFilters] = useState(null);
 
   const handleDescargarCsv = () => {
     if (!reportData || reportData.length === 0) return;
@@ -77,10 +80,18 @@ export default function Reportes() {
   };
 
   const handleGenerateReport = async (filters) => {
+    if (!filters) return;
     setLoading(true);
     setError(null);
+    setLastFilters(filters);
     try {
-      const data = await getReportes(filters);
+      const activeStartDate = dateRange?.startDate || filters.fechaInicio;
+      const activeEndDate = dateRange?.endDate || filters.fechaFin;
+      const data = await getReportes({
+        ...filters,
+        fechaInicio: activeStartDate,
+        fechaFin: activeEndDate,
+      });
       setReportData(data);
     } catch (err) {
       console.error('Error fetching report:', err);
@@ -90,6 +101,14 @@ export default function Reportes() {
       setLoading(false);
     }
   };
+
+  // Opción B: Cuando cambia el rango de fechas en el header principal,
+  // si el usuario ya había consultado un tipo de reporte, recargar automáticamente
+  useEffect(() => {
+    if (lastFilters && lastFilters.tipoReporte && dateRange?.startDate && dateRange?.endDate) {
+      handleGenerateReport(lastFilters);
+    }
+  }, [dateRange?.startDate, dateRange?.endDate]);
 
   const handleRowClick = (row) => {
     if (row && row.id && row.tipoReporte) {
@@ -221,12 +240,12 @@ export default function Reportes() {
         </Box>
 
         {tabActual === 1 ? (
-          <ReporteTransporteTab />
+          <ReporteTransporteTab dateRange={dateRange} />
         ) : (
           <>
             {/* Filtros de Reporte */}
             <Box sx={{ mb: 4 }}>
-              <ReportFilter onGenerate={handleGenerateReport} />
+              <ReportFilter onGenerate={handleGenerateReport} dateRange={dateRange} />
             </Box>
 
             {error && (

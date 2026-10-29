@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import {
     Card, CardContent, Typography, Box, TextField, MenuItem,
-    Button, Stack, Divider, Chip, InputAdornment, IconButton, Grid,
+    Button, Stack, Divider, Chip,
     Autocomplete, CircularProgress, createFilterOptions
 } from '@mui/material';
 import {
@@ -45,43 +46,16 @@ const customFilterOptions = createFilterOptions({
     stringify: (option) => `${option.nombre} ${option.rut} ${option.perfilNombre || ''}`,
 });
 
-// ── Helper: fecha local en formato YYYY-MM-DD ─────────────────────
-const formatDate = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
+const ReportFilter = ({ onGenerate, dateRange: propDateRange }) => {
+    const outletCtx = useOutletContext?.() || {};
+    const dateRange = propDateRange || outletCtx.dateRange || null;
 
-const today = () => formatDate(new Date());
-const thirtyDaysAgo = () => {
-    const d = new Date();
-    d.setDate(d.getDate() - 30);
-    return formatDate(d);
-};
-
-const ReportFilter = ({ onGenerate }) => {
-    const [fechaInicio, setFechaInicio] = useState(thirtyDaysAgo());
-    const [fechaFin, setFechaFin] = useState(today());
     const [tipoReporte, setTipoReporte] = useState('');
     const [selectedActor, setSelectedActor] = useState(null);
     const [subOptions, setSubOptions] = useState([]);
     const [loadingSub, setLoadingSub] = useState(false);
     const [allUsers, setAllUsers] = useState(null);
     const [allPlantas, setAllPlantas] = useState(null);
-
-    // Referencias para los inputs ocultos de fecha
-    const inputInicioRef = useRef(null);
-    const inputFinRef = useRef(null);
-
-    const openPicker = (ref) => {
-        if (ref.current && typeof ref.current.showPicker === 'function') {
-            ref.current.showPicker();
-        } else if (ref.current) {
-            ref.current.focus();
-            ref.current.click();
-        }
-    };
 
     // Precargar usuarios y plantas al montar el componente
     useEffect(() => {
@@ -182,8 +156,8 @@ const ReportFilter = ({ onGenerate }) => {
     const handleGenerar = () => {
         if (onGenerate) {
             onGenerate({
-                fechaInicio,
-                fechaFin,
+                fechaInicio: dateRange?.startDate,
+                fechaFin: dateRange?.endDate,
                 tipoReporte,
                 subSeleccion: selectedActor ? selectedActor.id : '',
                 rut: selectedActor ? selectedActor.rut : '',
@@ -194,7 +168,7 @@ const ReportFilter = ({ onGenerate }) => {
 
     const selectedType = REPORT_TYPES.find(t => t.id === tipoReporte);
     const actorLabel = selectedType ? selectedType.label : 'Actor / Entidad';
-    const isFormValid = fechaInicio && fechaFin && tipoReporte;
+    const isFormValid = Boolean(dateRange?.startDate && dateRange?.endDate && tipoReporte);
 
     return (
         <Card
@@ -214,106 +188,52 @@ const ReportFilter = ({ onGenerate }) => {
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
                         gap: 1.5,
                         mb: 2,
                     }}
                 >
-                    <FilterIcon sx={{ color: 'secondary.main' }} />
-                    <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', m: 0 }}>
-                        Filtros de Reporte
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <FilterIcon sx={{ color: 'secondary.main' }} />
+                        <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit', color: 'text.primary', m: 0 }}>
+                            Filtros de Reporte
+                        </Typography>
+                    </Box>
+
+                    {dateRange?.startDate && dateRange?.endDate && (
+                        <Chip
+                            icon={<CalendarIcon sx={{ fontSize: '1rem !important' }} />}
+                            label={`Período: ${dateRange.startDate} al ${dateRange.endDate}`}
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                                fontWeight: 700,
+                                fontFamily: 'Inter',
+                                fontSize: '0.8rem',
+                                px: 0.5,
+                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(14, 165, 233, 0.12)' : '#f0f9ff',
+                                color: 'primary.main',
+                                borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(14, 165, 233, 0.3)' : '#bae6fd',
+                            }}
+                        />
+                    )}
                 </Box>
 
                 <Divider sx={{ mb: 3, borderColor: 'divider' }} />
-
-                {/* Inputs nativos ocultos para disparar el calendario */}
-                <input
-                    type="date"
-                    ref={inputInicioRef}
-                    style={{ opacity: 0, position: 'absolute', zIndex: -1, width: 0, height: 0 }}
-                    value={fechaInicio}
-                    onChange={(e) => setFechaInicio(e.target.value)}
-                />
-                <input
-                    type="date"
-                    ref={inputFinRef}
-                    style={{ opacity: 0, position: 'absolute', zIndex: -1, width: 0, height: 0 }}
-                    value={fechaFin}
-                    onChange={(e) => setFechaFin(e.target.value)}
-                    min={fechaInicio}
-                />
 
                 <Box
                     sx={{
                         display: 'grid',
                         gridTemplateColumns: {
                             xs: '1fr',
-                            sm: '1fr 1fr',
-                            md: 'repeat(2, 1fr)',
-                            lg: '1fr 1fr 1.15fr 1.35fr auto',
+                            sm: '1fr',
+                            md: '280px 1fr auto',
                         },
                         gap: 2,
                         alignItems: 'center',
                     }}
                 >
-                    {/* Fecha Inicio */}
-                    <Box>
-                        <TextField
-                            id="filter-fecha-inicio"
-                            label="Fecha Inicio"
-                            type="text"
-                            value={fechaInicio}
-                            slotProps={{
-                                input: {
-                                    readOnly: true,
-                                    onClick: () => openPicker(inputInicioRef),
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); openPicker(inputInicioRef); }}>
-                                                <CalendarIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                    sx: { borderRadius: 3, cursor: 'pointer', fontFamily: 'Inter' }
-                                },
-                                inputLabel: {
-                                    sx: { fontFamily: 'Inter' }
-                                }
-                            }}
-                            fullWidth
-                            size="small"
-                        />
-                    </Box>
-
-                    {/* Fecha Fin */}
-                    <Box>
-                        <TextField
-                            id="filter-fecha-fin"
-                            label="Fecha Fin"
-                            type="text"
-                            value={fechaFin}
-                            slotProps={{
-                                input: {
-                                    readOnly: true,
-                                    onClick: () => openPicker(inputFinRef),
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); openPicker(inputFinRef); }}>
-                                                <CalendarIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                    sx: { borderRadius: 3, cursor: 'pointer', fontFamily: 'Inter' }
-                                },
-                                inputLabel: {
-                                    sx: { fontFamily: 'Inter' }
-                                }
-                            }}
-                            fullWidth
-                            size="small"
-                        />
-                    </Box>
-
                     {/* Tipo de Reporte */}
                     <Box>
                         <TextField
@@ -494,7 +414,7 @@ const ReportFilter = ({ onGenerate }) => {
                     </Box>
 
                     {/* Botón Generar (TF.5) */}
-                    <Box sx={{ display: 'flex', width: '100%', justifyContent: 'stretch' }}>
+                    <Box sx={{ display: 'flex', width: { xs: '100%', md: 'auto' }, justifyContent: 'stretch' }}>
                         <Button
                             id="btn-generar-reporte"
                             variant="contained"
@@ -502,9 +422,9 @@ const ReportFilter = ({ onGenerate }) => {
                             onClick={handleGenerar}
                             startIcon={<SearchIcon />}
                             sx={{
-                                width: { xs: '100%', sm: '100%', lg: 'auto' },
-                                minHeight: 44,
-                                height: { xs: 44, lg: '40px' },
+                                width: { xs: '100%', md: 'auto' },
+                                minHeight: 40,
+                                height: 40,
                                 px: 3,
                                 minWidth: 120,
                                 borderRadius: 3,

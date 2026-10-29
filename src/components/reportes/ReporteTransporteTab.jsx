@@ -1,5 +1,6 @@
 // src/components/reportes/ReporteTransporteTab.jsx
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -26,17 +27,15 @@ import {
   WarningAmber as WarningIcon,
   LocalShipping as TruckIcon,
   Info as InfoIcon,
+  CalendarMonth as CalendarIcon,
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 import exportarCsv from '../../utils/exportarCsv';
 
-export default function ReporteTransporteTab() {
-  const [desde, setDesde] = useState(() => {
-    const d = new Date();
-    d.setDate(1);
-    return d.toISOString().slice(0, 10);
-  });
-  const [hasta, setHasta] = useState(() => new Date().toISOString().slice(0, 10));
+export default function ReporteTransporteTab({ dateRange: propDateRange }) {
+  const outletCtx = useOutletContext?.() || {};
+  const dateRange = propDateRange || outletCtx.dateRange || null;
+
   const [patente, setPatente] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -46,7 +45,7 @@ export default function ReporteTransporteTab() {
 
   useEffect(() => {
     cargarReporte();
-  }, []);
+  }, [dateRange?.startDate, dateRange?.endDate]);
 
   const cargarReporte = async () => {
     setLoading(true);
@@ -54,8 +53,8 @@ export default function ReporteTransporteTab() {
     try {
       const res = await api.get('/reportes/transporte/relaciones', {
         params: {
-          desde: desde || undefined,
-          hasta: hasta || undefined,
+          desde: dateRange?.startDate || undefined,
+          hasta: dateRange?.endDate || undefined,
           patente: patente.trim() || undefined,
         },
       });
@@ -115,29 +114,29 @@ export default function ReporteTransporteTab() {
       {/* Filtros */}
       <Paper elevation={0} sx={{ p: 2.5, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, sm: 3 }}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Fecha Desde"
-              type="date"
-              value={desde}
-              onChange={(e) => setDesde(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 3 }}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Fecha Hasta"
-              type="date"
-              value={hasta}
-              onChange={(e) => setHasta(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 3 }}>
+          {dateRange?.startDate && dateRange?.endDate && (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Chip
+                icon={<CalendarIcon sx={{ fontSize: '1rem !important' }} />}
+                label={`Período: ${dateRange.startDate} al ${dateRange.endDate}`}
+                size="small"
+                variant="outlined"
+                sx={{
+                  fontWeight: 700,
+                  fontFamily: 'Inter',
+                  fontSize: '0.8rem',
+                  py: 2,
+                  px: 1,
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(14, 165, 233, 0.12)' : '#f0f9ff',
+                  color: 'primary.main',
+                  borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(14, 165, 233, 0.3)' : '#bae6fd',
+                }}
+              />
+            </Grid>
+          )}
+          <Grid size={{ xs: 12, md: dateRange?.startDate ? 5 : 9 }}>
             <TextField
               fullWidth
               size="small"
@@ -145,9 +144,15 @@ export default function ReporteTransporteTab() {
               placeholder="Ej: ABCD12"
               value={patente}
               onChange={(e) => setPatente(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  cargarReporte();
+                }
+              }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 3 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Button
               fullWidth
               variant="contained"
