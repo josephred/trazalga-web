@@ -36,6 +36,7 @@ export default function ExtraccionVedaWidget({ dateRange }) {
   const [openModal, setOpenModal] = useState(false);
   const [detalle, setDetalle] = useState([]);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
+  const [errorDetalle, setErrorDetalle] = useState(null);
 
   // Estados para derivar a citación (T5.1)
   const [citacionModalOpen, setCitacionModalOpen] = useState(false);
@@ -105,15 +106,19 @@ export default function ExtraccionVedaWidget({ dateRange }) {
   const handleOpenDetalle = async () => {
     setOpenModal(true);
     setLoadingDetalle(true);
+    setErrorDetalle(null);
     try {
       let queryParams = '';
       if (dateRange && dateRange.startDate && dateRange.endDate) {
         queryParams = `?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
       }
       const response = await api.get(`/reportes/extraccion-veda-detalle${queryParams}`);
-      setDetalle(response.data || []);
+      const raw = response.data;
+      const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : (Array.isArray(raw?.content) ? raw.content : []));
+      setDetalle(list);
     } catch (err) {
       console.error('Error fetching detalle veda:', err);
+      setErrorDetalle(err.response?.data?.message || err.message || 'Error al obtener el detalle nominal de extracciones en veda.');
     } finally {
       setLoadingDetalle(false);
     }
@@ -348,6 +353,10 @@ export default function ExtraccionVedaWidget({ dateRange }) {
             {loadingDetalle ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                 <CircularProgress />
+              </Box>
+            ) : errorDetalle ? (
+              <Box sx={{ p: 3 }}>
+                <Alert severity="error">{errorDetalle}</Alert>
               </Box>
             ) : detalle.length === 0 ? (
               <Typography sx={{ p: 4, color: 'text.secondary', fontFamily: 'Inter', textAlign: 'center' }}>
