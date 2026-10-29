@@ -1542,6 +1542,22 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                     <Typography variant="caption" sx={{ color: '#94a3b8' }}>
                       {detailData.estadoHumedad || 'Humedad s/d'}
                     </Typography>
+                    {detailData.metodoExtraccion && (
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}>
+                        Método: {detailData.metodoExtraccion}
+                      </Typography>
+                    )}
+                    {detailData.metodoImputacionCuota && (
+                      <Tooltip describeChild title="Método en veda sin cuota propia en la comuna y el período: la captura corregida se descuenta de esta cuota (refinamiento 23-10).">
+                        <Chip
+                          size="small"
+                          label={`Cuota: ${detailData.metodoImputacionCuota}`}
+                          color="info"
+                          variant="outlined"
+                          sx={{ mt: 0.5, height: 18, fontSize: '0.65rem', fontWeight: 700, alignSelf: 'flex-start' }}
+                        />
+                      </Tooltip>
+                    )}
                     {detailData.edadExtraccionHoras != null && (
                       <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}>
                         Edad: {Number(detailData.edadExtraccionHoras).toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} h · Esp.: {detailData.estadoEsperadoHumedad || '-'}

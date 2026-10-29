@@ -87,6 +87,8 @@ export default function ParametrosGeneralesMaestro() {
       setSavingKey('CAT');
       setMensaje(null);
       for (const k of claves) {
+        // Una clave que el backend aún no entrega no se escribe vacía (evita apagar reglas por omisión)
+        if (configs[k] === undefined) continue;
         await api.put(`/api/configuracion-general/${k}`, {
           clave: k,
           valor: configs[k] ?? '',
@@ -369,6 +371,9 @@ export default function ParametrosGeneralesMaestro() {
                   'cuota_dias_gracia_declaracion',
                   'cuota_accion_extemporanea',
                   'cuota_imputacion_armador',
+                  'cuota_imputacion_veda_activo',
+                  'cuota_imputacion_veda_metodo_origen',
+                  'cuota_imputacion_veda_metodo_destino',
                 ])
               }
               sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
@@ -510,6 +515,49 @@ export default function ParametrosGeneralesMaestro() {
                 <MenuItem value="INSCRIPCION">INSCRIPCION (Comuna RPA del usuario armador)</MenuItem>
                 <MenuItem value="CALETA_DESEMBARQUE">CALETA (Comuna de la caleta de desembarque)</MenuItem>
               </TextField>
+            </Grid>
+
+            {/* Refinamiento 23-10 · punto 1: imputación cruzada por veda */}
+            <Grid size={{ xs: 12 }}>
+              <Divider />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['cuota_imputacion_veda_activo'] ?? 'true') === 'true'}
+                    onChange={(e) =>
+                      handleValorChange('cuota_imputacion_veda_activo', e.target.checked ? 'true' : 'false')
+                    }
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2">Imputación cruzada por veda</Typography>}
+              />
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                Si se declara un método en veda que no tiene cuota en la comuna y el período, la alerta de veda se
+                mantiene y la captura corregida se descuenta de la cuota del método de destino (refinamiento 23-10).
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Método en veda sin cuota propia"
+                value={configs['cuota_imputacion_veda_metodo_origen'] ?? 'BARRETEADO'}
+                onChange={(e) => handleValorChange('cuota_imputacion_veda_metodo_origen', e.target.value)}
+                helperText="Nombre en el maestro de métodos de extracción (p. ej. BARRETEADO)."
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Método cuya cuota recibe la captura"
+                value={configs['cuota_imputacion_veda_metodo_destino'] ?? 'VARADO'}
+                onChange={(e) => handleValorChange('cuota_imputacion_veda_metodo_destino', e.target.value)}
+                helperText="Nombre en el maestro de métodos de extracción (p. ej. VARADO)."
+              />
             </Grid>
           </Grid>
         </CardContent>

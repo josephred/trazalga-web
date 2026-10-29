@@ -374,6 +374,17 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                             {formatKg(orig.desembarqueKg)}
                           </Typography>
                         </Stack>
+                        {/* Refinamiento 23-10: método declarado y, si hubo imputación cruzada por veda, la cuota que la recibe */}
+                        {(orig.metodoExtraccion || orig.metodoImputacionCuota) && (
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem', mt: 0.4 }}>
+                            Método: <strong>{orig.metodoExtraccion || 'No informado'}</strong>
+                            {orig.metodoImputacionCuota && (
+                              <>
+                                {' · '}Descuenta cuota de <strong>{orig.metodoImputacionCuota}</strong> (en veda, sin cuota propia)
+                              </>
+                            )}
+                          </Typography>
+                        )}
                         {/* TH.5: Edad desde extracción, estado esperado y marca */}
                         {orig.edadExtraccionHoras !== null && orig.edadExtraccionHoras !== undefined && (
                           <Box sx={{ mt: 0.8, pt: 0.8, borderTop: '1px dashed', borderColor: 'divider' }}>

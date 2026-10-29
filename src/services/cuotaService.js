@@ -54,6 +54,24 @@ export const cuotaService = {
   async reabrirCuota(cuotaId, motivo) {
     const response = await api.put(`/api/cuotas/${cuotaId}/reabrir`, { motivo });
     return response.data;
+  },
+
+  /**
+   * Imputación cruzada por veda (refinamiento 23-10, punto 1): recalcula qué declaraciones de
+   * barreteado en veda, sin cuota de barreteado, se descuentan de la cuota de varado de su comuna y mes.
+   * Sólo ADMINISTRADOR. Con aplicar=false sólo informa lo que cambiaría.
+   *
+   * @param {string} desde Fecha inicio YYYY-MM-DD
+   * @param {string} hasta Fecha fin YYYY-MM-DD
+   * @param {boolean} aplicar
+   * @returns {Promise<object>} ResumenImputacionCruzadaDTO
+   */
+  async recalcularImputacionCruzada(desde, hasta, aplicar = false) {
+    const params = { aplicar };
+    if (desde) params.desde = desde;
+    if (hasta) params.hasta = hasta;
+    const response = await api.post('/api/cuotas/imputacion-cruzada/recalcular', null, { params });
+    return response.data;
   }
 };
 

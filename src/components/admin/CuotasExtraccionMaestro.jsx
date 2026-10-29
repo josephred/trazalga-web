@@ -46,9 +46,11 @@ import {
   Terrain as TerrainIcon,
   CalendarMonth as CalendarMonthIcon,
   AutoAwesome as AutoAwesomeIcon,
+  CallSplit as CallSplitIcon,
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 import CuotaForm from './cuotas/CuotaForm';
+import ImputacionVedaDialog from './cuotas/ImputacionVedaDialog';
 
 const MESES = [
   { id: 1, nombre: 'Enero' },
@@ -135,6 +137,8 @@ export default function CuotasExtraccionMaestro() {
   const [saving, setSaving] = useState(false);
   const [porEliminar, setPorEliminar] = useState(null);
   const [cuotaPorCerrar, setCuotaPorCerrar] = useState(null);
+  // Refinamiento 23-10 · punto 1: imputación de barreteado en veda a la cuota de varado
+  const [dialogImputacionOpen, setDialogImputacionOpen] = useState(false);
 
   // Dialog Alta Anual (T1.8)
   const [dialogAnualOpen, setDialogAnualOpen] = useState(false);
@@ -777,6 +781,24 @@ export default function CuotasExtraccionMaestro() {
         </Box>
 
         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Tooltip describeChild title="Barreteado declarado en veda sin cuota de barreteado: se descuenta de la cuota de varado de la comuna y el mes">
+            <Button
+              variant="outlined"
+              color="warning"
+              startIcon={<CallSplitIcon />}
+              onClick={() => setDialogImputacionOpen(true)}
+              sx={{
+                borderRadius: 2.5,
+                textTransform: 'none',
+                fontFamily: 'Outfit',
+                fontWeight: 600,
+                px: 2,
+              }}
+            >
+              Imputación por veda
+            </Button>
+          </Tooltip>
+
           <Button
             variant="outlined"
             color="primary"
@@ -1754,6 +1776,14 @@ export default function CuotasExtraccionMaestro() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Imputación por veda (refinamiento 23-10, punto 1) */}
+      <ImputacionVedaDialog
+        open={dialogImputacionOpen}
+        onClose={() => setDialogImputacionOpen(false)}
+        onAplicado={() => cargarListado()}
+        metodos={maestros.extraccionTipos || []}
+      />
 
       {/* Dialog Confirmar Cierre */}
       <Dialog open={Boolean(cuotaPorCerrar)} onClose={() => setCuotaPorCerrar(null)} maxWidth="xs">
