@@ -1,5 +1,5 @@
 // scripts/test-tf2-dates.js
-import { getDefaultDateRange, loadUserDateRange, saveUserDateRange } from '../src/utils/fechas.js';
+import { getDefaultDateRange, loadUserDateRange, saveUserDateRange, shiftMonthRange } from '../src/utils/fechas.js';
 
 const range = getDefaultDateRange();
 console.log('Resultado getDefaultDateRange():', range);
@@ -73,3 +73,38 @@ if (!safeRange.startDate || !safeRange.endDate) {
 saveUserDateRange('usr_falla', customRange); // No debe lanzar excepción
 console.log('✓ Manejo seguro con try/catch ante fallos en localStorage comprobado exitosamente');
 
+// Prueba 4: shiftMonthRange (+1 mes y -1 mes)
+// Ejemplo solicitado por el usuario: de 2026-10-01 a 2026-10-31 con '>' (+1) -> 2026-11-01 a 2026-11-30
+const octRange = { startDate: '2026-10-01', endDate: '2026-10-31' };
+const novRange = shiftMonthRange(octRange, 1);
+if (novRange.startDate !== '2026-11-01' || novRange.endDate !== '2026-11-30') {
+  console.error('ERROR: shiftMonthRange (+1) falló para octubre a noviembre:', novRange);
+  process.exit(1);
+}
+console.log('✓ shiftMonthRange (+1) avanza de 2026-10-01...2026-10-31 a 2026-11-01...2026-11-30');
+
+// Retroceder (< / -1) desde noviembre a octubre
+const backToOct = shiftMonthRange(novRange, -1);
+if (backToOct.startDate !== '2026-10-01' || backToOct.endDate !== '2026-10-31') {
+  console.error('ERROR: shiftMonthRange (-1) falló de vuelta a octubre:', backToOct);
+  process.exit(1);
+}
+console.log('✓ shiftMonthRange (-1) retrocede de 2026-11-01...2026-11-30 a 2026-10-01...2026-10-31');
+
+// Cambio de año hacia adelante (diciembre 2026 -> enero 2027)
+const decRange = { startDate: '2026-12-01', endDate: '2026-12-31' };
+const jan2027 = shiftMonthRange(decRange, 1);
+if (jan2027.startDate !== '2027-01-01' || jan2027.endDate !== '2027-01-31') {
+  console.error('ERROR: shiftMonthRange (+1) falló en cruce de año:', jan2027);
+  process.exit(1);
+}
+console.log('✓ shiftMonthRange cruza de año correctamente (2026-12 a 2027-01)');
+
+// Febrero en año bisiesto (2028: 29 días)
+const jan2028 = { startDate: '2028-01-01', endDate: '2028-01-31' };
+const feb2028 = shiftMonthRange(jan2028, 1);
+if (feb2028.startDate !== '2028-02-01' || feb2028.endDate !== '2028-02-29') {
+  console.error('ERROR: shiftMonthRange falló en año bisiesto 2028:', feb2028);
+  process.exit(1);
+}
+console.log('✓ shiftMonthRange calcula correctamente febrero en año bisiesto (29 días)');

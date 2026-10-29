@@ -30,7 +30,7 @@ import { onMessageListener } from '../../firebase';
 import { getPerfil, getNombre, getUsuarioId, getRegion, cerrarSesion, revalidarPerfilServidor } from '../../auth/sesion';
 import { puedeVer } from '../../auth/perfiles';
 import api from '../../api/axiosConfig';
-import { getDefaultDateRange, loadUserDateRange, saveUserDateRange } from '../../utils/fechas';
+import { getDefaultDateRange, loadUserDateRange, saveUserDateRange, shiftMonthRange } from '../../utils/fechas';
 
 export { getDefaultDateRange };
 
@@ -132,6 +132,12 @@ export default function MainLayout() {
   
   const handleEndDateChange = (e) => {
     const next = { ...dateRange, endDate: e.target.value };
+    setDateRange(next);
+    saveUserDateRange(usuarioId, next);
+  };
+
+  const handleShiftMonth = (offset) => {
+    const next = shiftMonthRange(dateRange, offset);
     setDateRange(next);
     saveUserDateRange(usuarioId, next);
   };
@@ -820,14 +826,31 @@ export default function MainLayout() {
                   border: '1px solid',
                   borderColor: 'divider', 
                   borderRadius: '24px', 
-                  px: 1.75, 
-                  py: 0.45,
-                  transition: 'border-color 0.2s',
+                  px: 0.75, 
+                  py: 0.35,
+                  transition: 'all 0.2s ease',
                   '&:focus-within': {
                     borderColor: 'primary.main'
                   }
                 }}>
-                  <CalendarTodayIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '0.85rem' }} />
+                  <Tooltip title="Mes anterior">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleShiftMonth(-1)}
+                      aria-label="Mes anterior"
+                      sx={{ 
+                        p: 0.4, 
+                        color: 'text.secondary',
+                        '&:hover': { 
+                          color: 'primary.main', 
+                          bgcolor: (t) => t.palette.mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' 
+                        }
+                      }}
+                    >
+                      <ChevronLeftIcon sx={{ fontSize: '1.15rem' }} />
+                    </IconButton>
+                  </Tooltip>
+                  <CalendarTodayIcon sx={{ color: 'text.secondary', mx: 0.75, fontSize: '0.85rem' }} />
                   <input 
                     type="date" 
                     value={dateRange.startDate} 
@@ -844,7 +867,7 @@ export default function MainLayout() {
                       colorScheme: theme.palette.mode
                     }} 
                   />
-                  <Typography sx={{ color: 'text.secondary', mx: 0.75, fontSize: '0.8rem' }}> - </Typography>
+                  <Typography sx={{ color: 'text.secondary', mx: 0.5, fontSize: '0.8rem' }}> - </Typography>
                   <input 
                     type="date" 
                     value={dateRange.endDate} 
@@ -861,6 +884,23 @@ export default function MainLayout() {
                       colorScheme: theme.palette.mode
                     }} 
                   />
+                  <Tooltip title="Mes siguiente">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleShiftMonth(1)}
+                      aria-label="Mes siguiente"
+                      sx={{ 
+                        p: 0.4, 
+                        color: 'text.secondary',
+                        '&:hover': { 
+                          color: 'primary.main', 
+                          bgcolor: (t) => t.palette.mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' 
+                        }
+                      }}
+                    >
+                      <ChevronRightIcon sx={{ fontSize: '1.15rem' }} />
+                    </IconButton>
+                  </Tooltip>
                 </Box>
                 <Button 
                   variant="contained" 
@@ -884,7 +924,27 @@ export default function MainLayout() {
               </Box>
 
               {/* Botón de Fechas Adaptativo para Móviles, Tablets y Pantallas Medianas (< lg) */}
-              <Box sx={{ display: { xs: 'block', lg: 'none' } }}>
+              <Box sx={{ display: { xs: 'flex', lg: 'none' }, alignItems: 'center', gap: 0.5 }}>
+                <Tooltip title="Mes anterior">
+                  <IconButton 
+                    size="small"
+                    onClick={() => handleShiftMonth(-1)}
+                    aria-label="Mes anterior"
+                    sx={{ 
+                      p: 0.4, 
+                      color: 'text.secondary',
+                      bgcolor: (t) => t.palette.mode === 'light' ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        color: 'primary.main'
+                      }
+                    }}
+                  >
+                    <ChevronLeftIcon sx={{ fontSize: '1rem' }} />
+                  </IconButton>
+                </Tooltip>
                 <Tooltip title="Filtrar por rango de fechas">
                   <Button 
                     size="small"
@@ -917,6 +977,27 @@ export default function MainLayout() {
                   </Button>
                 </Tooltip>
 
+                <Tooltip title="Mes siguiente">
+                  <IconButton 
+                    size="small"
+                    onClick={() => handleShiftMonth(1)}
+                    aria-label="Mes siguiente"
+                    sx={{ 
+                      p: 0.4, 
+                      color: 'text.secondary',
+                      bgcolor: (t) => t.palette.mode === 'light' ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        color: 'primary.main'
+                      }
+                    }}
+                  >
+                    <ChevronRightIcon sx={{ fontSize: '1rem' }} />
+                  </IconButton>
+                </Tooltip>
+
                 <Popover
                   open={Boolean(datePopoverEl)}
                   anchorEl={datePopoverEl}
@@ -938,9 +1019,33 @@ export default function MainLayout() {
                     }
                   }}
                 >
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'Outfit', mb: 1.5 }}>
-                    Rango de Fechas
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, fontFamily: 'Outfit' }}>
+                      Rango de Fechas
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Tooltip title="Mes anterior">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleShiftMonth(-1)}
+                          aria-label="Mes anterior"
+                          sx={{ p: 0.4 }}
+                        >
+                          <ChevronLeftIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Mes siguiente">
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleShiftMonth(1)}
+                          aria-label="Mes siguiente"
+                          sx={{ p: 0.4 }}
+                        >
+                          <ChevronRightIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     <Box>
                       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5, fontWeight: 600 }}>
