@@ -11,6 +11,7 @@ import StatCard from '../components/dashboard/StatCard';
 import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
 import DesembarqueFisicoWidget from '../components/dashboard/DesembarqueFisicoWidget';
 import CapturaCorregidaWidget from '../components/dashboard/CapturaCorregidaWidget';
+import SubreporteHuiroPaloWidget from '../components/dashboard/SubreporteHuiroPaloWidget';
 import ControlCuotaDiaria from '../components/dashboard/ControlCuotaDiaria';
 import LimiteExtraccionDiarioWidget from '../components/dashboard/LimiteExtraccionDiarioWidget';
 import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
@@ -223,6 +224,14 @@ export default function Dashboard() {
             <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <CapturaCorregidaWidget dateRange={dateRange} />
               <IndicadorHelpButton helpKey="capturaCorregida" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
+          </Grid>
+
+          {/* Subreporte Huiro Palo (refinamiento 23-10, punto 3) */}
+          <Grid size={{ xs: 12, md: 12 }} sx={{ width: '100%' }}>
+            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
+              <SubreporteHuiroPaloWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="subreporteHuiroPalo" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 

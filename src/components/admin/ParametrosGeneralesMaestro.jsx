@@ -305,7 +305,16 @@ export default function ParametrosGeneralesMaestro() {
               size="small"
               startIcon={<SaveIcon />}
               onClick={() =>
-                handleGuardarCategoria(['captura_politica_sin_factor', 'captura_factor_default'])
+                handleGuardarCategoria([
+                  'captura_politica_sin_factor',
+                  'captura_factor_default',
+                  'subreporte_huiro_palo_activo',
+                  'subreporte_huiro_palo_especie',
+                  'subreporte_huiro_palo_metodo',
+                  'subreporte_huiro_palo_composicion',
+                  'subreporte_huiro_palo_factor_pct',
+                  'subreporte_huiro_palo_formula',
+                ])
               }
               sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
             >
@@ -340,6 +349,90 @@ export default function ParametrosGeneralesMaestro() {
                 onChange={(e) => handleValorChange('captura_factor_default', e.target.value)}
                 helperText="Se aplica sólo cuando la política es USAR_DEFAULT."
               />
+            </Grid>
+
+            {/* Refinamiento 23-10 · punto 3: Subreporte Huiro Palo */}
+            <Grid size={{ xs: 12 }}>
+              <Divider sx={{ my: 1 }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  Subreporte Huiro Palo (fronda no declarada):
+                </Typography>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={(configs['subreporte_huiro_palo_activo'] ?? 'true') === 'true'}
+                      onChange={(e) =>
+                        handleValorChange('subreporte_huiro_palo_activo', e.target.checked ? 'true' : 'false')
+                      }
+                      color="secondary"
+                    />
+                  }
+                  label={<Typography variant="body2">Mostrar tarjeta</Typography>}
+                />
+              </Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
+                Estima la fronda que no queda declarada cuando la especie se extrae con el método indicado y se declara con la
+                composición indicada. Los nombres se buscan en los maestros sin importar tildes, mayúsculas ni plural.
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Especie"
+                    value={configs['subreporte_huiro_palo_especie'] ?? 'HUIRO PALO'}
+                    onChange={(e) => handleValorChange('subreporte_huiro_palo_especie', e.target.value)}
+                    helperText="Nombre en el maestro de especies."
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Método declarado"
+                    value={configs['subreporte_huiro_palo_metodo'] ?? 'BARRETEADO'}
+                    onChange={(e) => handleValorChange('subreporte_huiro_palo_metodo', e.target.value)}
+                    helperText="Nombre en el maestro de métodos."
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Composición"
+                    value={configs['subreporte_huiro_palo_composicion'] ?? 'SIN FRONDA'}
+                    onChange={(e) => handleValorChange('subreporte_huiro_palo_composicion', e.target.value)}
+                    helperText="Nombre en el maestro de composiciones."
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    inputProps={{ step: '0.1', min: '0.1', max: '99.9' }}
+                    label="Fronda (% de la captura biológica)"
+                    value={configs['subreporte_huiro_palo_factor_pct'] ?? '22'}
+                    onChange={(e) => handleValorChange('subreporte_huiro_palo_factor_pct', e.target.value)}
+                    helperText="IFOP: 22 %."
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 8 }}>
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
+                    label="Fórmula"
+                    value={configs['subreporte_huiro_palo_formula'] ?? 'SOBRE_SIN_FRONDA'}
+                    onChange={(e) => handleValorChange('subreporte_huiro_palo_formula', e.target.value)}
+                    helperText="Con 22 %: SOBRE_SIN_FRONDA suma 22 % a lo declarado; SOBRE_TOTAL suma 28,2 % (22/78)."
+                  >
+                    <MenuItem value="SOBRE_SIN_FRONDA">SOBRE_SIN_FRONDA (captura sin fronda × %)</MenuItem>
+                    <MenuItem value="SOBRE_TOTAL">SOBRE_TOTAL (el % es de la biomasa total)</MenuItem>
+                  </TextField>
+                </Grid>
+              </Grid>
             </Grid>
           </Grid>
         </CardContent>

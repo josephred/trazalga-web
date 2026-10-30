@@ -95,6 +95,18 @@ export const getCapturaCorregida = async (filters) => {
   return response.data;
 };
 
+/**
+ * Subreporte Huiro Palo (refinamiento 23-10, punto 3): fronda no declarada en el huiro palo
+ * barreteado declarado sin fronda.
+ */
+export const getSubreporteHuiroPalo = async (filters) => {
+  const params = {};
+  if (filters?.startDate) params.startDate = filters.startDate;
+  if (filters?.endDate) params.endDate = filters.endDate;
+  const response = await api.get('/reportes/subreporte-huiro-palo', { params });
+  return response.data;
+};
+
 export const getLimiteExtraccionDiario = async (fecha) => {
   const response = await api.get('/reportes/limite-extraccion-diario', { params: fecha ? { fecha } : {} });
   return response.data;

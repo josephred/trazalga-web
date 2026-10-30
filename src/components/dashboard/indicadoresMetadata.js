@@ -305,6 +305,30 @@ export const INDICADORES_METADATA = {
       'El factor aplicado queda congelado en los campos `factor_aplicado` (DECIMAL 8,4) y `factor_conversion_id` de cada declaración. Esto garantiza inviolabilidad histórica: si Subpesca modifica un factor en el futuro, las declaraciones anteriores conservan inalterado su valor legal de auditoría. Adicionalmente, cuando la regla de coherencia de humedad (Res. Ex. 3602/2017) detecta que el estado declarado es incompatible por ser más húmedo que la edad mínima transcurrida desde la fecha de extracción, registra la marca no bloqueante HUMEDAD_INCOHERENTE.'
   },
 
+  subreporteHuiroPalo: {
+    id: 'subreporteHuiroPalo',
+    codigo: 'IND-02-S',
+    nombre: 'Subreporte Huiro Palo (Indicador 2)',
+    categoria: 'Indicador Biológico Oficial',
+    subtitulo: 'Fronda no declarada en el huiro palo barreteado sin fronda',
+    icono: 'Grass',
+    color: '#d97706',
+    resumenNegocio:
+      'Cuando el huiro palo se extrae por barreteado y se declara «sin fronda», la fronda queda en el mar o se descarta y no aparece en la declaración. Según IFOP, la fronda equivale al {{subreporte_huiro_palo_factor_pct:22}} % de la captura biológica. Esta tarjeta estima los kilos que no quedan declarados (refinamiento del 23-10).',
+    metricaBase:
+      'Captura Biológica Corregida (kg) de las declaraciones de {{subreporte_huiro_palo_especie:HUIRO PALO}} con método declarado {{subreporte_huiro_palo_metodo:BARRETEADO}} y composición {{subreporte_huiro_palo_composicion:SIN FRONDA}}.',
+    humedadFactor:
+      'La base ya es la captura corregida por el factor de conversión de humedad (Indicador 2), de modo que el porcentaje de fronda se aplica sobre el equivalente de alga viva.',
+    fuentesDatos:
+      'Campos `captura`, `especie_id`, `extraccion_tipo_id` y `composicion_id` de `declaracion_recolector`, `declaracion_armador` y `declaracion_area`, cruzados con los maestros de especies, métodos de extracción y composiciones de fronda.',
+    periodoFechas:
+      'Misma fecha que el control de cuotas: {{cuota_fecha_imputacion:EXTRACCION}} (`cuota_fecha_imputacion`). La comuna es la de desembarque (la de la declaración o, si falta, la de la caleta).',
+    formula:
+      'Fórmula {{subreporte_huiro_palo_formula:SOBRE_SIN_FRONDA}}. SOBRE_SIN_FRONDA: Subreporte = Captura sin fronda × {{subreporte_huiro_palo_factor_pct:22}} %. SOBRE_TOTAL: el porcentaje es la parte de la biomasa total, de modo que Subreporte = Captura sin fronda × % / (100 − %) (con 22 %, 28,2 % sobre lo sin fronda). Captura total estimada = Captura sin fronda + Subreporte.',
+    criterioFiscalizacion:
+      'Es una estimación informativa: no descuenta cuotas ni genera alertas. Se usa el método declarado, de modo que el barreteado en veda que la imputación cruzada descuenta de la cuota de varado sigue contando como barreteado. Las declaraciones sin composición informada no entran en el cálculo y la tarjeta las informa aparte, igual que las declaradas con fronda. Los nombres de especie, método y composición se buscan en los maestros sin importar tildes, mayúsculas ni plural, y se editan en Administración → Alertas y Parámetros → Indicador 2, donde también se puede ocultar la tarjeta ({{subreporte_huiro_palo_activo:true}}).'
+  },
+
   controlCuotas: {
     id: 'controlCuotas',
     codigo: 'IND-03',
@@ -578,6 +602,12 @@ export const DEFAULT_CONFIG_VALUES = {
   desembarque_atipico_min_muestras: '10',
   captura_politica_sin_factor: 'USAR_DEFAULT',
   captura_factor_default: '1.0000',
+  subreporte_huiro_palo_activo: 'true',
+  subreporte_huiro_palo_especie: 'HUIRO PALO',
+  subreporte_huiro_palo_metodo: 'BARRETEADO',
+  subreporte_huiro_palo_composicion: 'SIN FRONDA',
+  subreporte_huiro_palo_factor_pct: '22',
+  subreporte_huiro_palo_formula: 'SOBRE_SIN_FRONDA',
   cuota_fecha_imputacion: 'EXTRACCION',
   cuota_umbral_restante_pct: '10.0',
   cuota_desvio_velocidad_pct: '25.0',
