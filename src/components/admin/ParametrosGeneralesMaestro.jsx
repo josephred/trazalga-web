@@ -663,7 +663,14 @@ export default function ParametrosGeneralesMaestro() {
               size="small"
               startIcon={<SaveIcon />}
               onClick={() =>
-                handleGuardarCategoria(['veda_modo_operacion', 'veda_dias_aviso_previo'])
+                handleGuardarCategoria([
+                  'veda_modo_operacion',
+                  'veda_dias_aviso_previo',
+                  'declaracion_congelar_activo',
+                  'declaracion_congelar_marcas',
+                  'declaracion_autorizacion_horas',
+                  'declaracion_escritura_exige_sesion',
+                ])
               }
               sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
             >
@@ -695,6 +702,64 @@ export default function ParametrosGeneralesMaestro() {
                 onChange={(e) => handleValorChange('veda_dias_aviso_previo', e.target.value)}
                 helperText="Días de anticipación para notificar el inicio de una veda en el cron diario."
               />
+            </Grid>
+
+            {/* Refinamiento 30-10 · punto 3: declaraciones congeladas por alerta */}
+            <Grid size={{ xs: 12 }}>
+              <Divider />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['declaracion_congelar_activo'] ?? 'true') === 'true'}
+                    onChange={(e) => handleValorChange('declaracion_congelar_activo', e.target.checked ? 'true' : 'false')}
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Congelar declaraciones con alerta</Typography>}
+              />
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                El usuario no puede modificar ni eliminar una declaración de recolector, armador o área con una de estas
+                marcas. Sólo un fiscalizador autoriza una edición o la elimina, con motivo y acta (Consola de Hallazgos).
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Marcas que congelan"
+                value={configs['declaracion_congelar_marcas'] ?? 'EN_VEDA,CUOTA_EXCEDIDA,POSTERIOR_CIERRE'}
+                onChange={(e) => handleValorChange('declaracion_congelar_marcas', e.target.value)}
+                helperText="Separadas por coma."
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="Plazo de una edición autorizada (horas)"
+                value={configs['declaracion_autorizacion_horas'] ?? '48'}
+                onChange={(e) => handleValorChange('declaracion_autorizacion_horas', e.target.value)}
+                helperText="Tiempo que tiene el usuario para usar la autorización del fiscalizador."
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['declaracion_escritura_exige_sesion'] ?? 'false') === 'true'}
+                    onChange={(e) => handleValorChange('declaracion_escritura_exige_sesion', e.target.checked ? 'true' : 'false')}
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Exigir sesión para modificar o eliminar declaraciones</Typography>}
+              />
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                Encender cuando los teléfonos tengan la app 2.5.0: la 2.4.0 elimina sin enviar la sesión y dejaría de poder
+                editar o eliminar. Con sesión, sólo el dueño de la declaración (o un administrador) puede hacerlo.
+              </Typography>
             </Grid>
           </Grid>
         </CardContent>

@@ -54,6 +54,8 @@ import {
 import api from '../../api/axiosConfig';
 import { getPerfil } from '../../auth/sesion';
 import { puedeHacer } from '../../auth/perfiles';
+import CongelamientoDeclaracionDialog from './CongelamientoDeclaracionDialog';
+import { esDeclaracionOrigen } from './congelamiento';
 
 // Metadatos de configuración visual para cada tipo de marca
 const MARCA_CONFIG = {
@@ -209,6 +211,8 @@ export default function ConsolaHallazgos() {
   }, [cargarDatos]);
 
   const [dialogResolverOpen, setDialogResolverOpen] = useState(false);
+  // Refinamiento 30-10 · punto 3: congelamiento de la declaración (autorizar edición o eliminar)
+  const [congelamientoSel, setCongelamientoSel] = useState(null);
   const [marcaSeleccionada, setMarcaSeleccionada] = useState(null);
   const [resolucionTipo, setResolucionTipo] = useState('LIBERADA');
   const [observacionResolucion, setObservacionResolucion] = useState('');
@@ -701,6 +705,17 @@ export default function ConsolaHallazgos() {
                               {h.folio ? `Folio: ${h.folio}` : `Faena #${h.declaracionId}`}
                             </Typography>
                           )}
+                          {esDeclaracionOrigen(h.declaracionTipo, h.declaracionId) && (
+                            <Button
+                              size="small"
+                              color="inherit"
+                              startIcon={<LockIcon sx={{ fontSize: 13 }} />}
+                              onClick={() => setCongelamientoSel({ tipo: h.declaracionTipo, id: h.declaracionId, folio: h.folio })}
+                              sx={{ textTransform: 'none', fontSize: '0.68rem', py: 0, px: 0.5, mt: 0.3, minWidth: 0, color: 'text.secondary' }}
+                            >
+                              Congelamiento
+                            </Button>
+                          )}
                         </TableCell>
 
                         {/* 2. Estado */}
@@ -1047,6 +1062,21 @@ export default function ConsolaHallazgos() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <CongelamientoDeclaracionDialog
+        open={congelamientoSel !== null}
+        onClose={() => setCongelamientoSel(null)}
+        declaracionTipo={congelamientoSel?.tipo}
+        declaracionId={congelamientoSel?.id}
+        folio={congelamientoSel?.folio}
+        puedeActuar={puedeResolver}
+        onCambio={(accion) => {
+          setActionSuccess(accion === 'eliminar'
+            ? 'Declaración eliminada por fiscalización. Se guardó un respaldo con sus marcas.'
+            : 'Edición autorizada: el usuario puede modificar la declaración una vez.');
+          cargarDatos();
+        }}
+      />
     </Box>
   );
 }
