@@ -487,7 +487,7 @@ export default function DesembarqueFisicoWidget({ dateRange }) {
           }}
         >
           <Typography variant="caption" sx={{ fontFamily: 'Inter', color: 'text.secondary', fontSize: '0.75rem' }}>
-            <strong>Nota territorial:</strong> El desembarque se imputa a la caleta y comuna donde ocurrió. El consumo de cuota de recolectores se imputa a la comuna de inscripción.
+            <strong>Nota territorial:</strong> El desembarque se imputa a la caleta y comuna donde ocurrió. El consumo de cuota se imputa a la comuna del usuario que declara.
           </Typography>
         </Box>
 

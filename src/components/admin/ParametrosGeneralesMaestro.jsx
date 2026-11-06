@@ -463,7 +463,6 @@ export default function ParametrosGeneralesMaestro() {
                   'cuota_cierre_automatico_vencimiento',
                   'cuota_dias_gracia_declaracion',
                   'cuota_accion_extemporanea',
-                  'cuota_imputacion_armador',
                   'cuota_imputacion_veda_activo',
                   'cuota_imputacion_veda_metodo_origen',
                   'cuota_imputacion_veda_metodo_destino',
@@ -595,19 +594,11 @@ export default function ParametrosGeneralesMaestro() {
               />
             </Grid>
 
+            {/* 06-11-2026: la imputación territorial dejó de ser configurable */}
             <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Imputación Territorial de Armadores (TC.8)"
-                value={(configs['cuota_imputacion_armador'] === 'CALETA' ? 'CALETA_DESEMBARQUE' : configs['cuota_imputacion_armador']) || 'INSCRIPCION'}
-                onChange={(e) => handleValorChange('cuota_imputacion_armador', e.target.value)}
-                helperText="Criterio territorial oficial para imputar consumo de armadores (D1)."
-              >
-                <MenuItem value="INSCRIPCION">INSCRIPCION (Comuna RPA del usuario armador)</MenuItem>
-                <MenuItem value="CALETA_DESEMBARQUE">CALETA (Comuna de la caleta de desembarque)</MenuItem>
-              </TextField>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                <strong>Imputación territorial:</strong> la cuota se descuenta en la comuna del usuario que declara (usuario.comuna_id): recolectores, armadores y áreas de manejo. Si el usuario no tiene comuna, en la comuna de desembarque.
+              </Typography>
             </Grid>
 
             {/* Refinamiento 23-10 · punto 1: imputación cruzada por veda */}

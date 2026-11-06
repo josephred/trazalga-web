@@ -646,7 +646,7 @@ export default function CuotasExtraccionMaestro() {
           </Box>
           <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'Inter', lineHeight: 1.6 }}>
             Motor de cuotas multiescala decretadas por Subpesca: <strong>Comunales</strong>, <strong>Provinciales</strong>, <strong>Regionales</strong> e <strong>Individuales</strong> (personal o plantilla con tope general).
-            El consumo unifica a recolectores de orilla (por inscripción o desembarque K15) y armadores artesanales según regla D1.
+            El consumo unifica a recolectores de orilla y armadores artesanales en la comuna del usuario que declara (si no tiene comuna, en la de desembarque).
             Descuento en <strong>captura biológica corregida</strong> (o desembarque con resolución).
           </Typography>
         </CardContent>

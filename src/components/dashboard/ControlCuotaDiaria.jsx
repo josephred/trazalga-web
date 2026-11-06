@@ -66,7 +66,6 @@ export default function ControlCuotaDiaria({ dateRange }) {
   const [errorPersonas, setErrorPersonas] = useState(null);
 
   // TC.8: Parámetro de imputación territorial de armadores
-  const [imputacionArmador, setImputacionArmador] = useState('INSCRIPCION');
 
   // Control de permisos y estado de recálculo (TC.10 / TQ.3)
   const perfil = getPerfil();
@@ -76,20 +75,6 @@ export default function ControlCuotaDiaria({ dateRange }) {
   const [recalculando, setRecalculando] = useState(false);
   const [resultadoRecalculo, setResultadoRecalculo] = useState(null);
   const [recalculoError, setRecalculoError] = useState(null);
-
-  // Cargar configuración general para nota territorial (TC.8)
-  useEffect(() => {
-    api.get('/api/configuracion-general')
-      .then((res) => {
-        if (Array.isArray(res.data)) {
-          const param = res.data.find((c) => c.clave === 'cuota_imputacion_armador');
-          if (param && param.valor) {
-            setImputacionArmador(param.valor.trim().toUpperCase());
-          }
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Cargar maestros de comunas y métodos de extracción para los filtros
   useEffect(() => {
@@ -485,13 +470,9 @@ export default function ControlCuotaDiaria({ dateRange }) {
     { id: 'TODAS', label: 'Todas las personas con actividad', activo: !soloSobreLimite, onClick: () => setSoloSobreLimite(false) },
   ], [soloSobreLimite]);
 
-  // Texto normativo dinámico según parámetro de imputación territorial (TC.8)
-  const notaTerritorialTexto = useMemo(() => {
-    if (imputacionArmador === 'CALETA_DESEMBARQUE' || imputacionArmador === 'CALETA') {
-      return 'El consumo suma recolectores (comuna de inscripción) y armadores (caleta de desembarque). Las AMERB se controlan en su propio módulo.';
-    }
-    return 'El consumo suma recolectores y armadores según comuna de inscripción (regla TC.8). Las AMERB se controlan en su propio módulo.';
-  }, [imputacionArmador]);
+  // Imputación territorial (TC.8; desde el 06-11-2026 es la comuna del usuario que declara)
+  const notaTerritorialTexto =
+    'El consumo suma recolectores y armadores en la comuna del usuario que declara (si no tiene comuna, en la de desembarque). Las AMERB se controlan en su propio módulo.';
 
   if (loading && cuotas.length === 0) {
     return (

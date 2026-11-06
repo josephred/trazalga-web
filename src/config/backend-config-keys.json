@@ -30,7 +30,6 @@
     "cuota_cierre_automatico_vencimiento",
     "cuota_dias_gracia_declaracion",
     "cuota_accion_extemporanea",
-    "cuota_imputacion_armador",
     "cuota_imputacion_veda_activo",
     "cuota_imputacion_veda_metodo_origen",
     "cuota_imputacion_veda_metodo_destino",
