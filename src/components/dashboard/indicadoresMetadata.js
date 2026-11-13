@@ -408,7 +408,7 @@ export const INDICADORES_METADATA = {
     periodoFechas: 'Declaraciones vinculadas procesadas en el período seleccionado.',
     formula: 'Variación % = ((peso_romana_kg - SUM(despachos_consumidos)) / SUM(despachos_consumidos)) × 100 evaluada con EvaluadorCoherenciaBiologica.',
     criterioFiscalizacion:
-      'Evalúa la variación frente al umbral general (`variacion_peso_umbral_general_pct`, {{variacion_peso_umbral_general_pct:5.0}}%). Si cambia la humedad se evalúa la alerta equivalente en captura con {{variacion_peso_alerta_equivalente:false}}. Separa los lotes con pesaje neto en romana certificado (vinculante, exigencia de peso gobernada por `planta_exige_peso_romana`, {{planta_exige_peso_romana:true}} y voucher por `variacion_peso_exige_voucher`, {{variacion_peso_exige_voucher:true}}) de los lotes sólo documentales. Las discrepancias anómalas alimentan el indicador 8 y el modulador biológico del perfilador de riesgo.'
+      'Evalúa la variación frente al umbral general (`variacion_peso_umbral_general_pct`, {{variacion_peso_umbral_general_pct:5.0}}%). Si cambia la humedad se evalúa la alerta equivalente en captura con {{variacion_peso_alerta_equivalente:false}}. Separa los lotes con pesaje neto en romana certificado (vinculante, exigencia de peso gobernada por `planta_exige_peso_romana`, {{planta_exige_peso_romana:true}}, voucher por `variacion_peso_exige_voucher`, {{variacion_peso_exige_voucher:true}} y lugar de acopio en planta por `planta_exige_lugar_acopio`, {{planta_exige_lugar_acopio:true}}) de los lotes sólo documentales. Las discrepancias anómalas alimentan el indicador 8 y el modulador biológico del perfilador de riesgo.'
   },
 
   retencionBodega: {
@@ -670,7 +670,8 @@ export const DEFAULT_CONFIG_VALUES = {
   patente_consulta_max_por_minuto: '20',
   planta_exige_peso_romana: 'true',
   planta_version_minima: '',
-  planta_exige_humedad_recepcion: 'true'
+  planta_exige_humedad_recepcion: 'true',
+  planta_exige_lugar_acopio: 'true'
 };
 
 /**

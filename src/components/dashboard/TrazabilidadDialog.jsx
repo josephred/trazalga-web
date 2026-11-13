@@ -159,7 +159,7 @@ Actor: ${detailData.nombreActor || '-'} (RUT: ${detailData.rutActor || '-'})
 ${esFlujoInternoPlanta(detailData.tipoNodo) ? 'Flujo interno de planta' : `Destinatario: ${detailData.nombreDestinatario || '-'}`}
 Especie: ${detailData.especie || '-'}
 Estado Humedad: ${detailData.estadoHumedad || '-'}
-Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
+Ubicación: ${detailData.caleta || detailData.comuna || '-'}${detailData.lugarAcopio ? ` · Acopio: ${detailData.lugarAcopio}` : ''}`;
 
     navigator.clipboard.writeText(summary);
     setCopiedSummary(true);
@@ -1076,6 +1076,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                             </Typography>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, color: '#94a3b8', fontSize: '0.72rem' }}>
                               <span>⚖ Romana / Voucher: #{n.voucherRomana || n.docNumero || 'VR-2026'}</span>
+                              {n.lugarAcopio && <span>🏭 Acopio: {n.lugarAcopio}</span>}
                               <span>💧 Humedad: {n.estadoHumedad || 'SEMI SECO'}</span>
                             </Box>
                           </Paper>
@@ -1755,7 +1756,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                             CALETA / PLANTA / SECTOR
                           </Typography>
                           <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
-                            {detailData.caleta || detailData.varaderoOAmerb || 'No informada'}
+                            {detailData.caleta || detailData.varaderoOAmerb || 'No informada'}{detailData.lugarAcopio ? ` · Acopio: ${detailData.lugarAcopio}` : ''}
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 6 }}>

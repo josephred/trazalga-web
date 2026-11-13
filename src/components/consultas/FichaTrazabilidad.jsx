@@ -702,7 +702,7 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                       Comuna: <strong>{planta.comuna || 'Sin comuna'}</strong>
-                      {planta.codigoSernapesca ? ` · Código: ${planta.codigoSernapesca}` : ''}
+                      {planta.codigoSernapesca ? ` · Código: ${planta.codigoSernapesca}` : ''}{planta.lugarAcopio ? ` · Acopio: ${planta.lugarAcopio}` : ''}
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                       Fecha llegada: <strong>{formatDate(planta.fechaLlegada)} {planta.hora || ''}</strong>

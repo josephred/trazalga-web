@@ -831,6 +831,7 @@ export default function ParametrosGeneralesMaestro() {
                   'planta_exige_peso_romana',
                   'variacion_peso_exige_voucher',
                   'planta_exige_humedad_recepcion',
+                  'planta_exige_lugar_acopio',
                   'planta_version_minima',
                   'retencion_bodega_activo',
                   'retencion_bodega_dias_amarilla',
@@ -930,6 +931,24 @@ export default function ParametrosGeneralesMaestro() {
                   />
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                     Exige estado verificado de humedad al recibir.
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={configs['planta_exige_lugar_acopio'] === 'true'}
+                        onChange={(e) =>
+                          handleValorChange('planta_exige_lugar_acopio', e.target.checked ? 'true' : 'false')
+                        }
+                        color="secondary"
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Exigir Lugar Acopio</Typography>}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                    Exige declarar el lugar de almacenamiento físico al recibir (NA.2).
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12 }}>

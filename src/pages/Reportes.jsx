@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Typography, Container, Grid, Box, CircularProgress, Alert, Button, Tabs, Tab } from '@mui/material';
-import { Assessment as AssessmentIcon, FileDownload as DownloadIcon, LocalShipping as TruckIcon } from '@mui/icons-material';
+import { Assessment as AssessmentIcon, FileDownload as DownloadIcon, LocalShipping as TruckIcon, Inventory2 as InventoryIcon } from '@mui/icons-material';
 import { getReportes } from '../services/reportesService';
 import DataTable from '../components/dashboard/DataTable';
 import ReportFilter from '../components/dashboard/ReportFilter';
 import TrazabilidadDialog from '../components/dashboard/TrazabilidadDialog';
 import ReporteTransporteTab from '../components/reportes/ReporteTransporteTab';
+import ReporteStockPlantaTab from '../components/reportes/ReporteStockPlantaTab';
 import exportarCsv from '../utils/exportarCsv';
 
 export default function Reportes() {
@@ -236,11 +237,14 @@ export default function Reportes() {
           >
             <Tab icon={<AssessmentIcon />} iconPosition="start" label="Planillas Masivas" sx={{ fontWeight: 700 }} />
             <Tab icon={<TruckIcon />} iconPosition="start" label="Transporte" sx={{ fontWeight: 700 }} />
+            <Tab icon={<InventoryIcon />} iconPosition="start" label="Stock en Planta" sx={{ fontWeight: 700 }} />
           </Tabs>
         </Box>
 
         {tabActual === 1 ? (
           <ReporteTransporteTab dateRange={dateRange} />
+        ) : tabActual === 2 ? (
+          <ReporteStockPlantaTab />
         ) : (
           <>
             {/* Filtros de Reporte */}

@@ -83,6 +83,7 @@
     "patente_consulta_max_por_minuto",
     "planta_exige_peso_romana",
     "planta_version_minima",
-    "planta_exige_humedad_recepcion"
+    "planta_exige_humedad_recepcion",
+    "planta_exige_lugar_acopio"
   ]
 }

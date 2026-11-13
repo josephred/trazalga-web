@@ -240,7 +240,7 @@ export default function VariacionPesoWidget({ dateRange }) {
   const handleExportarRecepciones = () => {
     if (!recepcionesData || recepcionesData.length === 0) return;
     const headers = [
-      'Folio Planta', 'N° Voucher', 'Fecha Pesaje', 'Planta Titular', 'Comercializador',
+      'Folio Planta', 'N° Voucher', 'Fecha Pesaje', 'Planta Titular', 'Lugar de Acopio', 'Comercializador',
       'Kg Despacho', 'Kg Romana', 'Delta Kg', 'Delta %', 'Delta Eq %',
       'Días Tránsito', 'Humedad Despacho', 'Humedad Recepción', 'Semáforo', 'Criterio Biológico'
     ];
@@ -249,6 +249,7 @@ export default function VariacionPesoWidget({ dateRange }) {
       r.voucherRomanaNumero || '',
       r.fechaPesaje ? new Date(r.fechaPesaje).toLocaleDateString('es-CL') : '',
       r.plantaNombre || '',
+      r.lugarAcopio || '',
       r.comercializadorNombre || r.despachos?.[0]?.declaradorNombre || '',
       r.kgDespacho ?? '',
       r.kgRomana ?? '',
@@ -783,6 +784,7 @@ export default function VariacionPesoWidget({ dateRange }) {
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Voucher Romana</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Fecha Ingreso</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Planta Titular</TableCell>
+                          <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Lugar de Acopio</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }}>Despachos / Comercializador</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Despacho</TableCell>
                           <TableCell sx={{ fontWeight: 700, fontFamily: 'Outfit', bgcolor: 'background.default' }} align="right">Kg Romana</TableCell>
@@ -823,6 +825,9 @@ export default function VariacionPesoWidget({ dateRange }) {
                               </TableCell>
                               <TableCell sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
                                 {row.plantaNombre || '—'}
+                              </TableCell>
+                              <TableCell sx={{ fontSize: '0.8rem' }}>
+                                {row.lugarAcopio || '—'}
                               </TableCell>
                               <TableCell sx={{ fontSize: '0.8rem' }}>
                                 {row.despachos && row.despachos.length > 0 ? (

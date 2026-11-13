@@ -229,6 +229,18 @@ export const getOrigenesRecepcionPlanta = async (plantaId, options = {}) => {
 };
 
 /**
+ * Obtiene el stock disponible en planta por lugar de acopio (NA.2).
+ */
+export const getStockEnPlanta = async (plantaId = null, options = {}) => {
+  const params = plantaId ? { plantaId } : {};
+  const response = await api.get('/reportes/stock-planta', {
+    params,
+    signal: options?.signal
+  });
+  return response.data;
+};
+
+/**
  * Obtiene el desglose individual por persona para una cuota específica (TM.2 / TQ.1).
  */
 export const getCuotaPersonas = async (cuotaId, soloSobreLimite = false, options = {}) => {
