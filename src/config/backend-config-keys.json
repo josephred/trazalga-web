@@ -85,6 +85,7 @@
     "planta_version_minima",
     "planta_exige_humedad_recepcion",
     "planta_exige_lugar_acopio",
-    "planta_exige_lote_interno"
+    "planta_exige_lote_interno",
+    "produccion_exige_formato_oficial"
   ]
 }

@@ -970,6 +970,24 @@ export default function ParametrosGeneralesMaestro() {
                     Exige código de lote interno único por planta al recibir (NA.3).
                   </Typography>
                 </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={configs['produccion_exige_formato_oficial'] === 'true'}
+                        onChange={(e) =>
+                          handleValorChange('produccion_exige_formato_oficial', e.target.checked ? 'true' : 'false')
+                        }
+                        color="secondary"
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Exigir Formato Oficial</Typography>}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                    Exige formato activo con código oficial Sernapesca en Producción y Destino (NF.4).
+                  </Typography>
+                </Grid>
                 <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth

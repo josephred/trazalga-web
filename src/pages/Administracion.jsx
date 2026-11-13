@@ -60,6 +60,7 @@ import MacrozonasMaestro from '../components/admin/MacrozonasMaestro';
 import CaletasMaestro from '../components/admin/CaletasMaestro';
 import MonitoreoVersionesApp from '../components/admin/MonitoreoVersionesApp';
 import TransporteMaestro from '../components/admin/TransporteMaestro';
+import FormatosProductoMaestro from '../components/admin/FormatosProductoMaestro';
 import FactoryIcon from '@mui/icons-material/Factory';
 import ScaleIcon from '@mui/icons-material/Scale';
 import BlockIcon from '@mui/icons-material/Block';
@@ -211,6 +212,17 @@ export const ADMIN_MODULES = [
     badge: 'Transporte',
     color: '#059669',
     icon: <TruckIcon sx={{ fontSize: 26 }} />,
+  },
+  {
+    id: 'formatos',
+    tabIndex: 11,
+    categoria: 'regulacion',
+    titulo: 'Formatos de Producto',
+    nombreCorto: 'Formatos Producto',
+    descripcion: 'Catálogo de formatos resultantes con código oficial Sernapesca, humedad del formato y especie (NF.3).',
+    badge: 'Catálogo',
+    color: '#0ea5e9',
+    icon: <CategoryIcon sx={{ fontSize: 26 }} />,
   }
 ];
 
@@ -218,7 +230,7 @@ export const ADMIN_MODULES = [
 export const resolveAdminTab = (param) => {
   if (!param || param === 'hub') return 'hub';
   const num = parseInt(param, 10);
-  if (!isNaN(num) && num >= 0 && num <= 10) return num;
+  if (!isNaN(num) && num >= 0 && num <= 11) return num;
   const mod = ADMIN_MODULES.find(m => m.id === param);
   if (mod) return mod.tabIndex;
   return 'hub';
@@ -1835,6 +1847,9 @@ export default function Administracion() {
 
         {/* Renderizado de Pestaña 10: Mantenedor de Transportistas y Vehículos (TT.5) */}
         {activeTab === 10 && <TransporteMaestro />}
+
+        {/* Renderizado de Pestaña 11: Catálogo de Formatos de Producto (NF.3) */}
+        {activeTab === 11 && <FormatosProductoMaestro />}
 
       </Box>
   );

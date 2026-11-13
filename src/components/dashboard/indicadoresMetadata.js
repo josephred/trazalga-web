@@ -672,7 +672,8 @@ export const DEFAULT_CONFIG_VALUES = {
   planta_version_minima: '',
   planta_exige_humedad_recepcion: 'true',
   planta_exige_lugar_acopio: 'true',
-  planta_exige_lote_interno: 'true'
+  planta_exige_lote_interno: 'true',
+  produccion_exige_formato_oficial: 'false'
 };
 
 /**

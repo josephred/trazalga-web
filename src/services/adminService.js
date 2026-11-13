@@ -43,3 +43,26 @@ export const getCoberturaCoordenadas = async () => {
   return response.data;
 };
 
+/**
+ * Formatos de producto (NF.1 / NF.3).
+ */
+export const getProductosAdmin = async () => {
+  const response = await api.get('/admin/productos');
+  return response.data;
+};
+
+export const crearProductoAdmin = async (payload) => {
+  const response = await api.post('/admin/productos', payload);
+  return response.data;
+};
+
+export const actualizarProductoAdmin = async (id, payload) => {
+  const response = await api.put(`/admin/productos/${id}`, payload);
+  return response.data;
+};
+
+export const cambiarEstadoProductoAdmin = async (id, activo) => {
+  const response = await api.put(`/admin/productos/${id}/activo`, { activo });
+  return response.data;
+};
+
