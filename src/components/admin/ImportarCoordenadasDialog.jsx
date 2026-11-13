@@ -170,7 +170,7 @@ export default function ImportarCoordenadasDialog({ open, onClose, onImportacion
               Carga y Cobertura de Coordenadas (TG.1)
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Importación masiva verificable para Caletas, Varaderos y AMERB
+              Importación masiva verificable para Caletas, Varaderos, AMERB y Plantas
             </Typography>
           </Box>
         </Box>
@@ -222,7 +222,7 @@ export default function ImportarCoordenadasDialog({ open, onClose, onImportacion
                 {archivo ? archivo.name : 'Seleccione o arrastre la planilla CSV de coordenadas'}
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
-                Columnas requeridas: tipo (CALETA|VARADERO|AMERB), nombre, comuna, region, latitud, longitud. Opcionales: codigo, datum, fuente.
+                Columnas requeridas: tipo (CALETA|VARADERO|AMERB|PLANTA), nombre, comuna, region, latitud, longitud. Opcionales: codigo, datum, fuente, tipo_planta (SECADO|PROCESO|OTRA).
               </Typography>
               <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
                 <Button
@@ -361,7 +361,7 @@ export default function ImportarCoordenadasDialog({ open, onClose, onImportacion
               <Box>
                 {/* Resumen Global */}
                 <Grid container spacing={2} sx={{ mb: 3 }}>
-                  <Grid size={{ xs: 12, sm: 3 }}>
+                  <Grid size={{ xs: 12, sm: 2.4 }}>
                     <Card variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: 'primary.50' }}>
                       <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.dark' }}>COBERTURA TOTAL</Typography>
                       <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', my: 0.5 }}>
@@ -373,7 +373,7 @@ export default function ImportarCoordenadasDialog({ open, onClose, onImportacion
                       <LinearProgress variant="determinate" value={cobertura.porcentajeTotal} sx={{ mt: 1, borderRadius: 1 }} />
                     </Card>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 3 }}>
+                  <Grid size={{ xs: 12, sm: 2.4 }}>
                     <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                       <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>CALETAS</Typography>
                       <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>
@@ -384,7 +384,7 @@ export default function ImportarCoordenadasDialog({ open, onClose, onImportacion
                       </Typography>
                     </Card>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 3 }}>
+                  <Grid size={{ xs: 12, sm: 2.4 }}>
                     <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                       <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>VARADEROS</Typography>
                       <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>
@@ -395,7 +395,7 @@ export default function ImportarCoordenadasDialog({ open, onClose, onImportacion
                       </Typography>
                     </Card>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 3 }}>
+                  <Grid size={{ xs: 12, sm: 2.4 }}>
                     <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                       <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>AMERB</Typography>
                       <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>
@@ -403,6 +403,17 @@ export default function ImportarCoordenadasDialog({ open, onClose, onImportacion
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                         {cobertura.amerbConGps} de {cobertura.totalAmerb} áreas de manejo
+                      </Typography>
+                    </Card>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 2.4 }}>
+                    <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>PLANTAS</Typography>
+                      <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>
+                        {cobertura.porcentajePlantas ?? 0}%
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {cobertura.plantasConGps ?? 0} de {cobertura.totalPlantas ?? 0} plantas
                       </Typography>
                     </Card>
                   </Grid>
