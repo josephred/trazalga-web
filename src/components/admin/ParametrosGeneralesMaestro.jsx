@@ -832,6 +832,7 @@ export default function ParametrosGeneralesMaestro() {
                   'variacion_peso_exige_voucher',
                   'planta_exige_humedad_recepcion',
                   'planta_exige_lugar_acopio',
+                  'planta_exige_lote_interno',
                   'planta_version_minima',
                   'retencion_bodega_activo',
                   'retencion_bodega_dias_amarilla',
@@ -949,6 +950,24 @@ export default function ParametrosGeneralesMaestro() {
                   />
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                     Exige declarar el lugar de almacenamiento físico al recibir (NA.2).
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={configs['planta_exige_lote_interno'] === 'true'}
+                        onChange={(e) =>
+                          handleValorChange('planta_exige_lote_interno', e.target.checked ? 'true' : 'false')
+                        }
+                        color="secondary"
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Exigir Lote Interno</Typography>}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                    Exige código de lote interno único por planta al recibir (NA.3).
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12 }}>

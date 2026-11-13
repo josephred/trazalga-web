@@ -78,6 +78,7 @@ export default function ReporteStockPlantaTab() {
       }
       if (!q) return true;
       return (
+        (l.loteInterno || '').toLowerCase().includes(q) ||
         (l.folioDeclaracionapla || '').toLowerCase().includes(q) ||
         (l.folioOrigen || '').toLowerCase().includes(q) ||
         (l.lugarAcopio || '').toLowerCase().includes(q) ||
@@ -95,6 +96,7 @@ export default function ReporteStockPlantaTab() {
   const handleDescargarCsv = () => {
     if (!lotesFiltrados.length) return;
     const headers = [
+      'Lote Interno',
       'Folio A-PLA',
       'Folio Origen',
       'Planta',
@@ -108,6 +110,7 @@ export default function ReporteStockPlantaTab() {
       'Stock Disponible (kg)',
     ];
     const rows = lotesFiltrados.map((l) => [
+      l.loteInterno || '',
       l.folioDeclaracionapla || '',
       l.folioOrigen || '',
       l.plantaNombre || '',
@@ -215,7 +218,7 @@ export default function ReporteStockPlantaTab() {
             <TextField
               fullWidth
               size="small"
-              label="Buscar folio, acopio o especie"
+              label="Buscar lote, folio, acopio o especie"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
@@ -268,6 +271,7 @@ export default function ReporteStockPlantaTab() {
           <Table size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: 'background.default' }}>
+                <TableCell sx={{ fontWeight: 700 }}>Lote Interno</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Folio A-PLA</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Planta</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Lugar de Acopio</TableCell>
@@ -280,6 +284,9 @@ export default function ReporteStockPlantaTab() {
             <TableBody>
               {lotesFiltrados.map((l) => (
                 <TableRow key={l.id} hover>
+                  <TableCell sx={{ fontFamily: 'monospace', fontWeight: 800, color: 'primary.main' }}>
+                    {l.loteInterno || '—'}
+                  </TableCell>
                   <TableCell sx={{ fontFamily: 'monospace', fontWeight: 700 }}>
                     {l.folioDeclaracionapla || l.folioOrigen || `#${l.id}`}
                   </TableCell>

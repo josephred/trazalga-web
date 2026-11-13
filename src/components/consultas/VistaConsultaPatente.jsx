@@ -663,7 +663,7 @@ export default function VistaConsultaPatente({ data, onVolver }) {
                       />
                       {m.recepcionPlantaNombre && (
                         <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                          Planta: {m.recepcionPlantaNombre}
+                          Planta: {m.recepcionPlantaNombre}{m.recepcionLoteInterno ? ` · Lote: ${m.recepcionLoteInterno}` : ''}{m.recepcionLugarAcopio ? ` · Acopio: ${m.recepcionLugarAcopio}` : ''}
                         </Typography>
                       )}
                     </TableCell>

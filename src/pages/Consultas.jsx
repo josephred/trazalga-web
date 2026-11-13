@@ -222,7 +222,7 @@ export default function Consultas() {
             <TextField
               inputRef={inputRef}
               fullWidth
-              placeholder="Ej: DA-9090, 4455, ABCD12, DAPLA-3001..."
+              placeholder="Ej: DA-9090, 4455, ABCD12, DAPLA-3001, LOT-01..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
