@@ -833,6 +833,7 @@ export default function ParametrosGeneralesMaestro() {
                   'planta_exige_humedad_recepcion',
                   'planta_exige_lugar_acopio',
                   'planta_exige_lote_interno',
+                  'planta_exige_guia_adjunta',
                   'produccion_exige_formato_oficial',
                   'rendimiento_activo',
                   'rendimiento_tolerancia_pct',
@@ -990,6 +991,24 @@ export default function ParametrosGeneralesMaestro() {
                   />
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                     Exige formato activo con código oficial Sernapesca en Producción y Destino (NF.4).
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={configs['planta_exige_guia_adjunta'] === 'true'}
+                        onChange={(e) =>
+                          handleValorChange('planta_exige_guia_adjunta', e.target.checked ? 'true' : 'false')
+                        }
+                        color="secondary"
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Exigir Foto Guía Despacho</Typography>}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                    Exige respaldo fotográfico/PDF de la guía al recepcionar en planta (NA.4).
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12 }}>

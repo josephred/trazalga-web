@@ -694,6 +694,7 @@ export const DEFAULT_CONFIG_VALUES = {
   planta_exige_humedad_recepcion: 'true',
   planta_exige_lugar_acopio: 'true',
   planta_exige_lote_interno: 'true',
+  planta_exige_guia_adjunta: 'false',
   produccion_exige_formato_oficial: 'false',
   rendimiento_activo: 'true',
   rendimiento_tolerancia_pct: '5',

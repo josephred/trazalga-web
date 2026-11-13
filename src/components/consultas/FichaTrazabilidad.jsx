@@ -16,6 +16,10 @@ import {
   Tooltip,
   IconButton,
   Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Share as ShareIcon,
@@ -35,9 +39,11 @@ import {
   DirectionsBoat as BoatIcon,
   Person as PersonIcon,
   ContentCopy as CopyIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import TrazabilidadDialog from '../dashboard/TrazabilidadDialog';
 import MapaDobleGeorreferencia from '../comun/MapaDobleGeorreferencia';
+import api from '../../api/axiosConfig';
 
 const SEMAFORO_COLORS = {
   VERDE: { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0', label: 'Normal (Verde)' },
@@ -48,10 +54,32 @@ const SEMAFORO_COLORS = {
 export default function FichaTrazabilidad({ ficha, onVolver }) {
   const [graphOpen, setGraphOpen] = useState(false);
   const [snackOpen, setSnackOpen] = useState(false);
+  const [adjuntoModal, setAdjuntoModal] = useState(null);
+  const [adjuntoError, setAdjuntoError] = useState(null);
 
   if (!ficha) return null;
 
   const { alertas, origenes, comercializadores, planta, tipoConsulta, idConsulta } = ficha;
+
+  const handleVerAdjunto = async (ruta, titulo) => {
+    if (!ruta) return;
+    setAdjuntoError(null);
+    try {
+      const urlLimpia = ruta.startsWith('/api/') ? ruta.slice(4) : ruta;
+      const res = await api.get(urlLimpia, { responseType: 'blob' });
+      const blobUrl = URL.createObjectURL(res.data);
+      setAdjuntoModal({ titulo, blobUrl, esPdf: res.data?.type === 'application/pdf' });
+    } catch (err) {
+      setAdjuntoError(`No se pudo cargar ${titulo.toLowerCase()}.`);
+    }
+  };
+
+  const handleCerrarAdjunto = () => {
+    if (adjuntoModal?.blobUrl) {
+      URL.revokeObjectURL(adjuntoModal.blobUrl);
+    }
+    setAdjuntoModal(null);
+  };
 
   const handleCopiarEnlace = () => {
     const url = `${window.location.origin}/consultas/${tipoConsulta}/${idConsulta}`;
@@ -745,6 +773,16 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                         Pesaje basado en cantidad declarada por receptor.
                       </Typography>
                     )}
+                    {planta.voucherRomanaAdjunto && (
+                      <Button
+                        size="small"
+                        startIcon={<VisibilityIcon />}
+                        onClick={() => handleVerAdjunto(planta.voucherRomanaAdjunto, 'Voucher de Romana')}
+                        sx={{ mt: 0.5, px: 0.5, textTransform: 'none' }}
+                      >
+                        Ver foto voucher
+                      </Button>
+                    )}
                   </Paper>
 
                     {/* Estados de Humedad: Origen vs Recepción (T3.3) */}
@@ -881,6 +919,16 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
                     Folio DAPLA: <strong>{planta.folioDeclaracionAPla || 'S/F'}</strong>
                     {planta.docOrigenNumero ? ` · Guía: ${planta.docOrigenNumero}` : ''}
                   </Typography>
+                  {planta.guiaDespachoAdjunto && (
+                    <Button
+                      size="small"
+                      startIcon={<VisibilityIcon />}
+                      onClick={() => handleVerAdjunto(planta.guiaDespachoAdjunto, 'Guía de Despacho')}
+                      sx={{ mt: 0.5, px: 0.5, textTransform: 'none' }}
+                    >
+                      Ver foto guía
+                    </Button>
+                  )}
                   {planta.patenteCamion && (
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                       Patente camión: <strong>{planta.patenteCamion}</strong>
@@ -933,6 +981,46 @@ export default function FichaTrazabilidad({ ficha, onVolver }) {
           row={{ id: idConsulta, tipoReporte: tipoConsulta }}
         />
       )}
+
+      {/* Visor de Evidencia Adjunta (NA.4) */}
+      <Dialog open={Boolean(adjuntoModal)} onClose={handleCerrarAdjunto} maxWidth="md" fullWidth>
+        <DialogTitle>{adjuntoModal?.titulo || 'Evidencia Adjunta'}</DialogTitle>
+        <DialogContent dividers sx={{ textAlign: 'center' }}>
+          {adjuntoModal?.esPdf ? (
+            <iframe
+              src={adjuntoModal.blobUrl}
+              title={adjuntoModal.titulo}
+              style={{ width: '100%', height: '70vh', border: 'none' }}
+            />
+          ) : (
+            adjuntoModal?.blobUrl && (
+              <img
+                src={adjuntoModal.blobUrl}
+                alt={adjuntoModal.titulo}
+                style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 8 }}
+              />
+            )
+          )}
+        </DialogContent>
+        <DialogActions>
+          {adjuntoModal?.blobUrl && (
+            <Button onClick={() => window.open(adjuntoModal.blobUrl, '_blank', 'noopener')}>
+              Abrir en nueva pestaña
+            </Button>
+          )}
+          <Button onClick={handleCerrarAdjunto} variant="contained">
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar de error al cargar adjunto */}
+      <Snackbar
+        open={Boolean(adjuntoError)}
+        autoHideDuration={4000}
+        onClose={() => setAdjuntoError(null)}
+        message={adjuntoError}
+      />
 
       {/* Snackbar al copiar enlace */}
       <Snackbar
