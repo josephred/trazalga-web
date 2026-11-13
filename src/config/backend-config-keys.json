@@ -86,6 +86,10 @@
     "planta_exige_humedad_recepcion",
     "planta_exige_lugar_acopio",
     "planta_exige_lote_interno",
-    "produccion_exige_formato_oficial"
+    "produccion_exige_formato_oficial",
+    "rendimiento_activo",
+    "rendimiento_tolerancia_pct",
+    "rendimiento_min_pct",
+    "marcas_bloqueantes_produccion"
   ]
 }

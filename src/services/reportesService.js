@@ -253,3 +253,18 @@ export const getCuotaPersonas = async (cuotaId, soloSobreLimite = false, options
 
 
 
+/**
+ * Obtiene métricas y detalle de rendimiento en planta de proceso (NP.7).
+ */
+export const getRendimientoPlanta = async (dateRange = null, filtros = {}, options = {}) => {
+  const params = {};
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  if (filtros?.plantaId) params.plantaId = filtros.plantaId;
+  if (filtros?.especieId) params.especieId = filtros.especieId;
+  const response = await api.get('/reportes/rendimiento-planta', {
+    params,
+    signal: options?.signal
+  });
+  return response.data;
+};

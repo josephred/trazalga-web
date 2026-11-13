@@ -430,6 +430,27 @@ export const INDICADORES_METADATA = {
       'Aplica los tramos de la Res. 3602: plazo máximo de {{retencion_humedo_max_horas:24}} h para húmedo (`retencion_humedo_max_horas`), {{retencion_semihumedo_max_horas:72}} h para semihúmedo (`retencion_semihumedo_max_horas`) y {{retencion_semiseco_max_horas:216}} h para semiseco (`retencion_semiseco_max_horas`); el recurso seco no tiene límite temporal. El semáforo preventivo pasa a amarillo a partir del {{retencion_preaviso_pct:80}}% del plazo máximo (`retencion_preaviso_pct`) y a rojo al superarlo. Superar el plazo máximo extingue la validez del estado de humedad declarado y la captura biológica calculada con su factor. Si el bloqueo automático está activo ({{retencion_bloqueo_activo:false}}), el lote se bloquea con marca oficial RETENCION_EXCEDIDA tras superar {{retencion_bloqueo_humedo_horas:120}} h en húmedo. Gobernado por el interruptor maestro `retencion_bodega_activo` ({{retencion_bodega_activo:true}}).'
   },
 
+  rendimientoPlanta: {
+    id: 'rendimientoPlanta',
+    codigo: 'IND-REND',
+    nombre: 'Rendimiento en Planta de Proceso',
+    categoria: 'Balance de Biomasa y Transformación',
+    subtitulo: 'Relación producto / materia prima calculada en servidor con bloqueo preventivo de destino',
+    icono: 'Factory',
+    color: '#0d9488',
+    resumenNegocio:
+      'Evalúa la consistencia física entre la masa de materia prima ingresada en lotes seleccionados (priorizando `peso_romana_kg`) y la cantidad de producto declarado en `declaracion_planta_produccion`, detectando rendimientos imposibles o incompatibles con la conversión biológica oficial.',
+    metricaBase: 'Rendimiento (%) = (cantidad_producto / masa_entrada_servidor) × 100 por declaración P-PLA.',
+    humedadFactor:
+      'Prioriza rangos oficiales vigentes en `rendimiento_rango` (TABLA) según especie, humedad de entrada predominante y formato resultante; en ausencia de tabla, calcula el balance máximo teórico desde `factor_conversion` (FACTORES).',
+    fuentesDatos:
+      'Registros de `declaracion_planta_produccion`, lotes `declaracion_planta_abastecimiento`, tabla `rendimiento_rango` y tabla `factor_conversion`.',
+    periodoFechas: 'Declaraciones P-PLA filtradas por `fecha_produccion` dentro del rango seleccionado.',
+    formula: 'Anómalo si rendimientoPct > maxTeorico × (1 + {{rendimiento_tolerancia_pct:5}} / 100) o < rendimiento_min_pct ({{rendimiento_min_pct}}).',
+    criterioFiscalizacion:
+      'El control queda gobernado por `rendimiento_activo` ({{rendimiento_activo:true}}), tolerancia superior `rendimiento_tolerancia_pct` ({{rendimiento_tolerancia_pct:5}} %) y mínimo opcional `rendimiento_min_pct`. Las anomalías generan marca oficial `RENDIMIENTO_ANOMALO` y congelan edición y despacho en Destino según `marcas_bloqueantes_produccion` ({{marcas_bloqueantes_produccion:RENDIMIENTO_ANOMALO}}). Las producciones sin lotes informan `PRODUCCION_SIN_LOTES`.'
+  },
+
   integracionHumedadTiempo: {
     id: 'integracionHumedadTiempo',
     numero: 8,
@@ -673,7 +694,11 @@ export const DEFAULT_CONFIG_VALUES = {
   planta_exige_humedad_recepcion: 'true',
   planta_exige_lugar_acopio: 'true',
   planta_exige_lote_interno: 'true',
-  produccion_exige_formato_oficial: 'false'
+  produccion_exige_formato_oficial: 'false',
+  rendimiento_activo: 'true',
+  rendimiento_tolerancia_pct: '5',
+  rendimiento_min_pct: '',
+  marcas_bloqueantes_produccion: 'RENDIMIENTO_ANOMALO'
 };
 
 /**

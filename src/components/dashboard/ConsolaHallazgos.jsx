@@ -149,6 +149,24 @@ const MARCA_CONFIG = {
     indicador: 'Indicador 2',
     descripcion: 'Estado de humedad declarado incompatible con la edad desde la extracción (Res. Ex. 3602)',
   },
+  RENDIMIENTO_ANOMALO: {
+    label: 'Rendimiento anómalo',
+    color: '#be123c',
+    bg: 'rgba(190, 18, 60, 0.1)',
+    border: 'rgba(190, 18, 60, 0.3)',
+    icon: WarningIcon,
+    indicador: 'Rendimiento Planta',
+    descripcion: 'Rendimiento declarado en producción supera el máximo teórico oficial (factores o tabla) más tolerancia.',
+  },
+  PRODUCCION_SIN_LOTES: {
+    label: 'Producción sin lotes',
+    color: '#d97706',
+    bg: 'rgba(217, 119, 6, 0.1)',
+    border: 'rgba(217, 119, 6, 0.3)',
+    icon: WarningIcon,
+    indicador: 'Rendimiento Planta',
+    descripcion: 'Producción declarada sin lotes de abastecimiento seleccionados (masa ingresada manualmente).',
+  },
 };
 
 export default function ConsolaHallazgos() {
@@ -549,6 +567,7 @@ export default function ConsolaHallazgos() {
               <MenuItem value="RECOLECTOR">Recolector</MenuItem>
               <MenuItem value="ARMADOR">Armador</MenuItem>
               <MenuItem value="AREA">Área (AMERB)</MenuItem>
+              <MenuItem value="PLANTA_PRODUCCION">Planta Producción</MenuItem>
             </TextField>
           </Grid>
 

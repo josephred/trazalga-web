@@ -27,7 +27,9 @@ const VALID_MARCAS = new Set([
   'ORIGEN_GEO_INCONSISTENTE',
   'RETENCION_EXCEDIDA',
   'DECLARACION_EXTEMPORANEA',
-  'HUMEDAD_INCOHERENTE'
+  'HUMEDAD_INCOHERENTE',
+  'RENDIMIENTO_ANOMALO',
+  'PRODUCCION_SIN_LOTES'
 ]);
 
 // 2. Términos expresamente prohibidos / obsoletos según plan RX.3
@@ -52,7 +54,8 @@ const VALID_TABLES = new Set([
   'factor_conversion',
   'macrozona_region',
   'configuracion_general',
-  'configuracion_auditoria'
+  'configuracion_auditoria',
+  'rendimiento_rango'
 ]);
 
 // Extraer todos los textos del catálogo

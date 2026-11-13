@@ -17,6 +17,7 @@ import LimiteExtraccionDiarioWidget from '../components/dashboard/LimiteExtracci
 import ExtraccionVedaWidget from '../components/dashboard/ExtraccionVedaWidget';
 import VariacionPesoWidget from '../components/dashboard/VariacionPesoWidget';
 import RetencionBodegaWidget from '../components/dashboard/RetencionBodegaWidget';
+import RendimientoPlantaWidget from '../components/dashboard/RendimientoPlantaWidget';
 import PerfiladorRiesgoWidget from '../components/dashboard/PerfiladorRiesgoWidget';
 import DobleOperacionWidget from '../components/dashboard/DobleOperacionWidget';
 import OrigenGeoWidget from '../components/dashboard/OrigenGeoWidget';
@@ -270,6 +271,14 @@ export default function Dashboard() {
             <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
               <RetencionBodegaWidget />
               <IndicadorHelpButton helpKey="retencionBodega" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
+            </Box>
+          </Grid>
+
+          {/* NP.7: Rendimiento en Planta de Proceso */}
+          <Grid size={{ xs: 12, md: 12 }} sx={{ width: '100%' }}>
+            <Box sx={{ position: 'relative', height: '100%', width: '100%' }}>
+              <RendimientoPlantaWidget dateRange={dateRange} />
+              <IndicadorHelpButton helpKey="rendimientoPlanta" dateRange={dateRange} sx={{ bottom: 12, right: 12 }} />
             </Box>
           </Grid>
 

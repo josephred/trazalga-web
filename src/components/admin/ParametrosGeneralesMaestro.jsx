@@ -833,6 +833,10 @@ export default function ParametrosGeneralesMaestro() {
                   'planta_exige_humedad_recepcion',
                   'planta_exige_lugar_acopio',
                   'planta_exige_lote_interno',
+                  'produccion_exige_formato_oficial',
+                  'rendimiento_activo',
+                  'rendimiento_tolerancia_pct',
+                  'rendimiento_min_pct',
                   'planta_version_minima',
                   'retencion_bodega_activo',
                   'retencion_bodega_dias_amarilla',
@@ -997,6 +1001,54 @@ export default function ParametrosGeneralesMaestro() {
                     value={configs['planta_version_minima'] || ''}
                     onChange={(e) => handleValorChange('planta_version_minima', e.target.value)}
                     helperText="Si se especifica, versiones anteriores recibirán error 422 solicitando actualizar TrazAlga (TP.3)."
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12 }}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                    Rendimiento en Planta de Proceso (NP.4–NP.5)
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={configs['rendimiento_activo'] !== 'false'}
+                        onChange={(e) =>
+                          handleValorChange('rendimiento_activo', e.target.checked ? 'true' : 'false')
+                        }
+                        color="secondary"
+                        size="small"
+                      />
+                    }
+                    label={<Typography variant="body2">Validar Rendimiento</Typography>}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                    Genera marca RENDIMIENTO_ANOMALO y congela edición/destino cuando excede rango.
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Tolerancia superior rendimiento (%)"
+                    value={configs['rendimiento_tolerancia_pct'] ?? '5'}
+                    onChange={(e) => handleValorChange('rendimiento_tolerancia_pct', e.target.value)}
+                    helperText="Ej: 5 permite hasta +5 % sobre el máximo teórico."
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Rendimiento mínimo global (%) (opcional)"
+                    placeholder="Vacío = sin mínimo"
+                    value={configs['rendimiento_min_pct'] ?? ''}
+                    onChange={(e) => handleValorChange('rendimiento_min_pct', e.target.value)}
+                    helperText="Vacío = no alerta por rendimiento bajo el mínimo."
                   />
                 </Grid>
               </Grid>

@@ -1078,6 +1078,10 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}${detailData.lugarAc
                               <span>⚖ Romana / Voucher: #{n.voucherRomana || n.docNumero || 'VR-2026'}</span>
                               {n.lugarAcopio && <span>🏭 Acopio: {n.lugarAcopio}</span>}
                               {n.loteInterno && <span>🏷️ Lote: {n.loteInterno}</span>}
+                              {n.masaEntradaKg != null && <span>📥 Entrada: {formatKg(n.masaEntradaKg)}</span>}
+                              {n.rendimientoPct != null && (
+                                <span>📊 Rend.: {n.rendimientoPct}%{n.rendimientoMaxTeoricoPct != null ? ` (máx. ${n.rendimientoMaxTeoricoPct}% · ${n.rendimientoFuente || 'N/A'})` : ''}</span>
+                              )}
                               <span>💧 Humedad: {n.estadoHumedad || 'SEMI SECO'}</span>
                             </Box>
                           </Paper>
@@ -1549,6 +1553,16 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}${detailData.lugarAc
                     <Typography variant="caption" sx={{ color: '#94a3b8' }}>
                       {detailData.estadoHumedad || 'Humedad s/d'}
                     </Typography>
+                    {detailData.productoCodigo && (
+                      <Typography variant="caption" sx={{ color: '#0f766e', display: 'block', fontSize: '0.68rem', fontWeight: 700 }}>
+                        Cód. formato: {detailData.productoCodigo}
+                      </Typography>
+                    )}
+                    {detailData.masaEntradaKg != null && (
+                      <Typography variant="caption" sx={{ color: '#475569', display: 'block', fontSize: '0.68rem', fontWeight: 600 }}>
+                        Entrada: {formatKg(detailData.masaEntradaKg)}{detailData.rendimientoPct != null ? ` · Rend.: ${detailData.rendimientoPct}%` : ''}{detailData.rendimientoMaxTeoricoPct != null ? ` (máx. ${detailData.rendimientoMaxTeoricoPct}% · ${detailData.rendimientoFuente || 'N/A'})` : ''}
+                      </Typography>
+                    )}
                     {detailData.metodoExtraccion && (
                       <Typography variant="caption" sx={{ color: '#64748b', display: 'block', fontSize: '0.68rem' }}>
                         Método: {detailData.metodoExtraccion}
