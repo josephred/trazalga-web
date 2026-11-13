@@ -364,11 +364,11 @@ export const INDICADORES_METADATA = {
       'Fiscaliza que una embarcación artesanal no supere en un solo día el volumen físico máximo diario autorizado por resolución oficial (por ejemplo, la regla oficial de 2.000 kg/día de Desembarque para Huiro Palo Barreteado a nivel nacional). El sistema también admite configurar reglas por buzo o recolector si la autoridad lo determina.',
     metricaBase: 'Suma diaria de **Desembarque Físico (kg)** (métrica oficial por norma) para una misma fecha y unidad de agregación (`embarcacion_id`).',
     humedadFactor: 'Evaluado en Desembarque Físico directo en balanza conforme a la regla oficial validada por Sernapesca (configurable a Captura si una resolución particular lo especifica).',
-    fuentesDatos: 'Tabla `limite_extraccion_diario_config` cruzada con declaraciones de Armador (embarcación) o Recolector.',
+    fuentesDatos: 'Tabla `limite_extraccion_diario_config` cruzada con declaraciones de Armador (`declaracion_armador`), Área (`declaracion_area`) o Recolector (`declaracion_recolector`).',
     periodoFechas: 'Agrupado por día exacto (`fecha_declaracion = :fecha`).',
     formula: 'SUM(desembarque) WHERE embarcacion_id = :embarcacion AND fecha_declaracion = :fecha vs Limite LED (kg) + Tolerancia %',
     criterioFiscalizacion:
-      'Por defecto la tolerancia es 0% (`margen_tolerancia_pct = 0.0`). Si una declaración excede el límite oficial diario asignado a la embarcación, el motor aplica la acción configurada: marca oficial `LED_EXCEDIDO` en modo SOLO_ALERTA o rechazo HTTP 422 en modo BLOQUEO_DECLARACION.'
+      'Por defecto la tolerancia es 0% (`margen_tolerancia_pct = 0.0`). Si una declaración excede el límite oficial diario asignado a la embarcación, el motor aplica la acción configurada: marca oficial `LED_EXCEDIDO` en modo SOLO_ALERTA o rechazo HTTP 422 en modo BLOQUEO_DECLARACION. La inclusión de declaraciones de área de manejo en el acumulado diario de embarcación, buzo o usuario se gobierna por `led_suma_declaraciones_area` ({{led_suma_declaraciones_area:true}}).'
   },
 
   controlVedas: {
@@ -612,6 +612,7 @@ export const DEFAULT_CONFIG_VALUES = {
   declaracion_congelar_marcas: 'EN_VEDA,CUOTA_EXCEDIDA,POSTERIOR_CIERRE',
   declaracion_autorizacion_horas: '48',
   declaracion_escritura_exige_sesion: 'false',
+  led_suma_declaraciones_area: 'true',
   cuota_fecha_imputacion: 'EXTRACCION',
   cuota_umbral_restante_pct: '10.0',
   cuota_desvio_velocidad_pct: '25.0',

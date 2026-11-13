@@ -25,6 +25,7 @@
     "declaracion_congelar_marcas",
     "declaracion_autorizacion_horas",
     "declaracion_escritura_exige_sesion",
+    "led_suma_declaraciones_area",
     "cuota_fecha_imputacion",
     "cuota_umbral_restante_pct",
     "cuota_desvio_velocidad_pct",

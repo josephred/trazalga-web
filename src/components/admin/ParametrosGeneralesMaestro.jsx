@@ -22,6 +22,7 @@ import {
   Tune as TuneIcon,
   Scale as ScaleIcon,
   Phishing as PhishingIcon,
+  Speed as SpeedIcon,
   Block as BlockIcon,
   LocalShipping as LocalShippingIcon,
   Science as ScienceIcon,
@@ -647,6 +648,50 @@ export default function ParametrosGeneralesMaestro() {
         </CardContent>
       </Card>
 
+      {/* Indicador 4: Límite de Extracción Diario (LED) */}
+      <Card elevation={0} sx={{ borderRadius: 3, border: 1, borderColor: 'divider' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <SpeedIcon sx={{ color: '#f59e0b' }} />
+              <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+                Indicador 4: Límite de Extracción Diario (LED)
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              color="warning"
+              size="small"
+              startIcon={<SaveIcon />}
+              onClick={() => handleGuardarCategoria(['led_suma_declaraciones_area'])}
+              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
+            >
+              Guardar LED
+            </Button>
+          </Box>
+          <Divider sx={{ mb: 2.5 }} />
+
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['led_suma_declaraciones_area'] ?? 'true') === 'true'}
+                    onChange={(e) => handleValorChange('led_suma_declaraciones_area', e.target.checked ? 'true' : 'false')}
+                    color="warning"
+                  />
+                }
+                label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Sumar declaraciones de área de manejo al acumulado diario del LED</Typography>}
+              />
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                Cuando está activo, la evaluación en línea y el monitoreo del panel suman tanto las faenas directas de armador o recolector
+                como las declaraciones de área de manejo de la misma embarcación, buzo o usuario.
+              </Typography>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
       {/* SECCIÓN 4: Control de Vedas (Indicador 5) */}
       <Card elevation={0} sx={{ borderRadius: 3, border: 1, borderColor: 'divider' }}>
         <CardContent sx={{ p: 3 }}>
@@ -757,8 +802,8 @@ export default function ParametrosGeneralesMaestro() {
                 label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Exigir sesión para modificar o eliminar declaraciones</Typography>}
               />
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                Encender cuando los teléfonos tengan la app 2.5.0: la 2.4.0 elimina sin enviar la sesión y dejaría de poder
-                editar o eliminar. Con sesión, sólo el dueño de la declaración (o un administrador) puede hacerlo.
+                Encender cuando los teléfonos tengan la app 2.5.0 o superior: la 2.4.0 elimina sin enviar la sesión y dejaría de poder
+                editar o eliminar. Con sesión, sólo el dueño de la declaración de origen o planta (o un administrador) puede hacerlo.
               </Typography>
             </Grid>
           </Grid>
