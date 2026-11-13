@@ -143,6 +143,11 @@ export default function TrazabilidadDialog({ open, onClose, declaracionId, tipoR
     setTimeout(() => setCopiedFolio(false), 2000);
   };
 
+  const esFlujoInternoPlanta = (tipoNodo = '') => {
+    const t = String(tipoNodo).toLowerCase();
+    return (t.includes('abastecimiento') || t.includes('produccion') || t.includes('producción')) && !t.includes('destino');
+  };
+
   const handleCopySummary = () => {
     if (!detailData) return;
     const summary = `DECLARACIÓN TRAZABILIDAD - TRAZALGA
@@ -151,7 +156,7 @@ Folio: ${detailData.folio || '-'}
 Fecha: ${formatDate(detailData.fecha)} ${detailData.hora || ''}
 Cantidad: ${formatKg(detailData.cantidad)}
 Actor: ${detailData.nombreActor || '-'} (RUT: ${detailData.rutActor || '-'})
-Destinatario: ${detailData.nombreDestinatario || '-'}
+${esFlujoInternoPlanta(detailData.tipoNodo) ? 'Flujo interno de planta' : `Destinatario: ${detailData.nombreDestinatario || '-'}`}
 Especie: ${detailData.especie || '-'}
 Estado Humedad: ${detailData.estadoHumedad || '-'}
 Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
@@ -1669,6 +1674,7 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                 </Grid>
 
                 {/* 2. Destinatario de la Carga */}
+                {!esFlujoInternoPlanta(detailData.tipoNodo) && (
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Paper 
                     elevation={0} 
@@ -1719,6 +1725,8 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}`;
                     </Stack>
                   </Paper>
                 </Grid>
+
+                )}
 
                 {/* 3. Detalles de Recurso y Ubicación */}
                 <Grid size={{ xs: 12, md: 6 }}>
