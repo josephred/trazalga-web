@@ -31,7 +31,6 @@ import {
   Add as AddIcon,
   Category as CategoryIcon,
   Edit as EditIcon,
-  InfoOutlined as InfoOutlinedIcon,
   Search as SearchIcon,
   UploadFile as UploadFileIcon,
 } from '@mui/icons-material';
@@ -42,12 +41,15 @@ import {
   crearProductoAdmin,
   getProductosAdmin,
 } from '../../services/adminService';
+import ImportarCatalogoDialog from './ImportarCatalogoDialog';
 
 const FORM_VACIO = {
   id: null,
   codigo: '',
   nombre: '',
   descripcion: '',
+  presentacion: '',
+  calibre: '',
   humedadEstado: null,
   especie: null,
   activo: true,
@@ -67,7 +69,7 @@ export default function FormatosProductoMaestro() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState(FORM_VACIO);
-  const [importInfoOpen, setImportInfoOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   useEffect(() => {
     cargarDatos();
@@ -104,6 +106,8 @@ export default function FormatosProductoMaestro() {
         (p.codigo || '').toLowerCase().includes(q) ||
         (p.nombre || '').toLowerCase().includes(q) ||
         (p.descripcion || '').toLowerCase().includes(q) ||
+        (p.presentacion || '').toLowerCase().includes(q) ||
+        (p.calibre || '').toLowerCase().includes(q) ||
         (p.humedadEstadoNombre || '').toLowerCase().includes(q) ||
         (p.especieNombre || '').toLowerCase().includes(q)
       );
@@ -122,6 +126,8 @@ export default function FormatosProductoMaestro() {
       codigo: item.codigo || '',
       nombre: item.nombre || '',
       descripcion: item.descripcion || '',
+      presentacion: item.presentacion || '',
+      calibre: item.calibre || '',
       humedadEstado: humedadEstados.find((h) => h.id === item.humedadEstadoId) || null,
       especie: especies.find((e) => e.id === item.especieId) || null,
       activo: item.activo !== false,
@@ -143,6 +149,8 @@ export default function FormatosProductoMaestro() {
         codigo: formData.codigo?.trim() ? formData.codigo.trim().toUpperCase() : null,
         nombre: formData.nombre.trim(),
         descripcion: formData.descripcion?.trim() || null,
+        presentacion: formData.presentacion?.trim() || null,
+        calibre: formData.calibre?.trim() || null,
         humedadEstadoId: formData.humedadEstado?.id || null,
         especieId: formData.especie?.id || null,
         activo: !!formData.activo,
@@ -195,7 +203,7 @@ export default function FormatosProductoMaestro() {
               <Button
                 variant="outlined"
                 startIcon={<UploadFileIcon />}
-                onClick={() => setImportInfoOpen(true)}
+                onClick={() => setImportDialogOpen(true)}
                 sx={{ textTransform: 'none', borderRadius: 2 }}
               >
                 Importar catálogo
@@ -257,17 +265,19 @@ export default function FormatosProductoMaestro() {
                   <TableRow>
                     <TableCell sx={{ fontWeight: 700 }}>Código</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Nombre / Descripción</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Humedad del formato</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Especie</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Presentación</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Calibre</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Humedad</TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="center">Usos</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }} align="center">Activo</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }} align="center">Estado</TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="right">Acciones</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filtrados.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                      <TableCell colSpan={9} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                         No se encontraron formatos con los filtros aplicados.
                       </TableCell>
                     </TableRow>
@@ -294,6 +304,21 @@ export default function FormatosProductoMaestro() {
                           )}
                         </TableCell>
                         <TableCell>
+                          <Typography variant="body2" color={item.especieNombre ? 'text.primary' : 'text.secondary'}>
+                            {item.especieNombre || 'Cualquier especie'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color={item.presentacion ? 'text.primary' : 'text.secondary'}>
+                            {item.presentacion || '—'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color={item.calibre ? 'text.primary' : 'text.secondary'}>
+                            {item.calibre || '—'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
                           {item.humedadEstadoNombre ? (
                             <Chip label={item.humedadEstadoNombre} size="small" />
                           ) : (
@@ -301,11 +326,6 @@ export default function FormatosProductoMaestro() {
                               Sin asignar
                             </Typography>
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" color={item.especieNombre ? 'text.primary' : 'text.secondary'}>
-                            {item.especieNombre || 'Cualquier especie'}
-                          </Typography>
                         </TableCell>
                         <TableCell align="center">
                           <Tooltip title={`Producción: ${item.usosProduccion ?? 0} · Destino: ${item.usosDestino ?? 0}`}>
@@ -318,12 +338,20 @@ export default function FormatosProductoMaestro() {
                           </Tooltip>
                         </TableCell>
                         <TableCell align="center">
-                          <Switch
-                            size="small"
-                            checked={item.activo !== false}
-                            onChange={() => handleToggleActivo(item)}
-                            color="success"
-                          />
+                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                            <Switch
+                              size="small"
+                              checked={item.activo !== false}
+                              onChange={() => handleToggleActivo(item)}
+                              color="success"
+                            />
+                            <Chip
+                              label={item.activo !== false ? 'Activo' : 'Inactivo'}
+                              size="small"
+                              color={item.activo !== false ? 'success' : 'default'}
+                              variant="outlined"
+                            />
+                          </Box>
                         </TableCell>
                         <TableCell align="right">
                           <Tooltip title="Editar formato">
@@ -394,6 +422,26 @@ export default function FormatosProductoMaestro() {
                 )}
               />
             </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Presentación"
+                placeholder="Ej: PICADA, ENTERO, POLVO"
+                value={formData.presentacion}
+                onChange={(e) => setFormData({ ...formData, presentacion: e.target.value })}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Calibre (opcional)"
+                placeholder="Ej: 3/4, FINO, FARDO"
+                value={formData.calibre}
+                onChange={(e) => setFormData({ ...formData, calibre: e.target.value })}
+              />
+            </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -429,29 +477,11 @@ export default function FormatosProductoMaestro() {
         </DialogActions>
       </Dialog>
 
-      {/* Diálogo informativo de Importación de catálogo (NF.2 bloqueado por entregable Sernapesca) */}
-      <Dialog open={importInfoOpen} onClose={() => setImportInfoOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <InfoOutlinedIcon color="info" />
-          Importación del catálogo oficial (NF.2)
-        </DialogTitle>
-        <DialogContent dividers>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            La carga masiva automática (<code>POST /api/admin/productos/importar</code>) está en espera del archivo oficial de códigos de formato de Sernapesca.
-          </Alert>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            Cuando Sernapesca entregue el listado (formato CSV/XLSX <code>codigo;nombre;humedad;especie;descripcion</code>), permitirá previsualizar coincidencias con los productos locales actuales y asignarlos sin duplicar registros históricos.
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Mientras tanto, puedes crear y editar formatos manualmente desde esta pantalla y activar el parámetro <strong>Exigir Formato Oficial</strong> solo cuando el catálogo esté completo.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setImportInfoOpen(false)} variant="contained">
-            Entendido
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ImportarCatalogoDialog
+        open={importDialogOpen}
+        onClose={() => setImportDialogOpen(false)}
+        onImportacionExitosa={cargarDatos}
+      />
     </Box>
   );
 }

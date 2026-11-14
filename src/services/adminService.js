@@ -66,3 +66,13 @@ export const cambiarEstadoProductoAdmin = async (id, activo) => {
   return response.data;
 };
 
+export const importarCatalogoProductos = async (archivo, aplicar = false) => {
+  const formData = new FormData();
+  formData.append('file', archivo);
+  const response = await api.post('/admin/productos/importar', formData, {
+    params: { aplicar },
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
