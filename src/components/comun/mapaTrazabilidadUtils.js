@@ -435,3 +435,26 @@ export function construirCapasMapaCadena(items, { plantaNoRecepcionada = false }
     sinReferenciaItems: sinRef,
   };
 }
+
+/**
+ * QM.3 · Escala el grosor visual (2.5 a 9 px) de una línea origen -> planta
+ * según los kilos desembarcados respecto al máximo del período.
+ */
+export function ponderarGrosorFlujo(desembarqueKg, maxDesembarqueKg) {
+  const kg = Number(desembarqueKg);
+  const max = Number(maxDesembarqueKg);
+  if (!Number.isFinite(kg) || kg <= 0 || !Number.isFinite(max) || max <= 0) {
+    return 2.5;
+  }
+  const ratio = Math.min(1, Math.max(0, kg / max));
+  const grosor = 2.5 + 6.5 * Math.sqrt(ratio);
+  return Math.round(grosor * 10) / 10;
+}
+
+/**
+ * QE.1 / QE.2 · Formatea coordenadas WGS84 (EPSG:4326) siempre con separador decimal punto.
+ */
+export function formatearCoordenadaWgs84(valor, decimales = 6) {
+  if (!esNumeroValido(valor)) return '';
+  return Number(valor).toFixed(decimales);
+}

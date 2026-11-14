@@ -268,3 +268,40 @@ export const getRendimientoPlanta = async (dateRange = null, filtros = {}, optio
   });
   return response.data;
 };
+
+const extraerListaCatalogo = (data, keys = []) => {
+  if (Array.isArray(data)) return data;
+  if (!data || typeof data !== 'object') return [];
+  for (const k of keys) {
+    if (Array.isArray(data[k])) return data[k];
+  }
+  return [];
+};
+
+/**
+ * QM.3 / QE.1 · Consulta flujos regionales origen -> planta en un período con filtro opcional de especie y región.
+ */
+export const getFlujosOrigenDestino = async (filtros = {}, options = {}) => {
+  const params = {};
+  if (filtros?.startDate) params.startDate = filtros.startDate;
+  if (filtros?.endDate) params.endDate = filtros.endDate;
+  if (filtros?.especieId) params.especieId = filtros.especieId;
+  if (filtros?.regionId) params.regionId = filtros.regionId;
+
+  const response = await api.get('/reportes/flujos-origen-destino', {
+    params,
+    signal: options?.signal,
+  });
+  return response.data;
+};
+
+export const getCatalogosFiltrosFlujos = async (options = {}) => {
+  const [resEspecies, resRegiones] = await Promise.all([
+    api.get('/especies', { signal: options?.signal }).catch(() => ({ data: [] })),
+    api.get('/regiones', { signal: options?.signal }).catch(() => ({ data: [] })),
+  ]);
+  return {
+    especies: extraerListaCatalogo(resEspecies?.data, ['especies', 'content', 'data']),
+    regiones: extraerListaCatalogo(resRegiones?.data, ['regiones', 'content', 'data']),
+  };
+};

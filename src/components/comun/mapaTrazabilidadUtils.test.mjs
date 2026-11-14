@@ -4,6 +4,8 @@ import {
   normalizarEntradas,
   construirCapasMapaCadena,
   elegirCoordenadaEndpoint,
+  ponderarGrosorFlujo,
+  formatearCoordenadaWgs84,
 } from './mapaTrazabilidadUtils.js';
 
 test('QM.2: prioriza referencia oficial sobre GPS tanto en origen como en planta y preserva lineasPares', () => {
@@ -232,4 +234,14 @@ test('QM.2: cadena aún no recepcionada en planta emite aviso explícito y elegi
   assert.equal(capas.avisosTraza.length, 1);
   assert.match(capas.avisosTraza[0], /aún no recepcionada en planta/i);
   assert.equal(elegirCoordenadaEndpoint({ geo: { gps: { lat: '', lon: -71 } } }), null);
+});
+
+test('QM.3: ponderarGrosorFlujo escala entre 2.5 y 9 px y formatearCoordenadaWgs84 usa punto decimal', () => {
+  assert.equal(ponderarGrosorFlujo(0, 1000), 2.5);
+  assert.equal(ponderarGrosorFlujo(1000, 1000), 9);
+  const intermedio = ponderarGrosorFlujo(250, 1000);
+  assert.ok(intermedio > 2.5 && intermedio < 9);
+  assert.equal(formatearCoordenadaWgs84(-29.9533), '-29.953300');
+  assert.equal(formatearCoordenadaWgs84('-71,335'), '');
+  assert.equal(formatearCoordenadaWgs84(null), '');
 });
