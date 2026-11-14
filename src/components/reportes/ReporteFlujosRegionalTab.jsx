@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import {
   Search as SearchIcon,
+  FileDownload as DownloadIcon,
   AltRoute as FlowIcon,
   WarningAmber as WarningIcon,
   CheckCircleOutline as CheckIcon,
@@ -32,7 +33,14 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip as LeafletToo
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { getFlujosOrigenDestino, getCatalogosFiltrosFlujos } from '../../services/reportesService';
-import { ponderarGrosorFlujo, formatearKm, calcularDistanciaHaversineKm, formatearCoordenadaWgs84 } from '../comun/mapaTrazabilidadUtils';
+import {
+  ponderarGrosorFlujo,
+  formatearKm,
+  calcularDistanciaHaversineKm,
+  formatearCoordenadaWgs84,
+  construirFilasCsvFlujosOrigenDestino,
+} from '../comun/mapaTrazabilidadUtils';
+import { exportarCsv } from '../../utils/exportarCsv';
 
 function crearIconoOrigenFlujo(fuente) {
   const esReferencia = fuente === 'REFERENCIA';
@@ -137,7 +145,7 @@ const labelFuente = (fuente, detalle) => {
 /**
  * QM.3 · Pestaña regional «Mapa de flujos» en Reportes.
  */
-export default function ReporteFlujosRegionalTab({ dateRange, headerExportSlot = null }) {
+export default function ReporteFlujosRegionalTab({ dateRange }) {
   const [especies, setEspecies] = useState([]);
   const [regiones, setRegiones] = useState([]);
   const [especieId, setEspecieId] = useState('');
@@ -190,6 +198,18 @@ export default function ReporteFlujosRegionalTab({ dateRange, headerExportSlot =
   );
   const declaraciones = useMemo(() => (Array.isArray(datos?.declaraciones) ? datos.declaraciones : []), [datos]);
   const resumen = useMemo(() => datos?.resumen || {}, [datos]);
+
+  const handleExportarCsv = () => {
+    if (declaraciones.length === 0) return;
+    const { headers, rows } = construirFilasCsvFlujosOrigenDestino(declaraciones);
+    const sufijoInicio = dateRange?.startDate || 'inicio';
+    const sufijoFin = dateRange?.endDate || 'hoy';
+    exportarCsv({
+      headers,
+      rows,
+      nombreArchivo: `flujos_origen_destino_${sufijoInicio}_${sufijoFin}`,
+    });
+  };
 
   const maxDesembarqueKg = useMemo(
     () => flujosMapa.reduce((mx, f) => Math.max(mx, Number(f.desembarqueKg) || 0), 0),
@@ -275,7 +295,7 @@ export default function ReporteFlujosRegionalTab({ dateRange, headerExportSlot =
       <Paper elevation={0} sx={{ p: 2.5, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
         <Grid container spacing={2} alignItems="center">
           {dateRange?.startDate && (
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Chip
                 label={`Período: ${dateRange.startDate} al ${dateRange.endDate}`}
                 size="small"
@@ -329,7 +349,7 @@ export default function ReporteFlujosRegionalTab({ dateRange, headerExportSlot =
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, md: dateRange?.startDate ? 2 : 4 }}>
+          <Grid size={{ xs: 12, md: dateRange?.startDate ? 3 : 4 }}>
             <Stack direction="row" spacing={1}>
               <Button
                 fullWidth
@@ -341,9 +361,16 @@ export default function ReporteFlujosRegionalTab({ dateRange, headerExportSlot =
               >
                 Consultar
               </Button>
-              {typeof headerExportSlot === 'function'
-                ? headerExportSlot({ declaraciones, loading })
-                : null}
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                onClick={handleExportarCsv}
+                disabled={loading || declaraciones.length === 0}
+                sx={{ fontWeight: 700, py: 1 }}
+              >
+                Exportar
+              </Button>
             </Stack>
           </Grid>
         </Grid>

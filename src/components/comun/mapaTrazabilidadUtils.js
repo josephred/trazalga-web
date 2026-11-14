@@ -458,3 +458,58 @@ export function formatearCoordenadaWgs84(valor, decimales = 6) {
   if (!esNumeroValido(valor)) return '';
   return Number(valor).toFixed(decimales);
 }
+
+export const HEADERS_CSV_FLUJOS = [
+  'Folio Origen',
+  'Tipo Origen',
+  'Fecha Origen',
+  'Especie',
+  'Desembarque (kg)',
+  'Captura (kg)',
+  'Nombre Origen',
+  'Latitud Origen',
+  'Longitud Origen',
+  'Fuente Origen',
+  'Folio Comercializador',
+  'Nombre Planta',
+  'Código Planta',
+  'Latitud Planta',
+  'Longitud Planta',
+  'Fuente Planta',
+  'Folio Recepción',
+  'Fecha Recepción',
+  'Peso Romana (kg)',
+];
+
+/**
+ * QE.1 · Construye encabezados y filas (una por declaración de origen) para exportarCsv
+ * respetando coordenadas WGS84 con separador decimal punto.
+ */
+export function construirFilasCsvFlujosOrigenDestino(declaraciones = []) {
+  const lista = Array.isArray(declaraciones) ? declaraciones : [];
+  const rows = lista.map((d) => [
+    d?.origenFolio ?? '',
+    d?.origenTipo ?? '',
+    d?.origenFecha ?? '',
+    d?.especie ?? '',
+    esNumeroValido(d?.desembarqueKg) ? Number(d.desembarqueKg) : '',
+    esNumeroValido(d?.capturaKg) ? Number(d.capturaKg) : '',
+    d?.origenNombre ?? '',
+    formatearCoordenadaWgs84(d?.origenLatitud),
+    formatearCoordenadaWgs84(d?.origenLongitud),
+    d?.origenFuente ?? 'SIN_COORDENADAS',
+    d?.comercializadorFolio ?? '',
+    d?.plantaNombre ?? '',
+    d?.plantaCodigo ?? '',
+    formatearCoordenadaWgs84(d?.plantaLatitud),
+    formatearCoordenadaWgs84(d?.plantaLongitud),
+    d?.plantaFuente ?? 'SIN_COORDENADAS',
+    d?.recepcionFolio ?? '',
+    d?.recepcionFecha ?? '',
+    esNumeroValido(d?.pesoRomanaKg) ? Number(d.pesoRomanaKg) : '',
+  ]);
+  return {
+    headers: HEADERS_CSV_FLUJOS,
+    rows,
+  };
+}

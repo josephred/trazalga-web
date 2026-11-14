@@ -6,6 +6,7 @@ import {
   elegirCoordenadaEndpoint,
   ponderarGrosorFlujo,
   formatearCoordenadaWgs84,
+  construirFilasCsvFlujosOrigenDestino,
 } from './mapaTrazabilidadUtils.js';
 
 test('QM.2: prioriza referencia oficial sobre GPS tanto en origen como en planta y preserva lineasPares', () => {
@@ -244,4 +245,70 @@ test('QM.3: ponderarGrosorFlujo escala entre 2.5 y 9 px y formatearCoordenadaWgs
   assert.equal(formatearCoordenadaWgs84(-29.9533), '-29.953300');
   assert.equal(formatearCoordenadaWgs84('-71,335'), '');
   assert.equal(formatearCoordenadaWgs84(null), '');
+});
+
+test('QE.1: construirFilasCsvFlujosOrigenDestino genera una fila por declaracion con WGS84 punto decimal', () => {
+  const { headers, rows } = construirFilasCsvFlujosOrigenDestino([
+    {
+      origenFolio: 'RO-101',
+      origenTipo: 'RECOLECTOR',
+      origenFecha: '2026-10-08',
+      especie: 'Huiro Negro',
+      desembarqueKg: 420.5,
+      capturaKg: 450,
+      origenNombre: 'Caleta Coquimbo',
+      origenLatitud: -29.955651,
+      origenLongitud: -71.335132,
+      origenFuente: 'REFERENCIA',
+      comercializadorFolio: 'DC-88',
+      plantaNombre: 'Planta Norte',
+      plantaCodigo: 'PLA-01',
+      plantaLatitud: -29.91,
+      plantaLongitud: -71.25,
+      plantaFuente: 'GPS',
+      recepcionFolio: 'A-PLA-55',
+      recepcionFecha: '2026-10-10',
+      pesoRomanaKg: 410,
+    },
+    {
+      origenFolio: 'DA-202',
+      origenTipo: 'ARMADOR',
+      origenFecha: '2026-10-09',
+      especie: 'Huiro Palo',
+      desembarqueKg: 300,
+      capturaKg: 320,
+      origenNombre: 'Caleta Sin Ref',
+      origenLatitud: null,
+      origenLongitud: null,
+      origenFuente: 'SIN_COORDENADAS',
+      comercializadorFolio: null,
+      plantaNombre: 'Planta Oficial',
+      plantaCodigo: 'PLA-02',
+      plantaLatitud: -30.123456,
+      plantaLongitud: -71.654321,
+      plantaFuente: 'REFERENCIA',
+      recepcionFolio: 'A-PLA-56',
+      recepcionFecha: '2026-10-10',
+      pesoRomanaKg: 295,
+    },
+  ]);
+
+  assert.equal(headers.length, 19);
+  assert.equal(headers[7], 'Latitud Origen');
+  assert.equal(headers[13], 'Latitud Planta');
+  assert.equal(rows.length, 2);
+
+  assert.equal(rows[0][7], '-29.955651');
+  assert.equal(rows[0][8], '-71.335132');
+  assert.equal(rows[0][9], 'REFERENCIA');
+  assert.equal(rows[0][10], 'DC-88');
+  assert.equal(rows[0][13], '-29.910000');
+  assert.equal(rows[0][15], 'GPS');
+  assert.ok(!rows[0][7].includes(',') && !rows[0][13].includes(','));
+
+  assert.equal(rows[1][7], '');
+  assert.equal(rows[1][9], 'SIN_COORDENADAS');
+  assert.equal(rows[1][10], '');
+  assert.equal(rows[1][13], '-30.123456');
+  assert.equal(rows[1][15], 'REFERENCIA');
 });
