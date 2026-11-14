@@ -92,6 +92,12 @@
     "rendimiento_base",
     "rendimiento_tolerancia_pct",
     "rendimiento_min_pct",
-    "marcas_bloqueantes_produccion"
+    "marcas_bloqueantes_produccion",
+    "consulta_publica_texto_proteccion",
+    "consulta_publica_grafica",
+    "consulta_publica_fono_denuncia",
+    "consulta_publica_whatsapp",
+    "consulta_publica_muestra_comuna",
+    "consulta_ciudadana_resultados_anomalos"
   ]
 }

@@ -700,7 +700,13 @@ export const DEFAULT_CONFIG_VALUES = {
   rendimiento_base: 'CAPTURA_ORIGEN',
   rendimiento_tolerancia_pct: '5',
   rendimiento_min_pct: '',
-  marcas_bloqueantes_produccion: 'RENDIMIENTO_ANOMALO'
+  marcas_bloqueantes_produccion: 'RENDIMIENTO_ANOMALO',
+  consulta_publica_texto_proteccion: 'Las algas pardas son un recurso con medidas de protección. Su extracción y traslado requieren autorización de Sernapesca.',
+  consulta_publica_grafica: '',
+  consulta_publica_fono_denuncia: '',
+  consulta_publica_whatsapp: '',
+  consulta_publica_muestra_comuna: 'true',
+  consulta_ciudadana_resultados_anomalos: 'VENCIDO,SIN_REGISTROS,RETENIDO'
 };
 
 /**

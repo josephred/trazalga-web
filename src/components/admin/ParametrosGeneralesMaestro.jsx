@@ -1204,6 +1204,129 @@ export default function ParametrosGeneralesMaestro() {
           </Grid>
         </CardContent>
       </Card>
+
+      {/* SECCIÓN 6: Consulta Ciudadana de Patentes y Canal de Denuncia (QC.1) */}
+      <Card elevation={0} sx={{ borderRadius: 3, border: 1, borderColor: 'divider' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+                Consulta Ciudadana de Patentes y Canal de Denuncia
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              color="secondary"
+              size="small"
+              startIcon={<SaveIcon />}
+              onClick={() =>
+                handleGuardarCategoria([
+                  'consulta_publica_texto_proteccion',
+                  'consulta_publica_grafica',
+                  'consulta_publica_fono_denuncia',
+                  'consulta_publica_whatsapp',
+                  'consulta_publica_muestra_comuna',
+                  'consulta_ciudadana_resultados_anomalos',
+                ])
+              }
+              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
+            >
+              Guardar Sección
+            </Button>
+          </Box>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2.5 }}>
+            Configura los mensajes de protección, canales opcionales de denuncia anónima ante traslados sin autorización vigente y el criterio de anomalías para la consola de fiscalización (D37–D42).
+          </Typography>
+
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                size="small"
+                label="Leyenda pública de protección del recurso (consulta_publica_texto_proteccion)"
+                placeholder="Vacío = oculta"
+                value={
+                  configs['consulta_publica_texto_proteccion'] ??
+                  'Las algas pardas son un recurso con medidas de protección. Su extracción y traslado requieren autorización de Sernapesca.'
+                }
+                onChange={(e) => handleValorChange('consulta_publica_texto_proteccion', e.target.value)}
+                helperText="Se muestra en la consulta ciudadana pública (si queda vacío, la leyenda textual se oculta). D42."
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Gráfica informativa URL/ruta (consulta_publica_grafica)"
+                placeholder="Vacío = oculta"
+                value={configs['consulta_publica_grafica'] ?? ''}
+                onChange={(e) => handleValorChange('consulta_publica_grafica', e.target.value)}
+                helperText="Ruta en el servidor o URL pública de imagen informativa. Vacío = oculta."
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 3 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Fono Denuncia (consulta_publica_fono_denuncia)"
+                placeholder="Vacío = oculto"
+                value={configs['consulta_publica_fono_denuncia'] ?? ''}
+                onChange={(e) => handleValorChange('consulta_publica_fono_denuncia', e.target.value)}
+                helperText="Enlace tel: cuando no hay autorización vigente. Vacío = oculto (D38)."
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 3 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="WhatsApp Denuncia (consulta_publica_whatsapp)"
+                placeholder="Vacío = oculto (código país + número)"
+                value={configs['consulta_publica_whatsapp'] ?? ''}
+                onChange={(e) => handleValorChange('consulta_publica_whatsapp', e.target.value)}
+                helperText="Dígitos internacionales para enlace wa.me. Vacío = oculto (D38)."
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 5 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['consulta_publica_muestra_comuna'] ?? 'true') === 'true'}
+                    onChange={(e) =>
+                      handleValorChange('consulta_publica_muestra_comuna', e.target.checked ? 'true' : 'false')
+                    }
+                    color="secondary"
+                  />
+                }
+                label={
+                  <Typography variant="body2">
+                    Mostrar comuna de destino en respuesta AUTORIZADO (D37)
+                  </Typography>
+                }
+              />
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                Desactivar para omitir comunaDestino en la respuesta pública aun cuando esté autorizado.
+              </Typography>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 7 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Resultados anómalos para bandeja de fiscalización (consulta_ciudadana_resultados_anomalos)"
+                value={configs['consulta_ciudadana_resultados_anomalos'] ?? 'VENCIDO,SIN_REGISTROS,RETENIDO'}
+                onChange={(e) => handleValorChange('consulta_ciudadana_resultados_anomalos', e.target.value)}
+                helperText="Lista separada por comas usada en la bandeja de Consultas ciudadanas (D39): AUTORIZADO, RETENIDO, FINALIZADO, VENCIDO, SIN_REGISTROS."
+              />
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
     </Box>
   );
 }
