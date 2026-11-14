@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatearCoordenadaWgs84 } from '../comun/mapaTrazabilidadUtils';
 import {
     Card,
     CardContent,
@@ -217,6 +218,10 @@ const DataTable = ({ title, data = [], onRowClick, actions }) => {
                                             <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', borderBottom: 2, borderColor: 'divider', fontFamily: 'Outfit', py: 2 }}>Fecha P. Destino.</TableCell>
                                         </>
                                     )}
+                                    <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', borderBottom: 2, borderColor: 'divider', fontFamily: 'Outfit', py: 2 }}>Lat. Origen</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', borderBottom: 2, borderColor: 'divider', fontFamily: 'Outfit', py: 2 }}>Lon. Origen</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', borderBottom: 2, borderColor: 'divider', fontFamily: 'Outfit', py: 2 }}>Lat. Destino</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: 'text.primary', bgcolor: 'background.default', borderBottom: 2, borderColor: 'divider', fontFamily: 'Outfit', py: 2 }}>Lon. Destino</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -292,12 +297,22 @@ const DataTable = ({ title, data = [], onRowClick, actions }) => {
                                                         </TableCell>
                                                     </>
                                                 )}
+                                                {[row.latitudOrigen, row.longitudOrigen, row.latitudDestino, row.longitudDestino].map((coord, cIdx) => {
+                                                    const txt = formatearCoordenadaWgs84(coord);
+                                                    return (
+                                                        <TableCell key={cIdx} sx={{ py: 1.8 }}>
+                                                            <Typography variant="body2" sx={{ color: txt ? 'text.primary' : 'text.secondary', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                                                                {txt || '-'}
+                                                            </Typography>
+                                                        </TableCell>
+                                                    );
+                                                })}
                                             </TableRow>
                                         );
                                     })
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={hasExtendedTraceability ? 10 : 6} align="center" sx={{ py: 8 }}>
+                                        <TableCell colSpan={hasExtendedTraceability ? 14 : 10} align="center" sx={{ py: 8 }}>
                                             <EmptyIcon sx={{ fontSize: 48, color: 'divider', mb: 1.5 }} />
                                             <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 600, fontFamily: 'Outfit' }}>
                                                 No se encontraron transacciones

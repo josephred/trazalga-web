@@ -513,3 +513,22 @@ export function construirFilasCsvFlujosOrigenDestino(declaraciones = []) {
     rows,
   };
 }
+
+export const HEADERS_COORDENADAS_TRANSACCION = [
+  'Latitud Origen',
+  'Longitud Origen',
+  'Latitud Destino',
+  'Longitud Destino',
+];
+
+/**
+ * QE.2 · Serializa coordenadas origen/destino al final de la planilla de transacciones con punto decimal WGS84.
+ */
+export function mapearCoordenadasTransaccionCsv(row) {
+  return [
+    formatearCoordenadaWgs84(row?.latitudOrigen),
+    formatearCoordenadaWgs84(row?.longitudOrigen),
+    formatearCoordenadaWgs84(row?.latitudDestino),
+    formatearCoordenadaWgs84(row?.longitudDestino),
+  ];
+}

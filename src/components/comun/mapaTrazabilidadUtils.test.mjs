@@ -7,6 +7,8 @@ import {
   ponderarGrosorFlujo,
   formatearCoordenadaWgs84,
   construirFilasCsvFlujosOrigenDestino,
+  HEADERS_COORDENADAS_TRANSACCION,
+  mapearCoordenadasTransaccionCsv,
 } from './mapaTrazabilidadUtils.js';
 
 test('QM.2: prioriza referencia oficial sobre GPS tanto en origen como en planta y preserva lineasPares', () => {
@@ -311,4 +313,22 @@ test('QE.1: construirFilasCsvFlujosOrigenDestino genera una fila por declaracion
   assert.equal(rows[1][10], '');
   assert.equal(rows[1][13], '-30.123456');
   assert.equal(rows[1][15], 'REFERENCIA');
+});
+
+test('QE.2: mapearCoordenadasTransaccionCsv serializa columnas finales origen/destino en punto decimal', () => {
+  assert.deepEqual(HEADERS_COORDENADAS_TRANSACCION, [
+    'Latitud Origen',
+    'Longitud Origen',
+    'Latitud Destino',
+    'Longitud Destino',
+  ]);
+  assert.deepEqual(
+    mapearCoordenadasTransaccionCsv({
+      latitudOrigen: -29.955651,
+      longitudOrigen: -71.335132,
+      latitudDestino: -27.0667,
+      longitudDestino: null,
+    }),
+    ['-29.955651', '-71.335132', '-27.066700', '']
+  );
 });

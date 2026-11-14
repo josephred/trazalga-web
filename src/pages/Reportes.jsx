@@ -9,6 +9,10 @@ import TrazabilidadDialog from '../components/dashboard/TrazabilidadDialog';
 import ReporteTransporteTab from '../components/reportes/ReporteTransporteTab';
 import ReporteStockPlantaTab from '../components/reportes/ReporteStockPlantaTab';
 import ReporteFlujosRegionalTab from '../components/reportes/ReporteFlujosRegionalTab';
+import {
+  HEADERS_COORDENADAS_TRANSACCION,
+  mapearCoordenadasTransaccionCsv,
+} from '../components/comun/mapaTrazabilidadUtils';
 import exportarCsv from '../utils/exportarCsv';
 
 export default function Reportes() {
@@ -48,7 +52,8 @@ export default function Reportes() {
             'Fecha Planta Destino'
           ]
         : []),
-      'Tipo Reporte'
+      'Tipo Reporte',
+      ...HEADERS_COORDENADAS_TRANSACCION,
     ];
 
     const rows = reportData.map((row) => [
@@ -70,7 +75,8 @@ export default function Reportes() {
             row.fechaPlantaAbastecimiento ? new Date(row.fechaPlantaAbastecimiento).toLocaleDateString('es-CL') : '-'
           ]
         : []),
-      row.tipoReporte ?? ''
+      row.tipoReporte ?? '',
+      ...mapearCoordenadasTransaccionCsv(row),
     ]);
 
     const fechaStr = new Date().toISOString().slice(0, 10);
