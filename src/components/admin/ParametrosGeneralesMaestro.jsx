@@ -836,6 +836,7 @@ export default function ParametrosGeneralesMaestro() {
                   'planta_exige_guia_adjunta',
                   'produccion_exige_formato_oficial',
                   'rendimiento_activo',
+                  'rendimiento_base',
                   'rendimiento_tolerancia_pct',
                   'rendimiento_min_pct',
                   'planta_version_minima',
@@ -1026,10 +1027,10 @@ export default function ParametrosGeneralesMaestro() {
                 <Grid size={{ xs: 12 }}>
                   <Divider sx={{ my: 1 }} />
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                    Rendimiento en Planta de Proceso (NP.4–NP.5)
+                    Rendimiento en Planta: Captura de Origen y Proceso (NP.4–NP.5 / QR.3)
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -1047,7 +1048,21 @@ export default function ParametrosGeneralesMaestro() {
                     Genera marca RENDIMIENTO_ANOMALO y congela edición/destino cuando excede rango.
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
+                    label="Base de evaluación"
+                    value={configs['rendimiento_base'] ?? 'CAPTURA_ORIGEN'}
+                    onChange={(e) => handleValorChange('rendimiento_base', e.target.value)}
+                    helperText="CAPTURA_ORIGEN respalda automáticamente a MASA_RECIBIDA si la cadena está incompleta."
+                  >
+                    <MenuItem value="CAPTURA_ORIGEN">Captura biológica origen (recomendada)</MenuItem>
+                    <MenuItem value="MASA_RECIBIDA">Masa recibida en planta</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <TextField
                     fullWidth
                     size="small"
@@ -1058,7 +1073,7 @@ export default function ParametrosGeneralesMaestro() {
                     helperText="Ej: 5 permite hasta +5 % sobre el máximo teórico."
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <TextField
                     fullWidth
                     size="small"

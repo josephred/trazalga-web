@@ -433,22 +433,22 @@ export const INDICADORES_METADATA = {
   rendimientoPlanta: {
     id: 'rendimientoPlanta',
     codigo: 'IND-REND',
-    nombre: 'Rendimiento en Planta de Proceso',
+    nombre: 'Rendimiento en Planta (Final y de Proceso)',
     categoria: 'Balance de Biomasa y Transformación',
-    subtitulo: 'Relación producto / materia prima calculada en servidor con bloqueo preventivo de destino',
+    subtitulo: 'Rendimiento final sobre captura biológica de origen y rendimiento de proceso en servidor',
     icono: 'Factory',
     color: '#0d9488',
     resumenNegocio:
-      'Evalúa la consistencia física entre la masa de materia prima ingresada en lotes seleccionados (priorizando `peso_romana_kg`) y la cantidad de producto declarado en `declaracion_planta_produccion`, detectando rendimientos imposibles o incompatibles con la conversión biológica oficial.',
-    metricaBase: 'Rendimiento (%) = (cantidad_producto / masa_entrada_servidor) × 100 por declaración P-PLA.',
+      'Contrasta la cantidad de producto declarado en `declaracion_planta_produccion` (`P-PLA`) tanto contra la captura biológica de origen asociada (`declaracion_recolector`, `declaracion_armador`, `declaracion_area`, contando cada origen una sola vez) como contra la masa de entrada recibida en lotes `A-PLA` (rendimiento de proceso).',
+    metricaBase: 'Rendimiento final (%) = (cantidad_producto ÷ captura_origen_kg) × 100 · Rendimiento proceso (%) = (cantidad_producto ÷ masa_entrada_servidor) × 100.',
     humedadFactor:
-      'Prioriza rangos oficiales vigentes en `rendimiento_rango` (TABLA) según especie, humedad de entrada predominante y formato resultante; en ausencia de tabla, calcula el balance máximo teórico desde `factor_conversion` (FACTORES).',
+      'Evalúa según `rendimiento_base` ({{rendimiento_base:CAPTURA_ORIGEN}}). Prioriza rangos vigentes en `rendimiento_rango` para la base activa y, si no hay tabla para esa base, calcula el límite desde `factor_conversion`. Cuando la cadena hacia origen está incompleta o usa tokens LEGACY no atribuibles, respalda en `MASA_RECIBIDA` (registrado en `rendimiento_fuente`).',
     fuentesDatos:
-      'Registros de `declaracion_planta_produccion`, lotes `declaracion_planta_abastecimiento`, tabla `rendimiento_rango` y tabla `factor_conversion`.',
+      'Registros de `declaracion_planta_produccion`, lotes `declaracion_planta_abastecimiento`, orígenes `declaracion_recolector`, `declaracion_armador` y `declaracion_area`, tabla `rendimiento_rango` y tabla `factor_conversion`.',
     periodoFechas: 'Declaraciones P-PLA filtradas por `fecha_produccion` dentro del rango seleccionado.',
-    formula: 'Anómalo si rendimientoPct > maxTeorico × (1 + {{rendimiento_tolerancia_pct:5}} / 100) o < rendimiento_min_pct ({{rendimiento_min_pct}}).',
+    formula: 'Anómalo si rendimientoEvaluado > maxTeorico × (1 + {{rendimiento_tolerancia_pct:5}} / 100) o < rendimiento_min_pct ({{rendimiento_min_pct}}).',
     criterioFiscalizacion:
-      'El control queda gobernado por `rendimiento_activo` ({{rendimiento_activo:true}}), tolerancia superior `rendimiento_tolerancia_pct` ({{rendimiento_tolerancia_pct:5}} %) y mínimo opcional `rendimiento_min_pct`. Las anomalías generan marca oficial `RENDIMIENTO_ANOMALO` y congelan edición y despacho en Destino según `marcas_bloqueantes_produccion` ({{marcas_bloqueantes_produccion:RENDIMIENTO_ANOMALO}}). Las producciones sin lotes informan `PRODUCCION_SIN_LOTES`.'
+      'El control queda gobernado por `rendimiento_activo` ({{rendimiento_activo:true}}), base de evaluación `rendimiento_base` ({{rendimiento_base:CAPTURA_ORIGEN}}), tolerancia superior `rendimiento_tolerancia_pct` ({{rendimiento_tolerancia_pct:5}} %) y mínimo opcional `rendimiento_min_pct`. Las anomalías generan marca oficial `RENDIMIENTO_ANOMALO` y congelan edición y despacho en Destino según `marcas_bloqueantes_produccion` ({{marcas_bloqueantes_produccion:RENDIMIENTO_ANOMALO}}). Las producciones sin lotes informan `PRODUCCION_SIN_LOTES`.'
   },
 
   integracionHumedadTiempo: {
@@ -697,6 +697,7 @@ export const DEFAULT_CONFIG_VALUES = {
   planta_exige_guia_adjunta: 'false',
   produccion_exige_formato_oficial: 'false',
   rendimiento_activo: 'true',
+  rendimiento_base: 'CAPTURA_ORIGEN',
   rendimiento_tolerancia_pct: '5',
   rendimiento_min_pct: '',
   marcas_bloqueantes_produccion: 'RENDIMIENTO_ANOMALO'

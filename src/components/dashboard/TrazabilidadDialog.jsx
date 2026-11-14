@@ -1079,8 +1079,18 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}${detailData.lugarAc
                               {n.lugarAcopio && <span>🏭 Acopio: {n.lugarAcopio}</span>}
                               {n.loteInterno && <span>🏷️ Lote: {n.loteInterno}</span>}
                               {n.masaEntradaKg != null && <span>📥 Entrada: {formatKg(n.masaEntradaKg)}</span>}
+                              {n.capturaOrigenKg != null && (
+                                <span>
+                                  🌊 Captura origen: {formatKg(n.capturaOrigenKg)}
+                                  {n.capturaOrigenCompleta === false ? ' (incompleta)' : ''}
+                                </span>
+                              )}
                               {n.rendimientoPct != null && (
-                                <span>📊 Rend.: {n.rendimientoPct}%{n.rendimientoMaxTeoricoPct != null ? ` (máx. ${n.rendimientoMaxTeoricoPct}% · ${n.rendimientoFuente || 'N/A'})` : ''}</span>
+                                <span>
+                                  📊 Proceso: {n.rendimientoPct}%
+                                  {n.rendimientoFinalPct != null ? ` · Final: ${n.rendimientoFinalPct}%` : ''}
+                                  {n.rendimientoMaxTeoricoPct != null ? ` (máx. ${n.rendimientoMaxTeoricoPct}% · ${n.rendimientoFuente || 'N/A'})` : ''}
+                                </span>
                               )}
                               <span>💧 Humedad: {n.estadoHumedad || 'SEMI SECO'}</span>
                             </Box>
@@ -1560,7 +1570,11 @@ Ubicación: ${detailData.caleta || detailData.comuna || '-'}${detailData.lugarAc
                     )}
                     {detailData.masaEntradaKg != null && (
                       <Typography variant="caption" sx={{ color: '#475569', display: 'block', fontSize: '0.68rem', fontWeight: 600 }}>
-                        Entrada: {formatKg(detailData.masaEntradaKg)}{detailData.rendimientoPct != null ? ` · Rend.: ${detailData.rendimientoPct}%` : ''}{detailData.rendimientoMaxTeoricoPct != null ? ` (máx. ${detailData.rendimientoMaxTeoricoPct}% · ${detailData.rendimientoFuente || 'N/A'})` : ''}
+                        Entrada: {formatKg(detailData.masaEntradaKg)}
+                        {detailData.capturaOrigenKg != null ? ` · Captura origen: ${formatKg(detailData.capturaOrigenKg)}${detailData.capturaOrigenCompleta === false ? ' (incompleta)' : ''}` : ''}
+                        {detailData.rendimientoPct != null ? ` · Proceso: ${detailData.rendimientoPct}%` : ''}
+                        {detailData.rendimientoFinalPct != null ? ` · Final: ${detailData.rendimientoFinalPct}%` : ''}
+                        {detailData.rendimientoMaxTeoricoPct != null ? ` (máx. ${detailData.rendimientoMaxTeoricoPct}% · ${detailData.rendimientoFuente || 'N/A'})` : ''}
                       </Typography>
                     )}
                     {detailData.metodoExtraccion && (

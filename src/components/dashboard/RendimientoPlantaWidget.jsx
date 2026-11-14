@@ -43,7 +43,7 @@ const formatDate = (val) => {
 
 export default function RendimientoPlantaWidget({ dateRange }) {
   const [data, setData] = useState({
-    resumen: { total: 0, normales: 0, anomalas: 0, sinReferencia: 0, rendimientoActivo: true, toleranciaPct: 5 },
+    resumen: { total: 0, normales: 0, anomalas: 0, sinReferencia: 0, cadenasIncompletas: 0, rendimientoActivo: true, toleranciaPct: 5, rendimientoBase: 'CAPTURA_ORIGEN' },
     porPlantaFormato: [],
     detalle: []
   });
@@ -58,7 +58,7 @@ export default function RendimientoPlantaWidget({ dateRange }) {
       const resp = await getRendimientoPlanta(dateRange, {}, { signal });
       if (resp) {
         setData({
-          resumen: resp.resumen || { total: 0, normales: 0, anomalas: 0, sinReferencia: 0, rendimientoActivo: true, toleranciaPct: 5 },
+          resumen: resp.resumen || { total: 0, normales: 0, anomalas: 0, sinReferencia: 0, cadenasIncompletas: 0, rendimientoActivo: true, toleranciaPct: 5, rendimientoBase: 'CAPTURA_ORIGEN' },
           porPlantaFormato: resp.porPlantaFormato || [],
           detalle: resp.detalle || []
         });
@@ -106,14 +106,30 @@ export default function RendimientoPlantaWidget({ dateRange }) {
             </Box>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: 'Outfit', lineHeight: 1.2 }}>
-                Rendimiento en Planta de Proceso
+                Rendimiento en Planta (Final y de Proceso)
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Balance de biomasa y formatos · Tolerancia +{formatNum(resumen.toleranciaPct ?? 5, 0)} %
+                Balance de biomasa y formatos · Tolerancia +{formatNum(resumen.toleranciaPct ?? 5, 0)} % · Base: {resumen.rendimientoBase === 'MASA_RECIBIDA' ? 'Masa recibida' : 'Captura biológica origen'}
               </Typography>
             </Box>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Chip
+              size="small"
+              label={resumen.rendimientoBase === 'MASA_RECIBIDA' ? 'Base: Masa recibida' : 'Base: Captura origen'}
+              color={resumen.rendimientoBase === 'MASA_RECIBIDA' ? 'default' : 'primary'}
+              variant="outlined"
+              sx={{ fontWeight: 700 }}
+            />
+            {resumen.cadenasIncompletas > 0 && (
+              <Chip
+                size="small"
+                label={`${resumen.cadenasIncompletas} cadena(s) incompleta(s)`}
+                color="warning"
+                variant="outlined"
+                sx={{ fontWeight: 700 }}
+              />
+            )}
             <Chip
               size="small"
               label={resumen.rendimientoActivo !== false ? 'Control Activo' : 'Control Apagado'}
@@ -210,9 +226,11 @@ export default function RendimientoPlantaWidget({ dateRange }) {
                     <TableCell>Planta</TableCell>
                     <TableCell>Especie / Formato</TableCell>
                     <TableCell align="right">Prod.</TableCell>
-                    <TableCell align="right">Entrada (kg)</TableCell>
+                    <TableCell align="right">Entrada planta (kg)</TableCell>
+                    <TableCell align="right">Captura origen (kg)</TableCell>
                     <TableCell align="right">Producto (kg)</TableCell>
-                    <TableCell align="right">Rend. prom.</TableCell>
+                    <TableCell align="right">Rend. proceso</TableCell>
+                    <TableCell align="right">Rend. final</TableCell>
                     <TableCell align="right">Anómalas</TableCell>
                   </TableRow>
                 </TableHead>
@@ -230,9 +248,20 @@ export default function RendimientoPlantaWidget({ dateRange }) {
                       </TableCell>
                       <TableCell align="right">{row.producciones}</TableCell>
                       <TableCell align="right">{formatNum(row.masaEntradaKg, 0)}</TableCell>
+                      <TableCell align="right">
+                        {row.capturaOrigenKg > 0 ? formatNum(row.capturaOrigenKg, 0) : '—'}
+                        {row.cadenasIncompletas > 0 && (
+                          <Typography variant="caption" color="warning.main" display="block">
+                            {row.cadenasIncompletas} incompl.
+                          </Typography>
+                        )}
+                      </TableCell>
                       <TableCell align="right">{formatNum(row.masaProductoKg, 0)}</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700 }}>
+                      <TableCell align="right">
                         {row.rendimientoPromedioPct != null ? `${formatNum(row.rendimientoPromedioPct, 2)} %` : '—'}
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700 }}>
+                        {row.rendimientoFinalPromedioPct != null ? `${formatNum(row.rendimientoFinalPromedioPct, 2)} %` : '—'}
                       </TableCell>
                       <TableCell align="right">
                         {row.anomalas > 0 ? (
@@ -260,8 +289,10 @@ export default function RendimientoPlantaWidget({ dateRange }) {
                   <TableCell>Fecha</TableCell>
                   <TableCell>Planta / Formato</TableCell>
                   <TableCell align="right">Entrada (kg)</TableCell>
+                  <TableCell align="right">Captura origen (kg)</TableCell>
                   <TableCell align="right">Producto (kg)</TableCell>
-                  <TableCell align="right">Rend. (%)</TableCell>
+                  <TableCell align="right">Rend. proceso (%)</TableCell>
+                  <TableCell align="right">Rend. final (%)</TableCell>
                   <TableCell align="right">Máx. teór.</TableCell>
                   <TableCell>Fuente / Estado</TableCell>
                 </TableRow>
@@ -276,9 +307,22 @@ export default function RendimientoPlantaWidget({ dateRange }) {
                       <Typography variant="caption" color="text.secondary">{d.productoNombre || '—'}</Typography>
                     </TableCell>
                     <TableCell align="right">{formatNum(d.masaEntradaKg, 1)}</TableCell>
+                    <TableCell align="right">
+                      <Stack spacing={0.25} alignItems="flex-end">
+                        <span>{d.capturaOrigenKg != null ? formatNum(d.capturaOrigenKg, 1) : '—'}</span>
+                        {d.capturaOrigenCompleta === true ? (
+                          <Chip size="small" label="Completa" color="success" variant="outlined" sx={{ fontSize: '0.62rem', height: 18 }} />
+                        ) : d.capturaOrigenCompleta === false ? (
+                          <Chip size="small" label="Incompleta" color="warning" variant="outlined" sx={{ fontSize: '0.62rem', height: 18 }} />
+                        ) : null}
+                      </Stack>
+                    </TableCell>
                     <TableCell align="right">{formatNum(d.masaProductoKg, 1)}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: d.anomalo ? '#be123c' : 'text.primary' }}>
+                    <TableCell align="right" sx={{ fontWeight: !d.evaluadoSobreOrigen ? 700 : 400, color: d.anomalo && !d.evaluadoSobreOrigen ? '#be123c' : 'text.primary' }}>
                       {d.rendimientoPct != null ? `${formatNum(d.rendimientoPct, 2)} %` : '—'}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: d.evaluadoSobreOrigen ? 700 : 500, color: d.anomalo && d.evaluadoSobreOrigen ? '#be123c' : 'text.primary' }}>
+                      {d.rendimientoFinalPct != null ? `${formatNum(d.rendimientoFinalPct, 2)} %` : '—'}
                     </TableCell>
                     <TableCell align="right">
                       {d.rendimientoMaxTeoricoPct != null ? `${formatNum(d.rendimientoMaxTeoricoPct, 2)} %` : '—'}

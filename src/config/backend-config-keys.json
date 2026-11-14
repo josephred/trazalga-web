@@ -89,6 +89,7 @@
     "planta_exige_guia_adjunta",
     "produccion_exige_formato_oficial",
     "rendimiento_activo",
+    "rendimiento_base",
     "rendimiento_tolerancia_pct",
     "rendimiento_min_pct",
     "marcas_bloqueantes_produccion"
