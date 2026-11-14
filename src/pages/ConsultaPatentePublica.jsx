@@ -25,6 +25,8 @@ import {
   DirectionsCar,
   LocationOn,
   Spa,
+  Phone,
+  WhatsApp,
 } from '@mui/icons-material';
 import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router-dom';
 import api from '../api/axiosConfig';
@@ -111,6 +113,38 @@ export default function ConsultaPatentePublica() {
     : '';
   const graficaArchivo = resultado?.grafica && String(resultado.grafica).trim() !== ''
     ? String(resultado.grafica).trim()
+    : '';
+  const graficaSrc = graficaArchivo
+    ? (/^(https?:)?\/\//i.test(graficaArchivo) || graficaArchivo.startsWith('/')
+      ? graficaArchivo
+      : `/consulta-publica/${graficaArchivo}`)
+    : '';
+  const fonoDenuncia = resultado?.fonoDenuncia && String(resultado.fonoDenuncia).trim() !== ''
+    ? String(resultado.fonoDenuncia).trim()
+    : '';
+  const fonoTel = fonoDenuncia ? fonoDenuncia.replace(/[^\d+*#]/g, '') : '';
+  const whatsappRaw = resultado?.whatsappDenuncia && String(resultado.whatsappDenuncia).trim() !== ''
+    ? String(resultado.whatsappDenuncia).trim()
+    : '';
+  const whatsappDigits = whatsappRaw ? whatsappRaw.replace(/\D/g, '') : '';
+  const fechaConsultaTexto = (() => {
+    const raw = resultado?.consultadoEn;
+    if (!raw) return new Date().toLocaleString('es-CL');
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime())
+      ? String(raw)
+      : parsed.toLocaleString('es-CL', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+  })();
+  const whatsappHref = whatsappDigits
+    ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(
+        `Denuncia Sernapesca: patente ${patenteActiva || 'SIN_PATENTE'} consultada el ${fechaConsultaTexto} sin traslado de algas autorizado vigente.`
+      )}`
     : '';
 
   return (
@@ -349,19 +383,21 @@ export default function ConsultaPatentePublica() {
                       </Box>
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', height: '100%' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <LocationOn sx={{ fontSize: 18, color: '#16a34a' }} />
-                          <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700 }}>
-                            Comuna de destino
+                    {resultado.comunaDestino && (
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', height: '100%' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <LocationOn sx={{ fontSize: 18, color: '#16a34a' }} />
+                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700 }}>
+                              Comuna de destino
+                            </Typography>
+                          </Box>
+                          <Typography variant="body1" sx={{ fontWeight: 800, color: '#0f172a', wordBreak: 'break-word' }}>
+                            {resultado.comunaDestino}
                           </Typography>
                         </Box>
-                        <Typography variant="body1" sx={{ fontWeight: 800, color: '#0f172a', wordBreak: 'break-word' }}>
-                          {resultado.comunaDestino || 'Comuna no informada'}
-                        </Typography>
-                      </Box>
-                    </Grid>
+                      </Grid>
+                    )}
 
                     <Grid size={{ xs: 12, sm: 4 }}>
                       <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, border: '1px solid #e2e8f0', height: '100%' }}>
@@ -380,6 +416,7 @@ export default function ConsultaPatentePublica() {
                 </CardContent>
               </>
             ) : (
+              <>
               <Box
                 sx={{
                   bgcolor: '#475569',
@@ -410,12 +447,87 @@ export default function ConsultaPatentePublica() {
                   </Typography>
                 </Box>
               </Box>
+              {(textoProteccion || graficaSrc || fonoTel || whatsappHref) && (
+                <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
+                  {textoProteccion && (
+                    <Typography variant="body1" sx={{ color: '#1e293b', lineHeight: 1.6, mb: graficaSrc || fonoTel || whatsappHref ? 2 : 0 }}>
+                      {textoProteccion}
+                    </Typography>
+                  )}
+                  {graficaSrc && (
+                    <Box
+                      component="img"
+                      src={graficaSrc}
+                      alt="Protección del recurso"
+                      sx={{ width: '100%', maxHeight: 360, objectFit: 'contain', borderRadius: 2, mb: fonoTel || whatsappHref ? 2 : 0 }}
+                    />
+                  )}
+                  {(fonoTel || whatsappHref) && (
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        bgcolor: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                      }}
+                    >
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a', mb: 0.5 }}>
+                        ¿Presencia un traslado irregular? Denuncia ciudadana anónima
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#475569', display: 'block', mb: 1.5 }}>
+                        No se solicitan datos personales ni ubicación del denunciante.
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, flexWrap: 'wrap' }}>
+                        {fonoTel && (
+                          <Button
+                            component="a"
+                            href={`tel:${fonoTel}`}
+                            variant="contained"
+                            startIcon={<Phone />}
+                            sx={{
+                              bgcolor: '#1a3a5c',
+                              '&:hover': { bgcolor: '#0f2740' },
+                              textTransform: 'none',
+                              fontWeight: 700,
+                              borderRadius: 2,
+                              minHeight: 44,
+                            }}
+                          >
+                            Fono Denuncia{fonoDenuncia ? `: ${fonoDenuncia}` : ''}
+                          </Button>
+                        )}
+                        {whatsappHref && (
+                          <Button
+                            component="a"
+                            href={whatsappHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            variant="contained"
+                            startIcon={<WhatsApp />}
+                            sx={{
+                              bgcolor: '#15803d',
+                              '&:hover': { bgcolor: '#166534' },
+                              textTransform: 'none',
+                              fontWeight: 700,
+                              borderRadius: 2,
+                              minHeight: 44,
+                            }}
+                          >
+                            Denunciar por WhatsApp
+                          </Button>
+                        )}
+                      </Box>
+                    </Box>
+                  )}
+                </CardContent>
+              )}
+              </>
             )}
           </Paper>
         )}
 
-        {/* Sección opcional de texto y gráfica de protección del recurso (D1: oculta si ambos vienen vacíos) */}
-        {(textoProteccion || graficaArchivo) && (
+        {/* Sección opcional de texto y gráfica de protección cuando está AUTORIZADO (cuando no lo está, se muestra justo bajo el aviso) */}
+        {esAutorizado && (textoProteccion || graficaSrc) && (
           <Paper
             elevation={0}
             sx={{
@@ -427,14 +539,14 @@ export default function ConsultaPatentePublica() {
             }}
           >
             {textoProteccion && (
-              <Typography variant="body1" sx={{ color: '#1e293b', lineHeight: 1.6, mb: graficaArchivo ? 2 : 0 }}>
+              <Typography variant="body1" sx={{ color: '#1e293b', lineHeight: 1.6, mb: graficaSrc ? 2 : 0 }}>
                 {textoProteccion}
               </Typography>
             )}
-            {graficaArchivo && (
+            {graficaSrc && (
               <Box
                 component="img"
-                src={`/consulta-publica/${graficaArchivo}`}
+                src={graficaSrc}
                 alt="Protección del recurso"
                 sx={{ width: '100%', maxHeight: 360, objectFit: 'contain', borderRadius: 2 }}
               />
