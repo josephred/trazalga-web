@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -51,6 +52,8 @@ import {
   DoneAll as DoneAllIcon,
   History as HistoryIcon,
 } from '@mui/icons-material';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import api from '../../api/axiosConfig';
 import { getPerfil } from '../../auth/sesion';
 import { puedeHacer } from '../../auth/perfiles';
@@ -178,6 +181,7 @@ export default function ConsolaHallazgos() {
 
   const [hallazgos, setHallazgos] = useState([]);
   const [resumen, setResumen] = useState(null);
+  const [consultasCiudadanas, setConsultasCiudadanas] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionSuccess, setActionSuccess] = useState(null);
@@ -207,15 +211,21 @@ export default function ConsolaHallazgos() {
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
 
-      const [resLista, resResumen] = await Promise.all([
+      const ciudadanasParams = {};
+      if (startDate) ciudadanasParams.startDate = startDate;
+      if (endDate) ciudadanasParams.endDate = endDate;
+
+      const [resLista, resResumen, resCiudadanas] = await Promise.all([
         api.get('/api/declaracion-marcas', { params }),
         api.get('/api/declaracion-marcas/resumen').catch(() => null),
+        api.get('/api/reportes/consultas-ciudadanas', { params: ciudadanasParams }).catch(() => null),
       ]);
 
       setHallazgos(Array.isArray(resLista.data) ? resLista.data : []);
       if (resResumen && resResumen.data) {
         setResumen(resResumen.data);
       }
+      setConsultasCiudadanas(resCiudadanas?.data ?? null);
     } catch (err) {
       console.error('Error cargando hallazgos:', err);
       setError('No se pudieron obtener las marcas de fiscalización del servidor.');
@@ -905,6 +915,129 @@ export default function ConsolaHallazgos() {
           labelRowsPerPage="Filas por página:"
           labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
         />
+      </Card>
+
+      {/* Consultas ciudadanas de patentes (QC.4 / D39) */}
+      <Card elevation={0} sx={{ mt: 3, borderRadius: 3, border: 1, borderColor: 'divider', overflow: 'hidden' }}>
+        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#eff6ff', color: '#1d4ed8', display: 'flex' }}>
+                <DirectionsCarIcon />
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: 'Outfit', lineHeight: 1.2 }}>
+                  Consultas ciudadanas
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Bandeja de patentes con resultados anómalos en el portal público ({startDate || 'Inicio'} — {endDate || 'Hoy'}). No genera marcas automáticas.
+                </Typography>
+              </Box>
+            </Box>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Chip
+                label={`Consultas en período: ${consultasCiudadanas?.totalConsultas ?? 0}`}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ fontWeight: 700 }}
+              />
+              <Chip
+                label={`Anómalas: ${consultasCiudadanas?.totalAnomalas ?? 0}`}
+                size="small"
+                color={(consultasCiudadanas?.totalAnomalas ?? 0) > 0 ? 'warning' : 'default'}
+                sx={{ fontWeight: 700 }}
+              />
+            </Stack>
+          </Box>
+
+          {consultasCiudadanas?.totalesPorResultado && (
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+              {Object.entries(consultasCiudadanas.totalesPorResultado).map(([resKey, count]) => (
+                <Chip
+                  key={resKey}
+                  size="small"
+                  label={`${resKey}: ${count}`}
+                  variant="outlined"
+                  sx={{ fontSize: '0.72rem', fontWeight: 600 }}
+                />
+              ))}
+            </Stack>
+          )}
+
+          <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ bgcolor: 'action.hover' }}>
+                  <TableCell sx={{ fontWeight: 700 }}>Patente</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Último resultado</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>Consultas</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>Orígenes distintos</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Primera consulta</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Última consulta</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700 }}>Detalle</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(!consultasCiudadanas?.patentesAnomalas || consultasCiudadanas.patentesAnomalas.length === 0) ? (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                      No hay patentes con consultas ciudadanas anómalas en el período seleccionado.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  consultasCiudadanas.patentesAnomalas.map((row) => (
+                    <TableRow key={row.patente} hover>
+                      <TableCell>
+                        <Chip
+                          component={RouterLink}
+                          to={`/consultas/patente/${encodeURIComponent(row.patente)}`}
+                          clickable
+                          label={row.patente}
+                          size="small"
+                          sx={{ fontFamily: 'monospace', fontWeight: 800, cursor: 'pointer' }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={row.ultimoResultado}
+                          size="small"
+                          color={row.ultimoResultado === 'RETENIDO' ? 'error' : 'warning'}
+                          variant="outlined"
+                          sx={{ fontWeight: 700, fontSize: '0.7rem' }}
+                        />
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700 }}>{row.consultas}</TableCell>
+                      <TableCell align="right">{row.origenesDistintos}</TableCell>
+                      <TableCell>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          {row.primeraConsulta ? new Date(row.primeraConsulta).toLocaleString('es-CL') : '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          {row.ultimaConsulta ? new Date(row.ultimaConsulta).toLocaleString('es-CL') : '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Button
+                          component={RouterLink}
+                          to={`/consultas/patente/${encodeURIComponent(row.patente)}`}
+                          size="small"
+                          variant="outlined"
+                          endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+                          sx={{ textTransform: 'none', fontSize: '0.72rem', borderRadius: 2 }}
+                        >
+                          Ver patente
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
       </Card>
 
       {/* Diálogo de Resolución de Hallazgo y Desbloqueo de Carga (T4.5) */}
