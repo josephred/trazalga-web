@@ -368,7 +368,7 @@ export const INDICADORES_METADATA = {
     periodoFechas: 'Agrupado por día exacto (`fecha_declaracion = :fecha`).',
     formula: 'SUM(desembarque) WHERE embarcacion_id = :embarcacion AND fecha_declaracion = :fecha vs Limite LED (kg) + Tolerancia %',
     criterioFiscalizacion:
-      'Por defecto la tolerancia es 0% (`margen_tolerancia_pct = 0.0`). Si una declaración excede el límite oficial diario asignado a la embarcación, el motor aplica la acción configurada: marca oficial `LED_EXCEDIDO` en modo SOLO_ALERTA o rechazo HTTP 422 en modo BLOQUEO_DECLARACION. La inclusión de declaraciones de área de manejo en el acumulado diario de embarcación, buzo o usuario se gobierna por `led_suma_declaraciones_area` ({{led_suma_declaraciones_area:true}}).'
+      'Por defecto la tolerancia es 0% (`margen_tolerancia_pct = 0.0`). Si una declaración excede el límite oficial diario asignado a la embarcación, el motor aplica la acción configurada: marca oficial `LED_EXCEDIDO` en modo SOLO_ALERTA (por defecto incluida en `declaracion_congelar_marcas`, congelando la edición/eliminación por el titular con HTTP 423) o rechazo HTTP 422 en modo BLOQUEO_DECLARACION. La inclusión de declaraciones de área de manejo en el acumulado diario de embarcación, buzo o usuario se gobierna por `led_suma_declaraciones_area` ({{led_suma_declaraciones_area:true}}).'
   },
 
   controlVedas: {
@@ -387,7 +387,7 @@ export const INDICADORES_METADATA = {
     periodoFechas: 'Fecha de extracción de la declaración interceptada con `[fecha_inicio, fecha_fin]` o evaluada en `meses_veda` para vedas con recurrencia anual.',
     formula: 'Coincidencia por especie + región + método de extracción + fecha de extracción. Aplica por rango de fechas (`fecha_inicio`–`fecha_fin`) o recurrencia anual (`meses_veda`). Campos NULL actúan como comodines nacionales o de método.',
     criterioFiscalizacion:
-      'Emite aviso preventivo con {{veda_dias_aviso_previo:7}} días de anticipación (`veda_dias_aviso_previo`). Si la veda opera en modo BLOQUEO_ESTRICTO (modo activo: `{{veda_modo_operacion:BLOQUEO_ESTRICTO}}`), el sistema rechaza la declaración impidiendo su emisión (HTTP 422); si opera en modo ALERTA_FISCALIZACION, permite registrar la declaración asignándole la marca oficial EN_VEDA para notificación inmediata a los fiscalizadores. Congelamiento (refinamiento 30-10, activo: {{declaracion_congelar_activo:true}}): una declaración de recolector, armador o área con alguna de las marcas {{declaracion_congelar_marcas:EN_VEDA,CUOTA_EXCEDIDA,POSTERIOR_CIERRE}} no puede ser modificada ni eliminada por quien la emitió; la app le muestra la alerta y oculta esas opciones. Sólo un fiscalizador, con motivo y n.º de acta de verificación física, autoriza una edición (válida por {{declaracion_autorizacion_horas:48}} horas y por una sola vez) o la elimina, dejando un respaldo con sus marcas (Consola de Hallazgos → Congelamiento). Resolver la marca no descongela la declaración.'
+      'Emite aviso preventivo con {{veda_dias_aviso_previo:7}} días de anticipación (`veda_dias_aviso_previo`). Si la veda opera en modo BLOQUEO_ESTRICTO (modo activo: `{{veda_modo_operacion:BLOQUEO_ESTRICTO}}`), el sistema rechaza la declaración impidiendo su emisión (HTTP 422); si opera en modo ALERTA_FISCALIZACION, permite registrar la declaración asignándole la marca oficial EN_VEDA para notificación inmediata a los fiscalizadores. Congelamiento (refinamiento 30-10, activo: {{declaracion_congelar_activo:true}}): una declaración de recolector, armador o área con alguna de las marcas {{declaracion_congelar_marcas:EN_VEDA,CUOTA_EXCEDIDA,POSTERIOR_CIERRE,LED_EXCEDIDO}} no puede ser modificada ni eliminada por quien la emitió; la app le muestra la alerta y oculta esas opciones. Sólo un fiscalizador, con motivo y n.º de acta de verificación física, autoriza una edición (válida por {{declaracion_autorizacion_horas:48}} horas y por una sola vez) o la elimina, dejando un respaldo con sus marcas (Consola de Hallazgos → Congelamiento). Resolver la marca no descongela la declaración.'
   },
 
   variacionPeso: {
@@ -630,7 +630,7 @@ export const DEFAULT_CONFIG_VALUES = {
   subreporte_huiro_palo_factor_pct: '22',
   subreporte_huiro_palo_formula: 'SOBRE_SIN_FRONDA',
   declaracion_congelar_activo: 'true',
-  declaracion_congelar_marcas: 'EN_VEDA,CUOTA_EXCEDIDA,POSTERIOR_CIERRE',
+  declaracion_congelar_marcas: 'EN_VEDA,CUOTA_EXCEDIDA,POSTERIOR_CIERRE,LED_EXCEDIDO',
   declaracion_autorizacion_horas: '48',
   declaracion_escritura_exige_sesion: 'false',
   led_suma_declaraciones_area: 'true',

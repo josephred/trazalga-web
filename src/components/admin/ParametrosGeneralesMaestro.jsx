@@ -774,7 +774,7 @@ export default function ParametrosGeneralesMaestro() {
                 fullWidth
                 size="small"
                 label="Marcas que congelan"
-                value={configs['declaracion_congelar_marcas'] ?? 'EN_VEDA,CUOTA_EXCEDIDA,POSTERIOR_CIERRE'}
+                value={configs['declaracion_congelar_marcas'] ?? 'EN_VEDA,CUOTA_EXCEDIDA,POSTERIOR_CIERRE,LED_EXCEDIDO'}
                 onChange={(e) => handleValorChange('declaracion_congelar_marcas', e.target.value)}
                 helperText="Separadas por coma."
               />
