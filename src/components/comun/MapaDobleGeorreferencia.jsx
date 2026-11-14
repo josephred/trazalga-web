@@ -10,6 +10,8 @@ import {
   Collapse,
   Button,
   Alert,
+  Switch,
+  FormControlLabel,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -24,46 +26,16 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip as LeafletTooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-
-const EVALUACION_COLORES = {
-  COHERENTE: { color: '#16a34a', label: 'Coherente (≤ umbral)' },
-  PRECISION_BAJA: { color: '#d97706', label: 'Precisión GPS baja (> 500 m)' },
-  LEJANA: { color: '#dc2626', label: 'Lejana (> umbral)' },
-  SIN_REFERENCIA: { color: '#64748b', label: 'Sin coordenadas de origen' },
-  SIN_GPS: { color: '#64748b', label: 'Sin GPS' },
-};
-
-const FUENTE_LABELS = {
-  VARADERO_DECLARADO: 'Varadero declarado (planilla Sernapesca)',
-  CALETA: 'Caleta declarada',
-  VARADERO_CALETA: 'Varadero asociado a caleta',
-  AMERB: 'Área de manejo (AMERB)',
-  SERNAPESCA_2026_10: 'Planilla Sernapesca',
-  MANUAL: 'Coordenada manual',
-  SEMILLA: 'Semilla inicial',
-};
-
-function formatearKm(val) {
-  if (val === null || val === undefined || isNaN(Number(val))) return null;
-  return `${Number(val).toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
-}
-
-function formatearFechaHora(ts) {
-  if (!ts) return null;
-  try {
-    const d = new Date(ts);
-    if (isNaN(d.getTime())) return String(ts);
-    return d.toLocaleString('es-CL', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return String(ts);
-  }
-}
+import {
+  EVALUACION_COLORES,
+  FUENTE_LABELS,
+  formatearKm,
+  formatearFechaHora,
+  esEslabonOrigen,
+  esEslabonPlanta,
+  normalizarEntradas,
+  construirCapasMapaCadena,
+} from './mapaTrazabilidadUtils';
 
 /**
  * Marcador sólido para Origen del recurso (varadero, caleta o AMERB),
@@ -107,6 +79,52 @@ function crearIconoOrigenSolido(contador = 1) {
     ">●${badgeHtml}</div>`,
     iconSize: [26, 26],
     iconAnchor: [13, 13],
+    popupAnchor: [0, -14],
+  });
+}
+
+/**
+ * Marcador distintivo para Planta oficial del catastro Sernapesca / maestro plantas.
+ */
+function crearIconoPlantaOficial(contador = 1) {
+  const badgeHtml =
+    contador > 1
+      ? `<span style="
+          position:absolute;
+          top:-7px;
+          right:-10px;
+          background:#0f172a;
+          color:#ffffff;
+          border:2px solid #ffffff;
+          border-radius:999px;
+          padding:0 5px;
+          font-size:10px;
+          font-weight:800;
+          line-height:15px;
+          box-shadow:0 2px 4px rgba(0,0,0,0.3);
+        ">×${contador}</span>`
+      : '';
+
+  return L.divIcon({
+    className: 'trazalga-marker-planta-oficial',
+    html: `<div style="
+      position:relative;
+      width:28px;
+      height:28px;
+      border-radius:7px;
+      background:#4338ca;
+      border:3px solid #ffffff;
+      box-shadow:0 3px 8px rgba(0,0,0,0.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#ffffff;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:-0.02em;
+    " title="Planta oficial (catastro)">P${badgeHtml}</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
     popupAnchor: [0, -14],
   });
 }
@@ -173,158 +191,11 @@ function FitBounds({ coordsList }) {
         const bounds = L.latLngBounds(valid);
         map.fitBounds(bounds, { padding: [44, 44], maxZoom: 13 });
       }
-    } catch (e) {
+    } catch {
       // ignore bounds error on hidden container
     }
   }, [map, coordsList]);
   return null;
-}
-
-function esEslabonOrigen(eslabon) {
-  const s = String(eslabon || '').toUpperCase();
-  return (
-    s.includes('ORIGEN') ||
-    s.includes('RECOLECTOR') ||
-    s.includes('ARMADOR') ||
-    s.includes('AREA') ||
-    s.includes('ÁREA') ||
-    s.includes('AMERB')
-  );
-}
-
-/**
- * Normaliza las distintas fuentes (puntos directos, nodos del modal o secciones de la ficha)
- * al contrato unificado `{ id, eslabon, folio, actor, rut, geo, rawNode }`,
- * sin inventar jamás coordenadas faltantes.
- */
-function normalizarEntradas({ puntos, nodos, origenes, comercializadores, planta }) {
-  if (Array.isArray(puntos) && puntos.length > 0) {
-    return puntos.map((p, idx) => ({
-      id: p.id || `pto-${idx}`,
-      eslabon: p.eslabon || p.tipo || 'ORIGEN',
-      folio: p.folio || '-',
-      actor: p.actor || p.nombre || 'Declarante',
-      rut: p.rut || null,
-      geo: p.geo || null,
-      rawNode: p.rawNode || p,
-    }));
-  }
-
-  if (Array.isArray(nodos) && nodos.length > 0) {
-    return nodos.map((n, idx) => {
-      const raw = n.data?.rawNode || n;
-      const tieneGpsDirecto =
-        raw.latitud !== null &&
-        raw.latitud !== undefined &&
-        raw.longitud !== null &&
-        raw.longitud !== undefined &&
-        !isNaN(Number(raw.latitud)) &&
-        !isNaN(Number(raw.longitud));
-      const geo =
-        raw.geo ||
-        (tieneGpsDirecto
-          ? {
-              gps: {
-                lat: Number(raw.latitud),
-                lon: Number(raw.longitud),
-                precisionM: raw.precisionMetros ?? null,
-                capturadoEn: raw.capturaTimestamp ?? null,
-                offline: Boolean(raw.enviadoOffline),
-              },
-              referencia: null,
-              distanciaKm: null,
-              evaluacion: esEslabonOrigen(raw.tipoNodo) ? 'SIN_REFERENCIA' : 'COHERENTE',
-              umbralKm: 30,
-            }
-          : {
-              gps: null,
-              referencia: null,
-              distanciaKm: null,
-              evaluacion: 'SIN_GPS',
-              umbralKm: 30,
-            });
-      return {
-        id: raw.id || `nodo-${idx}`,
-        eslabon: raw.tipoNodo || 'ORIGEN',
-        folio: raw.folio || '-',
-        actor: raw.nombreActor || 'Declarante',
-        rut: raw.rutActor || null,
-        geo,
-        rawNode: raw,
-      };
-    });
-  }
-
-  const resultado = [];
-  (origenes || []).forEach((o, idx) => {
-    const tieneGpsFallback =
-      o.latitud !== null &&
-      o.latitud !== undefined &&
-      o.longitud !== null &&
-      o.longitud !== undefined &&
-      !isNaN(Number(o.latitud)) &&
-      !isNaN(Number(o.longitud));
-    const geo =
-      o.geo ||
-      (tieneGpsFallback
-        ? {
-            gps: {
-              lat: Number(o.latitud),
-              lon: Number(o.longitud),
-              precisionM: null,
-              capturadoEn: null,
-              offline: false,
-            },
-            referencia: null,
-            distanciaKm: null,
-            evaluacion: 'SIN_REFERENCIA',
-            umbralKm: 30,
-          }
-        : {
-            gps: null,
-            referencia: null,
-            distanciaKm: null,
-            evaluacion: 'SIN_GPS',
-            umbralKm: 30,
-          });
-    resultado.push({
-      id: `orig-${o.tipo || 'ORIGEN'}-${o.id || idx}`,
-      eslabon: o.tipo || 'ORIGEN',
-      folio: o.folioOrigen || o.folioDesembarque || o.folio || '-',
-      actor: o.nombre || 'Recolector / Origen',
-      rut: o.rut || null,
-      geo,
-      rawNode: o,
-    });
-  });
-
-  (comercializadores || []).forEach((c, idx) => {
-    if (c.geo && (c.geo.gps || c.geo.referencia)) {
-      resultado.push({
-        id: `com-${c.id || idx}`,
-        eslabon: 'COMERCIALIZADOR',
-        folio: c.folio || '-',
-        actor: c.nombre || 'Comercializador',
-        rut: c.rut || null,
-        geo: c.geo,
-        rawNode: c,
-      });
-    }
-  });
-
-  if (planta && planta.recepcionada && planta.geo && (planta.geo.gps || planta.geo.referencia)) {
-    resultado.push({
-      id: `pla-${planta.id || 0}`,
-      eslabon: 'PLANTA_ABASTECIMIENTO',
-      folio: planta.folio || '-',
-      actor: planta.nombrePlanta || 'Planta de Abastecimiento',
-      rut: planta.rutPlanta || null,
-      geo: planta.geo,
-      rawNode: planta,
-    });
-  }
-
-  return resultado;
 }
 
 export default function MapaDobleGeorreferencia({
@@ -342,120 +213,32 @@ export default function MapaDobleGeorreferencia({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [leyendaAbiertaMobile, setLeyendaAbiertaMobile] = useState(false);
+  const [mostrarTraza, setMostrarTraza] = useState(true);
 
   const items = useMemo(
     () => normalizarEntradas({ puntos, nodos, origenes, comercializadores, planta }),
     [puntos, nodos, origenes, comercializadores, planta]
   );
 
-  // Construir marcadores agrupados de origen, marcadores individuales de GPS, líneas por par y avisos
+  const plantaNoRecepcionada =
+    !Array.isArray(puntos) &&
+    !Array.isArray(nodos) &&
+    (!planta || !planta.recepcionada);
+
   const {
     origenesAgrupados,
+    plantasReferencia,
     marcadoresGps,
     lineasPares,
+    lineasTrazaOrigenDestino,
+    avisosTraza,
     todasLasCoordenadas,
     sinGpsItems,
     sinReferenciaItems,
-  } = useMemo(() => {
-    const gruposOrigenMap = new Map();
-    const gpsList = [];
-    const lines = [];
-    const coords = [];
-    const sinGps = [];
-    const sinRef = [];
-
-    items.forEach((item) => {
-      const geo = item.geo || {};
-      const ref = geo.referencia;
-      const gps = geo.gps;
-      const evaluacion = geo.evaluacion || 'SIN_GPS';
-      const esOrigen = esEslabonOrigen(item.eslabon);
-
-      const tieneRef =
-        ref &&
-        ref.lat !== null &&
-        ref.lat !== undefined &&
-        ref.lon !== null &&
-        ref.lon !== undefined &&
-        !isNaN(Number(ref.lat)) &&
-        !isNaN(Number(ref.lon));
-
-      const tieneGps =
-        gps &&
-        gps.lat !== null &&
-        gps.lat !== undefined &&
-        gps.lon !== null &&
-        gps.lon !== undefined &&
-        !isNaN(Number(gps.lat)) &&
-        !isNaN(Number(gps.lon));
-
-      if (!tieneGps) {
-        sinGps.push(item);
-      }
-      if (esOrigen && !tieneRef) {
-        sinRef.push(item);
-      }
-
-      if (tieneRef) {
-        const lat = Number(ref.lat);
-        const lon = Number(ref.lon);
-        const key = `${lat.toFixed(5)}_${lon.toFixed(5)}`;
-        if (!gruposOrigenMap.has(key)) {
-          gruposOrigenMap.set(key, {
-            key,
-            coords: [lat, lon],
-            nombre: ref.nombre || 'Origen del recurso',
-            tipo: ref.tipo || 'ORIGEN',
-            fuente: ref.fuente || 'SERNAPESCA_2026_10',
-            declaraciones: [],
-          });
-          coords.push([lat, lon]);
-        }
-        gruposOrigenMap.get(key).declaraciones.push(item);
-      }
-
-      if (tieneGps) {
-        const lat = Number(gps.lat);
-        const lon = Number(gps.lon);
-        coords.push([lat, lon]);
-        gpsList.push({
-          id: `gps-${item.id}`,
-          coords: [lat, lon],
-          item,
-          gps,
-          ref: tieneRef ? ref : null,
-          evaluacion,
-          distanciaKm: geo.distanciaKm,
-          umbralKm: geo.umbralKm ?? 30,
-        });
-      }
-
-      if (tieneRef && tieneGps) {
-        const colorLinea = EVALUACION_COLORES[evaluacion]?.color || '#16a34a';
-        lines.push({
-          id: `par-${item.id}`,
-          coords: [
-            [Number(ref.lat), Number(ref.lon)],
-            [Number(gps.lat), Number(gps.lon)],
-          ],
-          color: colorLinea,
-          evaluacion,
-          distanciaTexto: formatearKm(geo.distanciaKm),
-          folio: item.folio,
-          actor: item.actor,
-        });
-      }
-    });
-
-    return {
-      origenesAgrupados: Array.from(gruposOrigenMap.values()),
-      marcadoresGps: gpsList,
-      lineasPares: lines,
-      todasLasCoordenadas: coords,
-      sinGpsItems: sinGps,
-      sinReferenciaItems: sinRef,
-    };
-  }, [items]);
+  } = useMemo(
+    () => construirCapasMapaCadena(items, { plantaNoRecepcionada }),
+    [items, plantaNoRecepcionada]
+  );
 
   const defaultCenter = todasLasCoordenadas[0] || [-29.9533, -71.3436];
 
@@ -484,6 +267,22 @@ export default function MapaDobleGeorreferencia({
           />
           <Typography variant="caption" sx={{ fontWeight: 700 }}>
             Origen del recurso (varadero / caleta / AMERB)
+          </Typography>
+        </Stack>
+
+        <Stack direction="row" spacing={0.75} alignItems="center">
+          <Box
+            sx={{
+              width: 14,
+              height: 14,
+              borderRadius: '4px',
+              bgcolor: '#4338ca',
+              border: '2px solid #ffffff',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            }}
+          />
+          <Typography variant="caption" sx={{ fontWeight: 700 }}>
+            Planta oficial (catastro)
           </Typography>
         </Stack>
 
@@ -522,14 +321,38 @@ export default function MapaDobleGeorreferencia({
             Lejana (&gt; umbral)
           </Typography>
         </Stack>
+
+        <Stack direction="row" spacing={0.75} alignItems="center">
+          <Box sx={{ width: 22, borderTop: '3.5px solid #2563eb', borderRadius: 1 }} />
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                color="primary"
+                checked={mostrarTraza}
+                onChange={(e) => setMostrarTraza(e.target.checked)}
+                inputProps={{ 'aria-label': 'Traza origen → destino' }}
+              />
+            }
+            label={
+              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                Traza origen → destino
+              </Typography>
+            }
+            data-testid="toggle-traza-origen-destino"
+            sx={{ m: 0, ml: 0.25 }}
+          />
+        </Stack>
       </Stack>
     </Box>
   );
 
-  const avisosFaltantes = (sinGpsItems.length > 0 || sinReferenciaItems.length > 0) && (
+  const avisosFaltantes = (sinGpsItems.length > 0 || sinReferenciaItems.length > 0 || avisosTraza.length > 0) && (
     <Stack
       direction={{ xs: 'column', sm: 'row' }}
       spacing={1}
+      flexWrap="wrap"
+      useFlexGap
       sx={{
         px: 2,
         py: 1,
@@ -564,6 +387,18 @@ export default function MapaDobleGeorreferencia({
           sx={{ fontWeight: 700 }}
         />
       )}
+      {avisosTraza.map((aviso, idx) => (
+        <Chip
+          key={`aviso-traza-${idx}`}
+          data-testid="aviso-traza-faltante"
+          size="small"
+          icon={<WarningIcon fontSize="small" />}
+          color="info"
+          variant="outlined"
+          label={aviso}
+          sx={{ fontWeight: 700 }}
+        />
+      ))}
     </Stack>
   );
 
@@ -597,6 +432,57 @@ export default function MapaDobleGeorreferencia({
           />
           <MapResizer triggerKey={triggerKey} />
           <FitBounds coordsList={todasLasCoordenadas} />
+
+          {/* Líneas continuas directas origen → planta (D41: bypass comercializador) */}
+          {mostrarTraza &&
+            lineasTrazaOrigenDestino.map((traza) => (
+              <Polyline
+                key={traza.id}
+                positions={traza.coords}
+                pathOptions={{
+                  color: '#2563eb',
+                  weight: 3.5,
+                  opacity: 0.85,
+                }}
+              >
+                <LeafletTooltip sticky direction="top" opacity={0.94}>
+                  <span style={{ fontWeight: 800, fontSize: '11px', color: '#1d4ed8' }}>
+                    #{traza.origen.folio} → #{traza.destino.folio}
+                    {traza.distanciaTexto ? ` · ${traza.distanciaTexto}` : ''}
+                  </span>
+                </LeafletTooltip>
+                <Popup>
+                  <Box sx={{ p: 0.5, minWidth: 220 }}>
+                    <Chip
+                      size="small"
+                      label="Traza directa origen → destino"
+                      sx={{
+                        height: 20,
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        mb: 0.75,
+                        bgcolor: '#eff6ff',
+                        color: '#1d4ed8',
+                        border: '1px solid #bfdbfe',
+                      }}
+                    />
+                    <Typography variant="caption" sx={{ display: 'block', color: '#0f172a', mb: 0.4 }}>
+                      <strong>Origen (#{traza.origen.folio}):</strong> {traza.origen.label} (
+                      {traza.origen.tipoFuente === 'REFERENCIA' ? 'Referencia oficial' : 'GPS declarado'})
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block', color: '#0f172a', mb: 0.4 }}>
+                      <strong>Destino (#{traza.destino.folio}):</strong> {traza.destino.label} (
+                      {traza.destino.tipoFuente === 'REFERENCIA' ? 'Planta oficial' : 'GPS declarado'})
+                    </Typography>
+                    {traza.distanciaTexto && (
+                      <Typography variant="caption" sx={{ display: 'block', fontWeight: 800, color: '#1d4ed8' }}>
+                        Distancia lineal: {traza.distanciaTexto}
+                      </Typography>
+                    )}
+                  </Box>
+                </Popup>
+              </Polyline>
+            ))}
 
           {/* Líneas punteadas por par origen–declaración (sin unir GPS entre sí) */}
           {lineasPares.map((line) => (
@@ -646,6 +532,54 @@ export default function MapaDobleGeorreferencia({
                         bgcolor: '#ecfdf5',
                         color: '#047857',
                         border: '1px solid #a7f3d0',
+                      }}
+                    />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a', mb: 0.4 }}>
+                      {etiquetaGrupo}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#475569', display: 'block', mb: 0.5 }}>
+                      Fuente referencia: <strong>{FUENTE_LABELS[grp.fuente] || grp.fuente}</strong>
+                    </Typography>
+                    <Stack spacing={0.4} sx={{ maxHeight: 130, overflowY: 'auto', mt: 0.5 }}>
+                      {grp.declaraciones.map((d) => (
+                        <Typography
+                          key={d.id}
+                          variant="caption"
+                          sx={{ color: '#1e293b', display: 'block', fontSize: '0.72rem' }}
+                        >
+                          • Folio <strong>#{d.folio}</strong> — {d.actor}
+                        </Typography>
+                      ))}
+                    </Stack>
+                  </Box>
+                </Popup>
+              </Marker>
+            );
+          })}
+
+          {/* Marcadores oficiales de Planta de destino (catastro Sernapesca / maestro plantas) */}
+          {plantasReferencia.map((grp) => {
+            const count = grp.declaraciones.length;
+            const etiquetaGrupo = count > 1 ? `${grp.nombre} · ${count} recepciones` : grp.nombre;
+            return (
+              <Marker
+                key={`planta-ref-${grp.key}`}
+                position={grp.coords}
+                icon={crearIconoPlantaOficial(count)}
+              >
+                <Popup>
+                  <Box sx={{ p: 0.5, minWidth: 200 }}>
+                    <Chip
+                      size="small"
+                      label={`Planta oficial (${grp.tipo})`}
+                      sx={{
+                        height: 20,
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        mb: 0.75,
+                        bgcolor: '#eef2ff',
+                        color: '#3730a3',
+                        border: '1px solid #c7d2fe',
                       }}
                     />
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a', mb: 0.4 }}>
@@ -726,7 +660,7 @@ export default function MapaDobleGeorreferencia({
                         variant="caption"
                         sx={{ fontWeight: 800, color: evalInfo.color, display: 'block', mt: 0.4 }}
                       >
-                        Distancia al origen: {distStr} ({evalInfo.label})
+                        {esEslabonPlanta(m.item.eslabon) ? 'Distancia a planta oficial' : 'Distancia al origen'}: {distStr} ({evalInfo.label})
                       </Typography>
                     )}
 
