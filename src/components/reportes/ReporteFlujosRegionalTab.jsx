@@ -180,6 +180,7 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
   const [regiones, setRegiones] = useState([]);
   const [especieId, setEspecieId] = useState('');
   const [regionId, setRegionId] = useState('');
+  const [regionDestinoId, setRegionDestinoId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [datos, setDatos] = useState(null);
@@ -205,6 +206,7 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
           endDate: dateRange?.endDate || undefined,
           especieId: especieId || undefined,
           regionId: regionId || undefined,
+          regionDestinoId: regionDestinoId || undefined,
         },
         { signal }
       );
@@ -215,7 +217,7 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
     } finally {
       setLoading(false);
     }
-  }, [dateRange?.startDate, dateRange?.endDate, especieId, regionId]);
+  }, [dateRange?.startDate, dateRange?.endDate, especieId, regionId, regionDestinoId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -369,7 +371,7 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
               />
             </Grid>
           )}
-          <Grid size={{ xs: 12, sm: 6, md: dateRange?.startDate ? 3 : 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: dateRange?.startDate ? 2.25 : 3 }}>
             <TextField
               select
               fullWidth
@@ -386,7 +388,7 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: dateRange?.startDate ? 3 : 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: dateRange?.startDate ? 2.25 : 3 }}>
             <TextField
               select
               fullWidth
@@ -403,7 +405,24 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, md: dateRange?.startDate ? 3 : 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: dateRange?.startDate ? 2.25 : 3 }}>
+            <TextField
+              select
+              fullWidth
+              size="small"
+              label="Región de destino"
+              value={regionDestinoId}
+              onChange={(e) => setRegionDestinoId(e.target.value)}
+            >
+              <MenuItem value="">Todas las regiones</MenuItem>
+              {regiones.map((reg) => (
+                <MenuItem key={reg.id} value={String(reg.id)}>
+                  {reg.nombre}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, md: dateRange?.startDate ? 2.25 : 3 }}>
             <Stack direction="row" spacing={1}>
               <Button
                 fullWidth

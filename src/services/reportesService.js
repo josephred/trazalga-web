@@ -309,6 +309,7 @@ export const getFlujosOrigenDestino = async (filtros = {}, options = {}) => {
   if (filtros?.endDate) params.endDate = filtros.endDate;
   if (filtros?.especieId) params.especieId = filtros.especieId;
   if (filtros?.regionId) params.regionId = filtros.regionId;
+  if (filtros?.regionDestinoId) params.regionDestinoId = filtros.regionDestinoId;
 
   const response = await api.get('/reportes/flujos-origen-destino', {
     params,
