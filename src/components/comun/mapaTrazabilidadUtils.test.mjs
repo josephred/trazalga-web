@@ -7,6 +7,8 @@ import {
   ponderarGrosorFlujo,
   formatearCoordenadaWgs84,
   construirFilasCsvFlujosOrigenDestino,
+  construirTrazaFlujoRegional,
+  esCoordenadaChileValida,
   HEADERS_COORDENADAS_TRANSACCION,
   mapearCoordenadasTransaccionCsv,
 } from './mapaTrazabilidadUtils.js';
@@ -73,17 +75,25 @@ test('QM.2: prioriza referencia oficial sobre GPS tanto en origen como en planta
   // Mantiene lineas punteadas referencia-GPS para ambos
   assert.equal(capas.lineasPares.length, 2);
 
-  // Traza directa origen -> planta bypassing comercializador usando referencia oficial en ambos extremos
+  // Por defecto ZM.2: traza origen -> comercializador -> planta
   assert.equal(capas.lineasTrazaOrigenDestino.length, 1);
   const traza = capas.lineasTrazaOrigenDestino[0];
   assert.deepEqual(traza.coords, [
     [-30.071, -71.375],
+    [-29.9, -71.25],
     [-27.0667, -70.8206],
   ]);
   assert.equal(traza.origen.tipoFuente, 'REFERENCIA');
   assert.equal(traza.destino.tipoFuente, 'REFERENCIA');
-  assert.ok(traza.distanciaKm > 330 && traza.distanciaKm < 350);
+  assert.ok(traza.distanciaKm > 330 && traza.distanciaKm < 360);
   assert.equal(capas.avisosTraza.length, 0);
+
+  // Al apagar Pasar por comercializador dibuja tramo directo origen -> planta
+  const capasDirecto = construirCapasMapaCadena(items, { pasarPorComercializador: false });
+  assert.deepEqual(capasDirecto.lineasTrazaOrigenDestino[0].coords, [
+    [-30.071, -71.375],
+    [-27.0667, -70.8206],
+  ]);
 });
 
 test('QM.2: usa GPS declarado como respaldo cuando falta referencia oficial (nodos del modal)', () => {
@@ -140,6 +150,7 @@ test('QM.2: usa GPS declarado como respaldo cuando falta referencia oficial (nod
   const traza = capas.lineasTrazaOrigenDestino[0];
   assert.deepEqual(traza.coords, [
     [-29.95, -71.34],
+    [-29.5, -71.1],
     [-27.1, -70.85],
   ]);
   assert.equal(traza.origen.tipoFuente, 'GPS');
@@ -331,4 +342,39 @@ test('QE.2: mapearCoordenadasTransaccionCsv serializa columnas finales origen/de
     }),
     ['-29.955651', '-71.335132', '-27.066700', '']
   );
+});
+
+test('ZM.2: construirTrazaFlujoRegional dibuja multi-salto por comercializadores válidos y respalda sin coordenadas', () => {
+  assert.equal(esCoordenadaChileValida(-29.95, -71.33), true);
+  assert.equal(esCoordenadaChileValida(0, 0), false);
+  assert.equal(esCoordenadaChileValida(-71.33, -29.95), false); // invertida
+
+  const flujoMulti = {
+    origen: { latitud: -30.07, longitud: -71.37 },
+    planta: { latitud: -27.06, longitud: -70.82 },
+    comercializadores: [
+      { folio: 'DC-1', latitud: -29.9, longitud: -71.25 },
+      { folio: 'DC-2', latitud: null, longitud: null },
+      { folio: 'DC-3', latitud: -28.5, longitud: -71.1 },
+    ],
+  };
+
+  const conCom = construirTrazaFlujoRegional(flujoMulti, { pasarPorComercializador: true });
+  assert.deepEqual(conCom.positions, [
+    [-30.07, -71.37],
+    [-29.9, -71.25],
+    [-28.5, -71.1],
+    [-27.06, -70.82],
+  ]);
+  assert.equal(conCom.pasosIntermedios.length, 2);
+  assert.equal(conCom.faltaCoordenadaComercializador, true);
+  assert.ok(conCom.distanciaKmTotal > 330);
+
+  const sinCom = construirTrazaFlujoRegional(flujoMulti, { pasarPorComercializador: false });
+  assert.deepEqual(sinCom.positions, [
+    [-30.07, -71.37],
+    [-27.06, -70.82],
+  ]);
+  assert.equal(sinCom.pasosIntermedios.length, 0);
+  assert.equal(sinCom.faltaCoordenadaComercializador, false);
 });

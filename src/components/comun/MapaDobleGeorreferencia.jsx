@@ -214,6 +214,7 @@ export default function MapaDobleGeorreferencia({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [leyendaAbiertaMobile, setLeyendaAbiertaMobile] = useState(false);
   const [mostrarTraza, setMostrarTraza] = useState(true);
+  const [pasarPorComercializador, setPasarPorComercializador] = useState(true);
 
   const items = useMemo(
     () => normalizarEntradas({ puntos, nodos, origenes, comercializadores, planta }),
@@ -232,12 +233,13 @@ export default function MapaDobleGeorreferencia({
     lineasPares,
     lineasTrazaOrigenDestino,
     avisosTraza,
+    comercializadoresSinCoords,
     todasLasCoordenadas,
     sinGpsItems,
     sinReferenciaItems,
   } = useMemo(
-    () => construirCapasMapaCadena(items, { plantaNoRecepcionada }),
-    [items, plantaNoRecepcionada]
+    () => construirCapasMapaCadena(items, { plantaNoRecepcionada, pasarPorComercializador }),
+    [items, plantaNoRecepcionada, pasarPorComercializador]
   );
 
   const defaultCenter = todasLasCoordenadas[0] || [-29.9533, -71.3436];
@@ -342,6 +344,34 @@ export default function MapaDobleGeorreferencia({
             data-testid="toggle-traza-origen-destino"
             sx={{ m: 0, ml: 0.25 }}
           />
+        </Stack>
+
+        <Stack direction="row" spacing={0.75} alignItems="center">
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                color="secondary"
+                checked={pasarPorComercializador}
+                onChange={(e) => setPasarPorComercializador(e.target.checked)}
+                disabled={!mostrarTraza}
+                inputProps={{ 'aria-label': 'Pasar por comercializador' }}
+              />
+            }
+            label={
+              <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                Pasar por comercializador
+              </Typography>
+            }
+            data-testid="toggle-pasar-por-comercializador"
+            sx={{ m: 0 }}
+          />
+          {pasarPorComercializador && comercializadoresSinCoords.length > 0 && (
+            <Typography variant="caption" color="warning.main" sx={{ fontWeight: 600 }}>
+              (Sin GPS en {comercializadoresSinCoords.slice(0, 2).join(', ')
+              }{comercializadoresSinCoords.length > 2 ? '…' : ''}: enlace directo)
+            </Typography>
+          )}
         </Stack>
       </Stack>
     </Box>

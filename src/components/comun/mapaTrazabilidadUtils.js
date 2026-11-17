@@ -71,6 +71,29 @@ export function esEslabonPlanta(eslabon) {
   return String(eslabon || '').toUpperCase().includes('PLANTA');
 }
 
+export function esEslabonComercializador(eslabon) {
+  return String(eslabon || '').toUpperCase().includes('COMERCIALIZADOR');
+}
+
+export function esCoordenadaChileValida(lat, lon) {
+  if (!esNumeroValido(lat) || !esNumeroValido(lon)) return false;
+  const nLat = Number(lat);
+  const nLon = Number(lon);
+  if (nLat === 0 && nLon === 0) return false;
+  return nLat >= -56 && nLat <= -17 && nLon >= -76 && nLon <= -66;
+}
+
+export function sumarDistanciasSegmentosKm(points = []) {
+  if (!Array.isArray(points) || points.length < 2) return null;
+  let total = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const d = calcularDistanciaHaversineKm(points[i], points[i + 1]);
+    if (d === null) return null;
+    total += d;
+  }
+  return total;
+}
+
 export function calcularDistanciaHaversineKm(coordA, coordB) {
   if (!Array.isArray(coordA) || !Array.isArray(coordB)) return null;
   const [lat1, lon1] = coordA;
@@ -245,10 +268,14 @@ export function normalizarEntradas({ puntos, nodos, origenes, comercializadores,
  * - plantasReferencia (puntos oficiales del catastro de planta)
  * - marcadoresGps (puntos declarados por GPS)
  * - lineasPares (punteadas referencia–GPS sin alterar comportamiento previo)
- * - lineasTrazaOrigenDestino (continuas directas origen → planta, bypass comercializador)
+ * - lineasTrazaOrigenDestino (continuas origen -> [comercializador(es)] -> planta si pasarPorComercializador=true)
+ * - comercializadoresSinCoords (folios sin coordenadas para nota de respaldo en leyenda)
  * - avisosTraza (avisos explícitos cuando un extremo carece de coordenadas o no existe)
  */
-export function construirCapasMapaCadena(items, { plantaNoRecepcionada = false } = {}) {
+export function construirCapasMapaCadena(
+  items,
+  { plantaNoRecepcionada = false, pasarPorComercializador = true } = {}
+) {
   const gruposOrigenMap = new Map();
   const gruposPlantaMap = new Map();
   const gpsList = [];
@@ -257,6 +284,7 @@ export function construirCapasMapaCadena(items, { plantaNoRecepcionada = false }
   const sinGps = [];
   const sinRef = [];
   const origenesItems = [];
+  const comercializadoresItems = [];
   const plantasAbastecimientoItems = [];
   const otrasPlantasItems = [];
 
@@ -266,11 +294,14 @@ export function construirCapasMapaCadena(items, { plantaNoRecepcionada = false }
     const gps = geo.gps;
     const evaluacion = geo.evaluacion || 'SIN_GPS';
     const esOrigen = esEslabonOrigen(item.eslabon);
+    const esCom = esEslabonComercializador(item.eslabon);
     const esPlantaAbast = esEslabonPlantaAbastecimiento(item.eslabon);
     const esOtraPlanta = !esPlantaAbast && esEslabonPlanta(item.eslabon);
 
     if (esOrigen) {
       origenesItems.push(item);
+    } else if (esCom) {
+      comercializadoresItems.push(item);
     } else if (esPlantaAbast) {
       plantasAbastecimientoItems.push(item);
     } else if (esOtraPlanta) {
@@ -357,6 +388,19 @@ export function construirCapasMapaCadena(items, { plantaNoRecepcionada = false }
     plantasAbastecimientoItems.length > 0 ? plantasAbastecimientoItems : otrasPlantasItems;
   const lineasTrazaOrigenDestino = [];
   const avisosTraza = [];
+  const comercializadoresSinCoords = [];
+
+  const puntosComercializadores = [];
+  if (pasarPorComercializador && comercializadoresItems.length > 0) {
+    comercializadoresItems.forEach((cItem) => {
+      const ep = elegirCoordenadaEndpoint(cItem);
+      if (ep && esCoordenadaChileValida(ep.coords[0], ep.coords[1])) {
+        puntosComercializadores.push({ item: cItem, endpoint: ep });
+      } else {
+        comercializadoresSinCoords.push(`#${cItem.folio}`);
+      }
+    });
+  }
 
   if (origenesItems.length === 0 && plantasDestino.length > 0) {
     avisosTraza.push('Sin traza origen → destino: sin eslabón de origen en la cadena');
@@ -383,10 +427,23 @@ export function construirCapasMapaCadena(items, { plantaNoRecepcionada = false }
           origSinCoords.add(`#${origItem.folio}`);
           return;
         }
-        const distanciaKm = calcularDistanciaHaversineKm(origEndpoint.coords, destEndpoint.coords);
+        const routeCoords = [
+          origEndpoint.coords,
+          ...puntosComercializadores.map((c) => c.endpoint.coords),
+          destEndpoint.coords,
+        ];
+        const distanciaKm = sumarDistanciasSegmentosKm(routeCoords);
         lineasTrazaOrigenDestino.push({
           id: `traza-${origItem.id}-a-${plantaItem.id}`,
-          coords: [origEndpoint.coords, destEndpoint.coords],
+          coords: routeCoords,
+          pasaPorComercializador: puntosComercializadores.length > 0,
+          comercializadores: puntosComercializadores.map((c) => ({
+            id: c.item.id,
+            folio: c.item.folio,
+            actor: c.item.actor,
+            coords: c.endpoint.coords,
+          })),
+          conRespaldoDirecto: comercializadoresSinCoords.length > 0,
           origen: {
             id: origItem.id,
             folio: origItem.folio,
@@ -430,9 +487,69 @@ export function construirCapasMapaCadena(items, { plantaNoRecepcionada = false }
     lineasPares: lines,
     lineasTrazaOrigenDestino,
     avisosTraza,
+    comercializadoresSinCoords,
     todasLasCoordenadas: coords,
     sinGpsItems: sinGps,
     sinReferenciaItems: sinRef,
+  };
+}
+
+/**
+ * ZM.2 · Construye la polilínea origen -> [comercializador(es)] -> planta para el mapa regional.
+ */
+export function construirTrazaFlujoRegional(flujo, { pasarPorComercializador = true } = {}) {
+  const oLat = Number(flujo?.origen?.latitud);
+  const oLon = Number(flujo?.origen?.longitud);
+  const pLat = Number(flujo?.planta?.latitud);
+  const pLon = Number(flujo?.planta?.longitud);
+  if (!esCoordenadaChileValida(oLat, oLon) || !esCoordenadaChileValida(pLat, pLon)) {
+    return {
+      positions: [],
+      pasosIntermedios: [],
+      faltaCoordenadaComercializador: false,
+      distanciaKmTotal: null,
+    };
+  }
+
+  const rawList = Array.isArray(flujo?.comercializadores) && flujo.comercializadores.length > 0
+    ? flujo.comercializadores
+    : (flujo?.comercializadorFolio || esCoordenadaChileValida(flujo?.comercializadorLatitud, flujo?.comercializadorLongitud))
+      ? [
+          {
+            folio: flujo.comercializadorFolio || 'COM',
+            latitud: flujo.comercializadorLatitud,
+            longitud: flujo.comercializadorLongitud,
+            fuente: flujo.comercializadorFuente || 'SIN_COORDENADAS',
+          },
+        ]
+      : [];
+
+  const pasosIntermedios = [];
+  let faltaCoord = Boolean(flujo?.algunComercializadorSinCoordenadas);
+  if (pasarPorComercializador) {
+    rawList.forEach((c) => {
+      if (esCoordenadaChileValida(c?.latitud, c?.longitud)) {
+        pasosIntermedios.push({
+          folio: c.folio || '-',
+          coords: [Number(c.latitud), Number(c.longitud)],
+          fuente: c.fuente || 'GPS_DECLARACION',
+        });
+      } else {
+        faltaCoord = true;
+      }
+    });
+  }
+
+  const positions = [
+    [oLat, oLon],
+    ...pasosIntermedios.map((p) => p.coords),
+    [pLat, pLon],
+  ];
+  return {
+    positions,
+    pasosIntermedios,
+    faltaCoordenadaComercializador: pasarPorComercializador && faltaCoord,
+    distanciaKmTotal: sumarDistanciasSegmentosKm(positions),
   };
 }
 

@@ -19,6 +19,8 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -36,9 +38,9 @@ import { getFlujosOrigenDestino, getCatalogosFiltrosFlujos } from '../../service
 import {
   ponderarGrosorFlujo,
   formatearKm,
-  calcularDistanciaHaversineKm,
   formatearCoordenadaWgs84,
   construirFilasCsvFlujosOrigenDestino,
+  construirTrazaFlujoRegional,
 } from '../comun/mapaTrazabilidadUtils';
 import { exportarCsv } from '../../utils/exportarCsv';
 
@@ -91,6 +93,29 @@ function crearIconoPlantaFlujo(fuente) {
     iconSize: [28, 28],
     iconAnchor: [14, 14],
     popupAnchor: [0, -14],
+  });
+}
+
+function crearIconoComercializadorFlujo() {
+  return L.divIcon({
+    className: 'trazalga-flujo-comercializador-marker',
+    html: `<div style="
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      background:#0284c7;
+      border:2.5px solid #ffffff;
+      box-shadow:0 2px 6px rgba(0,0,0,0.32);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#ffffff;
+      font-size:10px;
+      font-weight:800;
+    ">C</div>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+    popupAnchor: [0, -11],
   });
 }
 
@@ -153,6 +178,7 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [datos, setDatos] = useState(null);
+  const [pasarPorComercializador, setPasarPorComercializador] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -216,10 +242,12 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
     [flujosMapa]
   );
 
-  const { origenesUnicos, plantasUnicas, allCoords } = useMemo(() => {
+  const { origenesUnicos, plantasUnicas, comercializadoresUnicos, allCoords, tieneComercializadorSinCoords } = useMemo(() => {
     const origMap = new Map();
     const plantMap = new Map();
+    const comMap = new Map();
     const coords = [];
+    let faltaCoordCom = false;
 
     flujosMapa.forEach((f) => {
       const o = f.origen || {};
@@ -228,6 +256,24 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
       const oLon = Number(o.longitud);
       const pLat = Number(p.latitud);
       const pLon = Number(p.longitud);
+
+      const trazaInfo = construirTrazaFlujoRegional(f, { pasarPorComercializador });
+      if (trazaInfo.faltaCoordenadaComercializador) {
+        faltaCoordCom = true;
+      }
+      trazaInfo.pasosIntermedios.forEach((paso) => {
+        coords.push(paso.coords);
+        const cKey = `${paso.coords[0].toFixed(5)}|${paso.coords[1].toFixed(5)}|${paso.folio}`;
+        if (!comMap.has(cKey)) {
+          comMap.set(cKey, {
+            key: cKey,
+            lat: paso.coords[0],
+            lon: paso.coords[1],
+            folio: paso.folio,
+            fuente: paso.fuente,
+          });
+        }
+      });
 
       if (Number.isFinite(oLat) && Number.isFinite(oLon)) {
         coords.push([oLat, oLon]);
@@ -280,9 +326,11 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
     return {
       origenesUnicos: Array.from(origMap.values()),
       plantasUnicas: Array.from(plantMap.values()),
+      comercializadoresUnicos: Array.from(comMap.values()),
       allCoords: coords,
+      tieneComercializadorSinCoords: faltaCoordCom,
     };
-  }, [flujosMapa]);
+  }, [flujosMapa, pasarPorComercializador]);
 
   const mapCenter = useMemo(() => {
     if (allCoords.length > 0) return allCoords[0];
@@ -482,9 +530,34 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.5} flexWrap="wrap" alignItems="center">
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  color="primary"
+                  checked={pasarPorComercializador}
+                  onChange={(e) => setPasarPorComercializador(e.target.checked)}
+                />
+              }
+              label={
+                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                  Pasar por comercializador
+                </Typography>
+              }
+              data-testid="toggle-pasar-por-comercializador-regional"
+              sx={{ m: 0 }}
+            />
             <Chip size="small" label="● Origen (Ref./GPS)" sx={{ bgcolor: '#ecfdf5', color: '#065f46', fontWeight: 700 }} />
+            {pasarPorComercializador && (
+              <Chip size="small" label="C Comercializador (GPS)" sx={{ bgcolor: '#e0f2fe', color: '#0369a1', fontWeight: 700 }} />
+            )}
             <Chip size="small" label="P Planta oficial" sx={{ bgcolor: '#eef2ff', color: '#3730a3', fontWeight: 700 }} />
             <Chip size="small" label="P* Planta (GPS recepción)" sx={{ bgcolor: '#fffbeb', color: '#92400e', fontWeight: 700 }} />
+            {pasarPorComercializador && tieneComercializadorSinCoords && (
+              <Typography variant="caption" color="warning.dark" sx={{ fontWeight: 600 }}>
+                Nota: comercializador sin coordenadas se enlaza por tramo directo.
+              </Typography>
+            )}
           </Stack>
         </Box>
 
@@ -517,21 +590,16 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
               <FitBoundsFlujos coordsList={allCoords} />
 
               {flujosMapa.map((f) => {
-                const oLat = Number(f.origen.latitud);
-                const oLon = Number(f.origen.longitud);
-                const pLat = Number(f.planta.latitud);
-                const pLon = Number(f.planta.longitud);
-                const distKm = calcularDistanciaHaversineKm([oLat, oLon], [pLat, pLon]);
+                const traza = construirTrazaFlujoRegional(f, { pasarPorComercializador });
+                if (traza.positions.length < 2) return null;
+                const distKm = traza.distanciaKmTotal;
                 const grosor = ponderarGrosorFlujo(f.desembarqueKg, maxDesembarqueKg);
                 const esPlantaGps = f.planta.fuente === 'GPS';
 
                 return (
                   <Polyline
                     key={f.id}
-                    positions={[
-                      [oLat, oLon],
-                      [pLat, pLon],
-                    ]}
+                    positions={traza.positions}
                     pathOptions={{
                       color: esPlantaGps ? '#d97706' : '#1d4ed8',
                       weight: grosor,
@@ -541,7 +609,9 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
                   >
                     <LeafletTooltip sticky>
                       <div>
-                        <strong>{f.origen.nombre}</strong> → <strong>{f.planta.nombre}</strong>
+                        <strong>{f.origen.nombre}</strong>
+                        {traza.pasosIntermedios.length > 0 ? ` → ${traza.pasosIntermedios.map((c) => `#${c.folio}`).join(' → ')}` : ''}
+                        {' → '}<strong>{f.planta.nombre}</strong>
                         <br />
                         Desembarque: {formatearKg(f.desembarqueKg)} ({f.declaracionesCount} decl.)
                       </div>
@@ -557,6 +627,12 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
                         {f.origen.regionNombre && (
                           <Typography variant="body2">
                             <strong>Región origen:</strong> {f.origen.regionNombre}
+                          </Typography>
+                        )}
+                        {pasarPorComercializador && traza.pasosIntermedios.length > 0 && (
+                          <Typography variant="body2">
+                            <strong>Comercializador(es):</strong>{' '}
+                            {traza.pasosIntermedios.map((c) => `#${c.folio}`).join(' → ')}
                           </Typography>
                         )}
                         <Typography variant="body2">
@@ -587,6 +663,27 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
                   </Polyline>
                 );
               })}
+
+              {pasarPorComercializador &&
+                comercializadoresUnicos.map((c) => (
+                  <Marker
+                    key={c.key}
+                    position={[c.lat, c.lon]}
+                    icon={crearIconoComercializadorFlujo()}
+                  >
+                    <Popup>
+                      <Box sx={{ minWidth: 190 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                          Comercializador #{c.folio}
+                        </Typography>
+                        <Typography variant="body2">GPS de declaración</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          WGS84: {formatearCoordenadaWgs84(c.lat)}, {formatearCoordenadaWgs84(c.lon)}
+                        </Typography>
+                      </Box>
+                    </Popup>
+                  </Marker>
+                ))}
 
               {origenesUnicos.map((o) => (
                 <Marker
