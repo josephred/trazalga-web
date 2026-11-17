@@ -512,6 +512,11 @@ export default function VistaConsultaPatente({ data, onVolver }) {
                       <Typography variant="caption" sx={{ fontWeight: 700 }}>
                         {formatDateTime(m.fechaHoraSalida || m.fechaDeclaracion)}
                       </Typography>
+                      {m.recibidaEn && (
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                          Recibida: {formatDateTime(m.recibidaEn)}
+                        </Typography>
+                      )}
                     </Grid>
                     <Grid size={{ xs: 6 }}>
                       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
@@ -607,6 +612,11 @@ export default function VistaConsultaPatente({ data, onVolver }) {
                       <Typography variant="body2" sx={{ fontWeight: 700 }}>
                         {formatDateTime(m.fechaHoraSalida || m.fechaDeclaracion)}
                       </Typography>
+                      {m.recibidaEn && (
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                          Recibida: {formatDateTime(m.recibidaEn)}
+                        </Typography>
+                      )}
                       {m.docNumero && (
                         <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                           Guía #{m.docNumero}
