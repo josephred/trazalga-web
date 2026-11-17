@@ -159,25 +159,25 @@ export function normalizarEntradas({ puntos, nodos, origenes, comercializadores,
         raw.geo ||
         (tieneGpsDirecto
           ? {
-              gps: {
-                lat: Number(raw.latitud),
-                lon: Number(raw.longitud),
-                precisionM: raw.precisionMetros ?? null,
-                capturadoEn: raw.capturaTimestamp ?? null,
-                offline: Boolean(raw.enviadoOffline),
-              },
-              referencia: null,
-              distanciaKm: null,
-              evaluacion: esEslabonOrigen(raw.tipoNodo) ? 'SIN_REFERENCIA' : 'COHERENTE',
-              umbralKm: 30,
-            }
+            gps: {
+              lat: Number(raw.latitud),
+              lon: Number(raw.longitud),
+              precisionM: raw.precisionMetros ?? null,
+              capturadoEn: raw.capturaTimestamp ?? null,
+              offline: Boolean(raw.enviadoOffline),
+            },
+            referencia: null,
+            distanciaKm: null,
+            evaluacion: esEslabonOrigen(raw.tipoNodo) ? 'SIN_REFERENCIA' : 'COHERENTE',
+            umbralKm: 30,
+          }
           : {
-              gps: null,
-              referencia: null,
-              distanciaKm: null,
-              evaluacion: 'SIN_GPS',
-              umbralKm: 30,
-            });
+            gps: null,
+            referencia: null,
+            distanciaKm: null,
+            evaluacion: 'SIN_GPS',
+            umbralKm: 30,
+          });
       return {
         id: raw.idUnico || raw.id || `nodo-${idx}`,
         eslabon: raw.tipoNodo || 'ORIGEN',
@@ -197,25 +197,25 @@ export function normalizarEntradas({ puntos, nodos, origenes, comercializadores,
       o.geo ||
       (tieneGpsFallback
         ? {
-            gps: {
-              lat: Number(o.latitud),
-              lon: Number(o.longitud),
-              precisionM: null,
-              capturadoEn: null,
-              offline: false,
-            },
-            referencia: null,
-            distanciaKm: null,
-            evaluacion: 'SIN_REFERENCIA',
-            umbralKm: 30,
-          }
+          gps: {
+            lat: Number(o.latitud),
+            lon: Number(o.longitud),
+            precisionM: null,
+            capturadoEn: null,
+            offline: false,
+          },
+          referencia: null,
+          distanciaKm: null,
+          evaluacion: 'SIN_REFERENCIA',
+          umbralKm: 30,
+        }
         : {
-            gps: null,
-            referencia: null,
-            distanciaKm: null,
-            evaluacion: 'SIN_GPS',
-            umbralKm: 30,
-          });
+          gps: null,
+          referencia: null,
+          distanciaKm: null,
+          evaluacion: 'SIN_GPS',
+          umbralKm: 30,
+        });
     resultado.push({
       id: `orig-${o.tipo || 'ORIGEN'}-${o.id || idx}`,
       eslabon: o.tipo || 'ORIGEN',
@@ -515,13 +515,13 @@ export function construirTrazaFlujoRegional(flujo, { pasarPorComercializador = t
     ? flujo.comercializadores
     : (flujo?.comercializadorFolio || esCoordenadaChileValida(flujo?.comercializadorLatitud, flujo?.comercializadorLongitud))
       ? [
-          {
-            folio: flujo.comercializadorFolio || 'COM',
-            latitud: flujo.comercializadorLatitud,
-            longitud: flujo.comercializadorLongitud,
-            fuente: flujo.comercializadorFuente || 'SIN_COORDENADAS',
-          },
-        ]
+        {
+          folio: flujo.comercializadorFolio || 'COM',
+          latitud: flujo.comercializadorLatitud,
+          longitud: flujo.comercializadorLongitud,
+          fuente: flujo.comercializadorFuente || 'SIN_COORDENADAS',
+        },
+      ]
       : [];
 
   const pasosIntermedios = [];
