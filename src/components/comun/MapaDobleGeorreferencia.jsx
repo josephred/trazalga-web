@@ -36,6 +36,11 @@ import {
   normalizarEntradas,
   construirCapasMapaCadena,
 } from './mapaTrazabilidadUtils';
+import {
+  useCapasReferencia,
+  ControlesCapasReferencia,
+  CapasReferenciaMarkers,
+} from './CapasReferenciaOverlay';
 
 /**
  * Marcador sólido para Origen del recurso (varadero, caleta o AMERB),
@@ -215,6 +220,7 @@ export default function MapaDobleGeorreferencia({
   const [leyendaAbiertaMobile, setLeyendaAbiertaMobile] = useState(false);
   const [mostrarTraza, setMostrarTraza] = useState(true);
   const [pasarPorComercializador, setPasarPorComercializador] = useState(true);
+  const capasRefState = useCapasReferencia('');
 
   const items = useMemo(
     () => normalizarEntradas({ puntos, nodos, origenes, comercializadores, planta }),
@@ -373,6 +379,8 @@ export default function MapaDobleGeorreferencia({
             </Typography>
           )}
         </Stack>
+
+        <ControlesCapasReferencia {...capasRefState} />
       </Stack>
     </Box>
   );
@@ -462,6 +470,7 @@ export default function MapaDobleGeorreferencia({
           />
           <MapResizer triggerKey={triggerKey} />
           <FitBounds coordsList={todasLasCoordenadas} />
+          <CapasReferenciaMarkers {...capasRefState} />
 
           {/* Líneas continuas directas origen → planta (D41: bypass comercializador) */}
           {mostrarTraza &&

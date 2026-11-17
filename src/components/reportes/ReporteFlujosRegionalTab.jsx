@@ -42,6 +42,11 @@ import {
   construirFilasCsvFlujosOrigenDestino,
   construirTrazaFlujoRegional,
 } from '../comun/mapaTrazabilidadUtils';
+import {
+  useCapasReferencia,
+  ControlesCapasReferencia,
+  CapasReferenciaMarkers,
+} from '../comun/CapasReferenciaOverlay';
 import { exportarCsv } from '../../utils/exportarCsv';
 
 function crearIconoOrigenFlujo(fuente) {
@@ -179,6 +184,7 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
   const [error, setError] = useState(null);
   const [datos, setDatos] = useState(null);
   const [pasarPorComercializador, setPasarPorComercializador] = useState(true);
+  const capasRefState = useCapasReferencia(regionId);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -558,6 +564,7 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
                 Nota: comercializador sin coordenadas se enlaza por tramo directo.
               </Typography>
             )}
+            <ControlesCapasReferencia {...capasRefState} />
           </Stack>
         </Box>
 
@@ -588,6 +595,7 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
               />
               <MapResizerFlujos triggerKey={`${flujosMapa.length}-${especieId}-${regionId}-${dateRange?.startDate}`} />
               <FitBoundsFlujos coordsList={allCoords} />
+              <CapasReferenciaMarkers {...capasRefState} />
 
               {flujosMapa.map((f) => {
                 const traza = construirTrazaFlujoRegional(f, { pasarPorComercializador });

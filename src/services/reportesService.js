@@ -327,3 +327,16 @@ export const getCatalogosFiltrosFlujos = async (options = {}) => {
     regiones: extraerListaCatalogo(resRegiones?.data, ['regiones', 'content', 'data']),
   };
 };
+
+/**
+ * ZM.3 · Obtiene capas de referencia (Caletas, Varaderos, Plantas) y su cobertura sin RUT personales.
+ */
+export const getCapasGeorreferencia = async ({ regionId } = {}, options = {}) => {
+  const params = {};
+  if (regionId) params.regionId = regionId;
+  const response = await api.get('/reportes/capas-georreferencia', {
+    params,
+    signal: options?.signal,
+  });
+  return response.data;
+};
