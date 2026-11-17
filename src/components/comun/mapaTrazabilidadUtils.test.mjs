@@ -346,7 +346,9 @@ test('QE.2: mapearCoordenadasTransaccionCsv serializa columnas finales origen/de
 
 test('ZM.2: construirTrazaFlujoRegional dibuja multi-salto por comercializadores válidos y respalda sin coordenadas', () => {
   assert.equal(esCoordenadaChileValida(-29.95, -71.33), true);
+  assert.equal(esCoordenadaChileValida(null, -71.33), false);
   assert.equal(esCoordenadaChileValida(0, 0), false);
+  assert.equal(esCoordenadaChileValida(95, -71.33), false);
   assert.equal(esCoordenadaChileValida(-71.33, -29.95), false); // invertida
 
   const flujoMulti = {
