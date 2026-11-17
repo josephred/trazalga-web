@@ -98,6 +98,18 @@
     "consulta_publica_fono_denuncia",
     "consulta_publica_whatsapp",
     "consulta_publica_muestra_comuna",
-    "consulta_ciudadana_resultados_anomalos"
+    "consulta_ciudadana_resultados_anomalos",
+    "declaracion_corrige_fecha_futura",
+    "declaracion_tolerancia_reloj_min",
+    "patente_traslado_max_dias",
+    "patente_incluye_despacho_planta",
+    "origen_directo_exige_patente",
+    "consulta_publica_registra_denuncia",
+    "consulta_patente_log_retencion_dias",
+    "produccion_exige_lotes",
+    "destino_exige_producciones",
+    "destino_tolerancia_pct",
+    "destino_exige_mismo_formato",
+    "declaracion_lectura_exige_dueno"
   ]
 }

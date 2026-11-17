@@ -1227,6 +1227,8 @@ export default function ParametrosGeneralesMaestro() {
                   'consulta_publica_whatsapp',
                   'consulta_publica_muestra_comuna',
                   'consulta_ciudadana_resultados_anomalos',
+                  'consulta_publica_registra_denuncia',
+                  'consulta_patente_log_retencion_dias',
                 ])
               }
               sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
@@ -1322,6 +1324,193 @@ export default function ParametrosGeneralesMaestro() {
                 value={configs['consulta_ciudadana_resultados_anomalos'] ?? 'VENCIDO,SIN_REGISTROS,RETENIDO'}
                 onChange={(e) => handleValorChange('consulta_ciudadana_resultados_anomalos', e.target.value)}
                 helperText="Lista separada por comas usada en la bandeja de Consultas ciudadanas (D39): AUTORIZADO, RETENIDO, FINALIZADO, VENCIDO, SIN_REGISTROS."
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['consulta_publica_registra_denuncia'] ?? 'true') === 'true'}
+                    onChange={(e) =>
+                      handleValorChange('consulta_publica_registra_denuncia', e.target.checked ? 'true' : 'false')
+                    }
+                    color="secondary"
+                  />
+                }
+                label={
+                  <Typography variant="body2">
+                    Registrar intención de denuncia ciudadana (consulta_publica_registra_denuncia)
+                  </Typography>
+                }
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="Días retención de log de patentes (consulta_patente_log_retencion_dias)"
+                value={configs['consulta_patente_log_retencion_dias'] ?? '365'}
+                onChange={(e) => handleValorChange('consulta_patente_log_retencion_dias', e.target.value)}
+                helperText="Vacío = sin depuración automática."
+              />
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* SECCIÓN 7: Cierre Fase 3 — Fechas, Transporte, Producción/Destino y Lecturas */}
+      <Card elevation={0} sx={{ borderRadius: 3, border: 1, borderColor: 'divider' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>
+                Integridad de Fechas, Traslado en Patente, Planta y Lecturas (Fase 3)
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              color="secondary"
+              size="small"
+              startIcon={<SaveIcon />}
+              onClick={() =>
+                handleGuardarCategoria([
+                  'declaracion_corrige_fecha_futura',
+                  'declaracion_tolerancia_reloj_min',
+                  'patente_traslado_max_dias',
+                  'patente_incluye_despacho_planta',
+                  'origen_directo_exige_patente',
+                  'produccion_exige_lotes',
+                  'destino_exige_producciones',
+                  'destino_tolerancia_pct',
+                  'destino_exige_mismo_formato',
+                  'declaracion_lectura_exige_dueno',
+                ])
+              }
+              sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
+            >
+              Guardar Sección
+            </Button>
+          </Box>
+
+          <Grid container spacing={2.5}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['declaracion_corrige_fecha_futura'] ?? 'true') === 'true'}
+                    onChange={(e) => handleValorChange('declaracion_corrige_fecha_futura', e.target.checked ? 'true' : 'false')}
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2">Corregir fecha futura por desfase UTC (declaracion_corrige_fecha_futura)</Typography>}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="Tolerancia de reloj futuro (min) (declaracion_tolerancia_reloj_min)"
+                value={configs['declaracion_tolerancia_reloj_min'] ?? '15'}
+                onChange={(e) => handleValorChange('declaracion_tolerancia_reloj_min', e.target.value)}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="Máx. días traslado (patente_traslado_max_dias)"
+                value={configs['patente_traslado_max_dias'] ?? '1'}
+                onChange={(e) => handleValorChange('patente_traslado_max_dias', e.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['patente_incluye_despacho_planta'] ?? 'true') === 'true'}
+                    onChange={(e) => handleValorChange('patente_incluye_despacho_planta', e.target.checked ? 'true' : 'false')}
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2">Incluir despacho planta en patentes (D52)</Typography>}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['origen_directo_exige_patente'] ?? 'false') === 'true'}
+                    onChange={(e) => handleValorChange('origen_directo_exige_patente', e.target.checked ? 'true' : 'false')}
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2">Exigir patente en origen directo a planta (D53)</Typography>}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['produccion_exige_lotes'] ?? 'true') === 'true'}
+                    onChange={(e) => handleValorChange('produccion_exige_lotes', e.target.checked ? 'true' : 'false')}
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2">Producción exige lotes (D57)</Typography>}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['destino_exige_producciones'] ?? 'true') === 'true'}
+                    onChange={(e) => handleValorChange('destino_exige_producciones', e.target.checked ? 'true' : 'false')}
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2">Destino exige producciones (ZP.1)</Typography>}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['destino_exige_mismo_formato'] ?? 'true') === 'true'}
+                    onChange={(e) => handleValorChange('destino_exige_mismo_formato', e.target.checked ? 'true' : 'false')}
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2">Destino exige mismo formato (D56)</Typography>}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="Tolerancia destino % (destino_tolerancia_pct)"
+                value={configs['destino_tolerancia_pct'] ?? '1'}
+                onChange={(e) => handleValorChange('destino_tolerancia_pct', e.target.value)}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={(configs['declaracion_lectura_exige_dueno'] ?? 'true') === 'true'}
+                    onChange={(e) => handleValorChange('declaracion_lectura_exige_dueno', e.target.checked ? 'true' : 'false')}
+                    color="secondary"
+                  />
+                }
+                label={<Typography variant="body2">Restringir lectura de declaraciones al dueño/destinatario (declaracion_lectura_exige_dueno)</Typography>}
               />
             </Grid>
           </Grid>

@@ -153,7 +153,7 @@ const MARCA_CONFIG = {
     descripcion: 'Estado de humedad declarado incompatible con la edad desde la extracción (Res. Ex. 3602)',
   },
   RENDIMIENTO_ANOMALO: {
-    label: 'Rendimiento anómalo',
+    label: 'Inconsistencia biológica (rendimiento)',
     color: '#be123c',
     bg: 'rgba(190, 18, 60, 0.1)',
     border: 'rgba(190, 18, 60, 0.3)',

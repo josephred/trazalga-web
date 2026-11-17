@@ -706,7 +706,19 @@ export const DEFAULT_CONFIG_VALUES = {
   consulta_publica_fono_denuncia: '',
   consulta_publica_whatsapp: '',
   consulta_publica_muestra_comuna: 'true',
-  consulta_ciudadana_resultados_anomalos: 'VENCIDO,SIN_REGISTROS,RETENIDO'
+  consulta_ciudadana_resultados_anomalos: 'VENCIDO,SIN_REGISTROS,RETENIDO',
+  declaracion_corrige_fecha_futura: 'true',
+  declaracion_tolerancia_reloj_min: '15',
+  patente_traslado_max_dias: '1',
+  patente_incluye_despacho_planta: 'true',
+  origen_directo_exige_patente: 'false',
+  consulta_publica_registra_denuncia: 'true',
+  consulta_patente_log_retencion_dias: '365',
+  produccion_exige_lotes: 'true',
+  destino_exige_producciones: 'true',
+  destino_tolerancia_pct: '1',
+  destino_exige_mismo_formato: 'true',
+  declaracion_lectura_exige_dueno: 'true'
 };
 
 /**
