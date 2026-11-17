@@ -260,7 +260,7 @@ test('QM.3: ponderarGrosorFlujo escala entre 2.5 y 9 px y formatearCoordenadaWgs
   assert.equal(formatearCoordenadaWgs84(null), '');
 });
 
-test('QE.1: construirFilasCsvFlujosOrigenDestino genera una fila por declaracion con WGS84 punto decimal', () => {
+test('QE.1 / ZE.2: construirFilasCsvFlujosOrigenDestino usa encabezados SIG <=10 chars, incluye comercializador y punto decimal WGS84', () => {
   const { headers, rows } = construirFilasCsvFlujosOrigenDestino([
     {
       origenFolio: 'RO-101',
@@ -274,8 +274,12 @@ test('QE.1: construirFilasCsvFlujosOrigenDestino genera una fila por declaracion
       origenLongitud: -71.335132,
       origenFuente: 'REFERENCIA',
       comercializadorFolio: 'DC-88',
+      comercializadorLatitud: -29.941234,
+      comercializadorLongitud: -71.310001,
+      comercializadorFuente: 'GPS_DECLARACION',
       plantaNombre: 'Planta Norte',
       plantaCodigo: 'PLA-01',
+      plantaComuna: 'Coquimbo',
       plantaLatitud: -29.91,
       plantaLongitud: -71.25,
       plantaFuente: 'GPS',
@@ -297,6 +301,7 @@ test('QE.1: construirFilasCsvFlujosOrigenDestino genera una fila por declaracion
       comercializadorFolio: null,
       plantaNombre: 'Planta Oficial',
       plantaCodigo: 'PLA-02',
+      plantaComuna: null,
       plantaLatitud: -30.123456,
       plantaLongitud: -71.654321,
       plantaFuente: 'REFERENCIA',
@@ -306,24 +311,36 @@ test('QE.1: construirFilasCsvFlujosOrigenDestino genera una fila por declaracion
     },
   ]);
 
-  assert.equal(headers.length, 19);
-  assert.equal(headers[7], 'Latitud Origen');
-  assert.equal(headers[13], 'Latitud Planta');
+  assert.equal(headers.length, 23);
+  assert.equal(new Set(headers).size, 23);
+  for (const h of headers) {
+    assert.match(h, /^[A-Z0-9_]{1,10}$/, `Encabezado invalido para shapefile: ${h}`);
+  }
+  assert.equal(headers[7], 'LAT_ORI');
+  assert.equal(headers[11], 'LAT_COM');
+  assert.equal(headers[16], 'COM_PLA');
+  assert.equal(headers[17], 'LAT_PLA');
   assert.equal(rows.length, 2);
 
   assert.equal(rows[0][7], '-29.955651');
   assert.equal(rows[0][8], '-71.335132');
   assert.equal(rows[0][9], 'REFERENCIA');
   assert.equal(rows[0][10], 'DC-88');
-  assert.equal(rows[0][13], '-29.910000');
-  assert.equal(rows[0][15], 'GPS');
-  assert.ok(!rows[0][7].includes(',') && !rows[0][13].includes(','));
+  assert.equal(rows[0][11], '-29.941234');
+  assert.equal(rows[0][12], '-71.310001');
+  assert.equal(rows[0][13], 'GPS_DECLARACION');
+  assert.equal(rows[0][16], 'Coquimbo');
+  assert.equal(rows[0][17], '-29.910000');
+  assert.equal(rows[0][19], 'GPS');
+  assert.ok(!rows[0][7].includes(',') && !rows[0][11].includes(',') && !rows[0][17].includes(','));
 
   assert.equal(rows[1][7], '');
   assert.equal(rows[1][9], 'SIN_COORDENADAS');
   assert.equal(rows[1][10], '');
-  assert.equal(rows[1][13], '-30.123456');
-  assert.equal(rows[1][15], 'REFERENCIA');
+  assert.equal(rows[1][11], '');
+  assert.equal(rows[1][16], '');
+  assert.equal(rows[1][17], '-30.123456');
+  assert.equal(rows[1][19], 'REFERENCIA');
 });
 
 test('QE.2: mapearCoordenadasTransaccionCsv serializa columnas finales origen/destino en punto decimal', () => {

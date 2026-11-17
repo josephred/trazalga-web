@@ -577,37 +577,48 @@ export function formatearCoordenadaWgs84(valor, decimales = 6) {
 }
 
 export const HEADERS_CSV_FLUJOS = [
-  'Folio Origen',
-  'Tipo Origen',
-  'Fecha Origen',
-  'Especie',
-  'Desembarque (kg)',
-  'Captura (kg)',
-  'Nombre Origen',
-  'Latitud Origen',
-  'Longitud Origen',
-  'Fuente Origen',
-  'Folio Comercializador',
-  'Nombre Planta',
-  'Código Planta',
-  'Latitud Planta',
-  'Longitud Planta',
-  'Fuente Planta',
-  'Folio Recepción',
-  'Fecha Recepción',
-  'Peso Romana (kg)',
+  'FOLIO_ORI',
+  'TIPO_ORI',
+  'FECHA_ORI',
+  'ESPECIE',
+  'DESEMB_KG',
+  'CAPT_KG',
+  'NOM_ORI',
+  'LAT_ORI',
+  'LON_ORI',
+  'FTE_ORI',
+  'FOLIO_COM',
+  'LAT_COM',
+  'LON_COM',
+  'FTE_COM',
+  'NOM_PLA',
+  'COD_PLA',
+  'COM_PLA',
+  'LAT_PLA',
+  'LON_PLA',
+  'FTE_PLA',
+  'FOLIO_REC',
+  'FECHA_REC',
+  'ROMANA_KG',
 ];
 
+function formatearFechaIsoCsv(valor) {
+  if (!valor) return '';
+  const s = String(valor).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  return s;
+}
+
 /**
- * QE.1 · Construye encabezados y filas (una por declaración de origen) para exportarCsv
- * respetando coordenadas WGS84 con separador decimal punto.
+ * QE.1 / ZE.2 · Construye encabezados (<= 10 caracteres ASCII para compatibilidad SIG/shapefile)
+ * y filas (una por declaración de origen) para exportarCsv con separador decimal punto WGS84.
  */
 export function construirFilasCsvFlujosOrigenDestino(declaraciones = []) {
   const lista = Array.isArray(declaraciones) ? declaraciones : [];
   const rows = lista.map((d) => [
     d?.origenFolio ?? '',
     d?.origenTipo ?? '',
-    d?.origenFecha ?? '',
+    formatearFechaIsoCsv(d?.origenFecha),
     d?.especie ?? '',
     esNumeroValido(d?.desembarqueKg) ? Number(d.desembarqueKg) : '',
     esNumeroValido(d?.capturaKg) ? Number(d.capturaKg) : '',
@@ -616,13 +627,17 @@ export function construirFilasCsvFlujosOrigenDestino(declaraciones = []) {
     formatearCoordenadaWgs84(d?.origenLongitud),
     d?.origenFuente ?? 'SIN_COORDENADAS',
     d?.comercializadorFolio ?? '',
+    formatearCoordenadaWgs84(d?.comercializadorLatitud),
+    formatearCoordenadaWgs84(d?.comercializadorLongitud),
+    d?.comercializadorFuente ?? '',
     d?.plantaNombre ?? '',
     d?.plantaCodigo ?? '',
+    d?.plantaComuna ?? '',
     formatearCoordenadaWgs84(d?.plantaLatitud),
     formatearCoordenadaWgs84(d?.plantaLongitud),
     d?.plantaFuente ?? 'SIN_COORDENADAS',
     d?.recepcionFolio ?? '',
-    d?.recepcionFecha ?? '',
+    formatearFechaIsoCsv(d?.recepcionFecha),
     esNumeroValido(d?.pesoRomanaKg) ? Number(d.pesoRomanaKg) : '',
   ]);
   return {
