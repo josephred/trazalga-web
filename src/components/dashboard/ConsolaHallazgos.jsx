@@ -182,6 +182,7 @@ export default function ConsolaHallazgos() {
   const [hallazgos, setHallazgos] = useState([]);
   const [resumen, setResumen] = useState(null);
   const [consultasCiudadanas, setConsultasCiudadanas] = useState(null);
+  const [errorCiudadanas, setErrorCiudadanas] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionSuccess, setActionSuccess] = useState(null);
@@ -218,14 +219,22 @@ export default function ConsolaHallazgos() {
       const [resLista, resResumen, resCiudadanas] = await Promise.all([
         api.get('/api/declaracion-marcas', { params }),
         api.get('/api/declaracion-marcas/resumen').catch(() => null),
-        api.get('/api/reportes/consultas-ciudadanas', { params: ciudadanasParams }).catch(() => null),
+        api.get('/api/reportes/consultas-ciudadanas', { params: ciudadanasParams })
+          .then((res) => ({ ok: true, data: res.data }))
+          .catch(() => ({ ok: false, data: null })),
       ]);
 
       setHallazgos(Array.isArray(resLista.data) ? resLista.data : []);
       if (resResumen && resResumen.data) {
         setResumen(resResumen.data);
       }
-      setConsultasCiudadanas(resCiudadanas?.data ?? null);
+      if (resCiudadanas?.ok) {
+        setConsultasCiudadanas(resCiudadanas.data ?? null);
+        setErrorCiudadanas(false);
+      } else {
+        setConsultasCiudadanas(null);
+        setErrorCiudadanas(true);
+      }
     } catch (err) {
       console.error('Error cargando hallazgos:', err);
       setError('No se pudieron obtener las marcas de fiscalización del servidor.');
@@ -935,23 +944,48 @@ export default function ConsolaHallazgos() {
               </Box>
             </Box>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              <Chip
-                label={`Consultas en período: ${consultasCiudadanas?.totalConsultas ?? 0}`}
-                size="small"
-                color="primary"
-                variant="outlined"
-                sx={{ fontWeight: 700 }}
-              />
-              <Chip
-                label={`Anómalas: ${consultasCiudadanas?.totalAnomalas ?? 0}`}
-                size="small"
-                color={(consultasCiudadanas?.totalAnomalas ?? 0) > 0 ? 'warning' : 'default'}
-                sx={{ fontWeight: 700 }}
-              />
+              {errorCiudadanas ? (
+                <Chip
+                  label="No se pudo cargar"
+                  size="small"
+                  color="error"
+                  variant="outlined"
+                  sx={{ fontWeight: 700 }}
+                />
+              ) : (
+                <>
+                  <Chip
+                    label={`Consultas en período: ${consultasCiudadanas?.totalConsultas ?? 0}`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={{ fontWeight: 700 }}
+                  />
+                  <Chip
+                    label={`Anómalas: ${consultasCiudadanas?.totalAnomalas ?? 0}`}
+                    size="small"
+                    color={(consultasCiudadanas?.totalAnomalas ?? 0) > 0 ? 'warning' : 'default'}
+                    sx={{ fontWeight: 700 }}
+                  />
+                  <Chip
+                    label={`Intentos de denuncia: ${consultasCiudadanas?.intentosDenuncia ?? 0}`}
+                    size="small"
+                    color={(consultasCiudadanas?.intentosDenuncia ?? 0) > 0 ? 'error' : 'default'}
+                    variant="outlined"
+                    sx={{ fontWeight: 700 }}
+                  />
+                </>
+              )}
             </Stack>
           </Box>
 
-          {consultasCiudadanas?.totalesPorResultado && (
+          {errorCiudadanas && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              No se pudo cargar el resumen de consultas ciudadanas del servidor.
+            </Alert>
+          )}
+
+          {!errorCiudadanas && consultasCiudadanas?.totalesPorResultado && (
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
               {Object.entries(consultasCiudadanas.totalesPorResultado).map(([resKey, count]) => (
                 <Chip
@@ -972,6 +1006,7 @@ export default function ConsolaHallazgos() {
                   <TableCell sx={{ fontWeight: 700 }}>Patente</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Último resultado</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>Consultas</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>Intentos de denuncia</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>Orígenes distintos</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Primera consulta</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Última consulta</TableCell>
@@ -979,9 +1014,15 @@ export default function ConsolaHallazgos() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {(!consultasCiudadanas?.patentesAnomalas || consultasCiudadanas.patentesAnomalas.length === 0) ? (
+                {errorCiudadanas ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 3, color: 'error.main' }}>
+                      No se pudo cargar
+                    </TableCell>
+                  </TableRow>
+                ) : (!consultasCiudadanas?.patentesAnomalas || consultasCiudadanas.patentesAnomalas.length === 0) ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                       No hay patentes con consultas ciudadanas anómalas en el período seleccionado.
                     </TableCell>
                   </TableRow>
@@ -1008,6 +1049,7 @@ export default function ConsolaHallazgos() {
                         />
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700 }}>{row.consultas}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700 }}>{row.intentosDenuncia ?? 0}</TableCell>
                       <TableCell align="right">{row.origenesDistintos}</TableCell>
                       <TableCell>
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>

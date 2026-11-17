@@ -29,7 +29,7 @@ import {
   WhatsApp,
 } from '@mui/icons-material';
 import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router-dom';
-import api from '../api/axiosConfig';
+import api, { API_ORIGIN } from '../api/axiosConfig';
 import sernapescaLogo from '../assets/sernapesca.png';
 
 const PATENTE_VALIDA_RE = /^[A-Z0-9]{5,8}$/;
@@ -157,6 +157,24 @@ export default function ConsultaPatentePublica() {
         `Denuncia Sernapesca: patente ${patenteActiva || 'SIN_PATENTE'} consultada el ${fechaConsultaTexto} sin traslado de algas autorizado vigente.`
       )}`
     : '';
+
+  const registrarIntencionDenuncia = (canal) => {
+    const target = normalizarPatente(resultado?.patente || patenteInput);
+    if (!PATENTE_VALIDA_RE.test(target)) return;
+    const url = API_ORIGIN
+      ? `${API_ORIGIN}/api/public/patentes/${encodeURIComponent(target)}/denuncia`
+      : `/v-api/public/patentes/${encodeURIComponent(target)}/denuncia`;
+    try {
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ canal }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      // No bloquear apertura del enlace ciudadano si falla el registro
+    }
+  };
 
   return (
     <Box
@@ -495,6 +513,7 @@ export default function ConsultaPatentePublica() {
                           <Button
                             component="a"
                             href={`tel:${fonoTel}`}
+                            onClick={() => registrarIntencionDenuncia('FONO')}
                             variant="contained"
                             startIcon={<Phone />}
                             sx={{
@@ -513,6 +532,7 @@ export default function ConsultaPatentePublica() {
                           <Button
                             component="a"
                             href={whatsappHref}
+                            onClick={() => registrarIntencionDenuncia('WHATSAPP')}
                             target="_blank"
                             rel="noopener noreferrer"
                             variant="contained"

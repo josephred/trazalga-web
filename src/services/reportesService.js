@@ -44,6 +44,28 @@ export const getResumenGlobal = async (dateRange) => {
   return response.data;
 };
 
+/**
+ * Obtiene el resumen de consultas ciudadanas por patente en el período.
+ */
+export const getConsultasCiudadanas = async (dateRange) => {
+  const params = {};
+  if (dateRange) {
+    if (Array.isArray(dateRange)) {
+      if (dateRange[0]) {
+        params.startDate = typeof dateRange[0].format === 'function' ? dateRange[0].format('YYYY-MM-DD') : dateRange[0];
+      }
+      if (dateRange[1]) {
+        params.endDate = typeof dateRange[1].format === 'function' ? dateRange[1].format('YYYY-MM-DD') : dateRange[1];
+      }
+    } else {
+      if (dateRange.startDate) params.startDate = dateRange.startDate;
+      if (dateRange.endDate) params.endDate = dateRange.endDate;
+    }
+  }
+  const response = await api.get('/reportes/consultas-ciudadanas', { params });
+  return response.data;
+};
+
 const formatParams = (filters) => {
   const params = {};
   if (!filters) return params;

@@ -1,11 +1,12 @@
-import { Typography, Container, Grid, Box } from '@mui/material';
+import { Typography, Container, Grid, Box, Paper, Stack, Chip, Button } from '@mui/material';
 import {
   BarChart as BarChartIcon,
   Inventory as InventoryIcon,
   Group as GroupIcon,
   WarningAmber as WarningIcon,
   CheckCircleOutline as OKIcon,
-  DirectionsBoat as BoatIcon
+  DirectionsBoat as BoatIcon,
+  DirectionsCar as DirectionsCarIcon
 } from '@mui/icons-material';
 import StatCard from '../components/dashboard/StatCard';
 import IndicadorRecolector from '../components/dashboard/IndicadorRecolector';
@@ -24,9 +25,9 @@ import OrigenGeoWidget from '../components/dashboard/OrigenGeoWidget';
 import TiempoValidacionWidget from '../components/dashboard/TiempoValidacionWidget';
 import CasosAbiertosWidget from '../components/dashboard/CasosAbiertosWidget';
 import CurvaSnakeWidget from '../components/dashboard/CurvaSnakeWidget';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, Link as RouterLink } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getResumenGlobal } from '../services/reportesService';
+import { getResumenGlobal, getConsultasCiudadanas } from '../services/reportesService';
 
 
 import IndicadorHelpButton from '../components/dashboard/IndicadorHelpButton';
@@ -41,6 +42,7 @@ export default function Dashboard() {
     inconsistenciasPct: 0,
     actoresFiscalizados: 0
   });
+  const [ciudadanas, setCiudadanas] = useState({ loading: true, error: false, data: null });
 
   useEffect(() => {
     const fetchResumen = async () => {
@@ -52,7 +54,19 @@ export default function Dashboard() {
       }
     };
 
+    const fetchCiudadanas = async () => {
+      setCiudadanas((prev) => ({ ...prev, loading: true, error: false }));
+      try {
+        const data = await getConsultasCiudadanas(dateRange);
+        setCiudadanas({ loading: false, error: false, data });
+      } catch (error) {
+        console.error('Error fetching consultas ciudadanas:', error);
+        setCiudadanas({ loading: false, error: true, data: null });
+      }
+    };
+
     fetchResumen();
+    fetchCiudadanas();
   }, [dateRange]);
 
   // Nº viajes del armador = nº de declaraciones de armador (1 declaración = 1 viaje).
@@ -202,6 +216,80 @@ export default function Dashboard() {
               helpKey="volumenComprado"
               dateRange={dateRange}
             />
+          </Grid>
+
+          {/* Consultas ciudadanas de patentes (ZC.5) */}
+          <Grid size={{ xs: 12, md: 9, lg: 9 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2.2,
+                height: '100%',
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                justifyContent: 'space-between',
+                gap: 2,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: '#eff6ff', color: '#1d4ed8', display: 'flex' }}>
+                  <DirectionsCarIcon />
+                </Box>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                    Consultas ciudadanas
+                  </Typography>
+                  {ciudadanas.error ? (
+                    <Typography variant="body2" sx={{ color: 'error.main', fontWeight: 700, mt: 0.5 }}>
+                      No se pudo cargar
+                    </Typography>
+                  ) : (
+                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 0.8 }}>
+                      <Chip
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        label={`Consultas: ${(ciudadanas.data?.totalConsultas ?? 0).toLocaleString('es-CL')}`}
+                        sx={{ fontWeight: 700 }}
+                      />
+                      <Chip
+                        size="small"
+                        color={(ciudadanas.data?.totalAnomalas ?? 0) > 0 ? 'warning' : 'default'}
+                        label={`Anómalas: ${(ciudadanas.data?.totalAnomalas ?? 0).toLocaleString('es-CL')}`}
+                        sx={{ fontWeight: 700 }}
+                      />
+                      <Chip
+                        size="small"
+                        color={(ciudadanas.data?.patentes3MasAnomalas ?? 0) > 0 ? 'warning' : 'default'}
+                        variant="outlined"
+                        label={`3+ anómalas: ${(ciudadanas.data?.patentes3MasAnomalas ?? 0).toLocaleString('es-CL')}`}
+                        sx={{ fontWeight: 700 }}
+                      />
+                      <Chip
+                        size="small"
+                        color={(ciudadanas.data?.intentosDenuncia ?? 0) > 0 ? 'error' : 'default'}
+                        variant="outlined"
+                        label={`Intentos de denuncia: ${(ciudadanas.data?.intentosDenuncia ?? 0).toLocaleString('es-CL')}`}
+                        sx={{ fontWeight: 700 }}
+                      />
+                    </Stack>
+                  )}
+                </Box>
+              </Box>
+              <Button
+                component={RouterLink}
+                to="/alertas"
+                variant="outlined"
+                size="small"
+                sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, whiteSpace: 'nowrap' }}
+              >
+                Ver en Alertas
+              </Button>
+            </Paper>
           </Grid>
 
           {/* Gráfico Principal de Desembarques y Declaraciones */}
