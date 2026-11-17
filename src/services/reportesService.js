@@ -341,3 +341,21 @@ export const getCapasGeorreferencia = async ({ regionId } = {}, options = {}) =>
   });
   return response.data;
 };
+
+/**
+ * ZE.1 · Descarga libro Excel georreferenciado (.xlsx) con los mismos filtros aplicados.
+ */
+export const exportarFlujosOrigenDestinoExcel = async (filtros = {}) => {
+  const params = { formato: 'xlsx' };
+  if (filtros?.startDate) params.startDate = filtros.startDate;
+  if (filtros?.endDate) params.endDate = filtros.endDate;
+  if (filtros?.especieId) params.especieId = filtros.especieId;
+  if (filtros?.regionId) params.regionId = filtros.regionId;
+  if (filtros?.regionDestinoId) params.regionDestinoId = filtros.regionDestinoId;
+
+  const response = await api.get('/reportes/flujos-origen-destino/exportar', {
+    params,
+    responseType: 'blob',
+  });
+  return response.data;
+};

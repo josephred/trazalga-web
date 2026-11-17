@@ -7,6 +7,7 @@ import {
   Grid,
   Chip,
   TextField,
+  Menu,
   MenuItem,
   Button,
   Alert,
@@ -25,6 +26,7 @@ import {
 import {
   Search as SearchIcon,
   FileDownload as DownloadIcon,
+  ArrowDropDown as ArrowDropDownIcon,
   AltRoute as FlowIcon,
   WarningAmber as WarningIcon,
   CheckCircleOutline as CheckIcon,
@@ -34,7 +36,11 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip as LeafletTooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { getFlujosOrigenDestino, getCatalogosFiltrosFlujos } from '../../services/reportesService';
+import {
+  getFlujosOrigenDestino,
+  getCatalogosFiltrosFlujos,
+  exportarFlujosOrigenDestinoExcel,
+} from '../../services/reportesService';
 import {
   ponderarGrosorFlujo,
   formatearKm,
@@ -185,6 +191,8 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
   const [error, setError] = useState(null);
   const [datos, setDatos] = useState(null);
   const [pasarPorComercializador, setPasarPorComercializador] = useState(true);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
+  const [exportandoExcel, setExportandoExcel] = useState(false);
   const capasRefState = useCapasReferencia(regionId);
 
   useEffect(() => {
@@ -234,6 +242,7 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
   const resumen = useMemo(() => datos?.resumen || {}, [datos]);
 
   const handleExportarCsv = () => {
+    setExportAnchorEl(null);
     if (declaraciones.length === 0) return;
     const { headers, rows } = construirFilasCsvFlujosOrigenDestino(declaraciones);
     const sufijoInicio = dateRange?.startDate || 'inicio';
@@ -243,6 +252,35 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
       rows,
       nombreArchivo: `flujos_origen_destino_${sufijoInicio}_${sufijoFin}`,
     });
+  };
+
+  const handleExportarExcel = async () => {
+    setExportAnchorEl(null);
+    if (declaraciones.length === 0 || exportandoExcel) return;
+    setExportandoExcel(true);
+    try {
+      const blob = await exportarFlujosOrigenDestinoExcel({
+        startDate: dateRange?.startDate || undefined,
+        endDate: dateRange?.endDate || undefined,
+        especieId: especieId || undefined,
+        regionId: regionId || undefined,
+        regionDestinoId: regionDestinoId || undefined,
+      });
+      const sufijoInicio = dateRange?.startDate || 'inicio';
+      const sufijoFin = dateRange?.endDate || 'hoy';
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `flujos_origen_destino_${sufijoInicio}_${sufijoFin}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError('No se pudo exportar el archivo Excel georreferenciado.');
+    } finally {
+      setExportandoExcel(false);
+    }
   };
 
   const maxDesembarqueKg = useMemo(
@@ -438,12 +476,21 @@ export default function ReporteFlujosRegionalTab({ dateRange }) {
                 fullWidth
                 variant="outlined"
                 startIcon={<DownloadIcon />}
-                onClick={handleExportarCsv}
-                disabled={loading || declaraciones.length === 0}
+                endIcon={<ArrowDropDownIcon />}
+                onClick={(e) => setExportAnchorEl(e.currentTarget)}
+                disabled={loading || exportandoExcel || declaraciones.length === 0}
                 sx={{ fontWeight: 700, py: 1 }}
               >
-                Exportar
+                {exportandoExcel ? 'Exportando...' : 'Exportar'}
               </Button>
+              <Menu
+                anchorEl={exportAnchorEl}
+                open={Boolean(exportAnchorEl)}
+                onClose={() => setExportAnchorEl(null)}
+              >
+                <MenuItem onClick={handleExportarExcel}>Excel (.xlsx)</MenuItem>
+                <MenuItem onClick={handleExportarCsv}>CSV</MenuItem>
+              </Menu>
             </Stack>
           </Grid>
         </Grid>
