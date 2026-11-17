@@ -32,11 +32,15 @@ import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router-d
 import api from '../api/axiosConfig';
 import sernapescaLogo from '../assets/sernapesca.png';
 
+const PATENTE_VALIDA_RE = /^[A-Z0-9]{5,8}$/;
+const normalizarPatente = (raw) => String(raw || '').toUpperCase().replace(/[\s-]/g, '').trim();
+
 export default function ConsultaPatentePublica() {
   const [patenteInput, setPatenteInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [fieldError, setFieldError] = useState('');
   const [rateLimited, setRateLimited] = useState(false);
 
   const navigate = useNavigate();
@@ -46,27 +50,32 @@ export default function ConsultaPatentePublica() {
 
   // Normalización estricta en el cliente (elimina guiones, espacios y convierte a mayúsculas)
   const handleInputChange = (e) => {
-    const raw = e.target.value || '';
-    const clean = raw.toUpperCase().replace(/[\s-]/g, '');
+    const clean = normalizarPatente(e.target.value);
     setPatenteInput(clean);
+    if (fieldError) setFieldError('');
     if (errorMsg) setErrorMsg('');
     if (rateLimited) setRateLimited(false);
   };
 
   const handleConsultar = async (patenteToQuery) => {
-    const target = (patenteToQuery || patenteInput || '').trim();
+    const target = normalizarPatente(patenteToQuery ?? patenteInput);
     if (!target) {
-      setErrorMsg('Por favor ingrese una placa patente para consultar.');
+      setFieldError('Por favor ingrese una placa patente para consultar.');
+      return;
+    }
+    if (!PATENTE_VALIDA_RE.test(target)) {
+      setFieldError('Patente no válida. Ingrese entre 5 y 8 letras o números sin símbolos.');
       return;
     }
 
     setLoading(true);
+    setFieldError('');
     setErrorMsg('');
     setRateLimited(false);
     setResultado(null);
 
     try {
-      const response = await api.get(`/public/patentes/${target}`);
+      const response = await api.get(`/public/patentes/${encodeURIComponent(target)}`);
       setResultado(response.data);
       setTimeout(() => {
         if (resultadoRef.current) {
@@ -77,6 +86,8 @@ export default function ConsultaPatentePublica() {
       if (err.response && err.response.status === 429) {
         setRateLimited(true);
         setErrorMsg('Límite de consultas por minuto alcanzado. Por favor, espere 60 segundos antes de intentar nuevamente.');
+      } else if (err.response && err.response.status === 400) {
+        setFieldError(err.response?.data?.error || err.response?.data?.message || 'Patente no válida.');
       } else {
         setErrorMsg(err.response?.data?.message || 'No fue posible completar la consulta. Verifique su conexión.');
       }
@@ -242,8 +253,10 @@ export default function ConsultaPatentePublica() {
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                   disabled={loading}
+                  error={Boolean(fieldError)}
+                  helperText={fieldError || ' '}
                   inputProps={{
-                    maxLength: 10,
+                    maxLength: 25,
                     style: {
                       fontSize: '1.2rem',
                       fontWeight: 800,
