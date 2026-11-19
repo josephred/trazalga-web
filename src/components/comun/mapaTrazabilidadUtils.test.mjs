@@ -273,6 +273,7 @@ test('QE.1 / ZE.2: construirFilasCsvFlujosOrigenDestino usa encabezados SIG <=10
       origenLatitud: -29.955651,
       origenLongitud: -71.335132,
       origenFuente: 'REFERENCIA',
+      origenReferenciaFuente: 'VARADERO',
       comercializadorFolio: 'DC-88',
       comercializadorLatitud: -29.941234,
       comercializadorLongitud: -71.310001,
@@ -311,8 +312,8 @@ test('QE.1 / ZE.2: construirFilasCsvFlujosOrigenDestino usa encabezados SIG <=10
     },
   ]);
 
-  assert.equal(headers.length, 23);
-  assert.equal(new Set(headers).size, 23);
+  assert.equal(headers.length, 24);
+  assert.equal(new Set(headers).size, 24);
   for (const h of headers) {
     assert.match(h, /^[A-Z0-9_]{1,10}$/, `Encabezado invalido para shapefile: ${h}`);
   }
@@ -320,6 +321,7 @@ test('QE.1 / ZE.2: construirFilasCsvFlujosOrigenDestino usa encabezados SIG <=10
   assert.equal(headers[11], 'LAT_COM');
   assert.equal(headers[16], 'COM_PLA');
   assert.equal(headers[17], 'LAT_PLA');
+  assert.equal(headers[23], 'REF_ORI');
   assert.equal(rows.length, 2);
 
   assert.equal(rows[0][7], '-29.955651');
@@ -332,6 +334,7 @@ test('QE.1 / ZE.2: construirFilasCsvFlujosOrigenDestino usa encabezados SIG <=10
   assert.equal(rows[0][16], 'Coquimbo');
   assert.equal(rows[0][17], '-29.910000');
   assert.equal(rows[0][19], 'GPS');
+  assert.equal(rows[0][23], 'VARADERO');
   assert.ok(!rows[0][7].includes(',') && !rows[0][11].includes(',') && !rows[0][17].includes(','));
 
   assert.equal(rows[1][7], '');
@@ -341,6 +344,7 @@ test('QE.1 / ZE.2: construirFilasCsvFlujosOrigenDestino usa encabezados SIG <=10
   assert.equal(rows[1][16], '');
   assert.equal(rows[1][17], '-30.123456');
   assert.equal(rows[1][19], 'REFERENCIA');
+  assert.equal(rows[1][23], 'SIN_COORD');
 });
 
 test('QE.2: mapearCoordenadasTransaccionCsv serializa columnas finales origen/destino en punto decimal', () => {

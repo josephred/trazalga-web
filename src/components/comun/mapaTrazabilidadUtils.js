@@ -600,7 +600,22 @@ export const HEADERS_CSV_FLUJOS = [
   'FOLIO_REC',
   'FECHA_REC',
   'ROMANA_KG',
+  'REF_ORI',
 ];
+
+function resolverRefOriCsv(d) {
+  if (d?.origenReferenciaFuente) {
+    return String(d.origenReferenciaFuente).trim().toUpperCase().slice(0, 10);
+  }
+  const fte = String(d?.origenFuente || '').trim().toUpperCase();
+  if (fte === 'GPS') return 'GPS';
+  const det = String(d?.origenFuenteDetalle || '').trim().toUpperCase();
+  if (det.includes('VARADERO')) return 'VARADERO';
+  if (det === 'CALETA') return 'CALETA';
+  if (det === 'AMERB') return 'AMERB';
+  if (det.includes('GPS')) return 'GPS';
+  return 'SIN_COORD';
+}
 
 function formatearFechaIsoCsv(valor) {
   if (!valor) return '';
@@ -639,6 +654,7 @@ export function construirFilasCsvFlujosOrigenDestino(declaraciones = []) {
     d?.recepcionFolio ?? '',
     formatearFechaIsoCsv(d?.recepcionFecha),
     esNumeroValido(d?.pesoRomanaKg) ? Number(d.pesoRomanaKg) : '',
+    resolverRefOriCsv(d),
   ]);
   return {
     headers: HEADERS_CSV_FLUJOS,
